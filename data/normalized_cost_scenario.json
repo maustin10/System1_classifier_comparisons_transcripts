@@ -71,7 +71,7 @@
     }
   },
   "state_length_sensitivity": {
-    "normalization": "USD per million raw state tokens",
+    "normalization": "USD per transcript",
     "state_token_range": [50, 32000],
     "assumptions": {
       "questions_per_transcript": 27,
@@ -104,13 +104,13 @@
       "jev_choice_state_tokens": 681.5036368744104
     },
     "sample_costs": [
-      {"state_tokens": 100, "modernbert_chunks": 1, "jev_requests": 1, "modernbert_trained": 0.0083171302547484, "modernbert_zero_shot": 0.25073701503285617, "jev_noul": 1.1170908, "jev_choice": 1.28674},
-      {"state_tokens": 224.46, "modernbert_chunks": 1, "jev_requests": 1, "modernbert_trained": 0.008226704078853836, "modernbert_zero_shot": 0.23378210705262545, "jev_noul": 0.5209676557070302, "jev_choice": 0.5965486946449255},
-      {"state_tokens": 600, "modernbert_chunks": 1, "jev_requests": 1, "modernbert_trained": 0.00818122943359238, "modernbert_zero_shot": 0.22525561106610253, "jev_noul": 0.2211818, "jev_choice": 0.2494566666666667},
-      {"state_tokens": 8000, "modernbert_chunks": 1, "jev_requests": 1, "modernbert_trained": 0.008156087781678516, "modernbert_zero_shot": 0.22054155133225312, "jev_noul": 0.05543863500000001, "jev_choice": 0.05755925},
-      {"state_tokens": 8192, "modernbert_chunks": 2, "jev_requests": 1, "modernbert_trained": 0.00841284477839852, "modernbert_zero_shot": 0.22778583485061377, "jev_noul": 0.0551236669921875, "jev_choice": 0.057194580078125},
-      {"state_tokens": 16000, "modernbert_chunks": 2, "jev_requests": 1, "modernbert_trained": 0.008286552569988297, "modernbert_zero_shot": 0.22406410061661713, "jev_noul": 0.0487193175, "jev_choice": 0.049779625},
-      {"state_tokens": 32000, "modernbert_chunks": 5, "jev_requests": 2, "modernbert_trained": 0.00841752698637741, "modernbert_zero_shot": 0.2276822051658565, "jev_noul": 0.0490553175, "jev_choice": 0.05011562500000001}
+      {"state_tokens": 100, "modernbert_chunks": 1, "jev_requests": 1, "modernbert_trained": 8.3171302547484e-7, "modernbert_zero_shot": 0.000025073701503285618, "jev_noul": 0.00011170908, "jev_choice": 0.000128674},
+      {"state_tokens": 224.46, "modernbert_chunks": 1, "jev_requests": 1, "modernbert_trained": 0.0000018465659975395323, "modernbert_zero_shot": 0.00005247473174903231, "jev_noul": 0.00011693640000000001, "jev_choice": 0.00013390132},
+      {"state_tokens": 600, "modernbert_chunks": 1, "jev_requests": 1, "modernbert_trained": 0.000004908737660155428, "modernbert_zero_shot": 0.00013515336663966153, "jev_noul": 0.00013270908, "jev_choice": 0.000149674},
+      {"state_tokens": 8000, "modernbert_chunks": 1, "jev_requests": 1, "modernbert_trained": 0.00006524870225342872, "modernbert_zero_shot": 0.001764332410658025, "jev_noul": 0.00044350908, "jev_choice": 0.000460474},
+      {"state_tokens": 8192, "modernbert_chunks": 2, "jev_requests": 1, "modernbert_trained": 0.00006891802442464068, "modernbert_zero_shot": 0.001866021559096228, "jev_noul": 0.00045157308, "jev_choice": 0.000468538},
+      {"state_tokens": 16000, "modernbert_chunks": 2, "jev_requests": 1, "modernbert_trained": 0.00013258484111981275, "modernbert_zero_shot": 0.003585025609865874, "jev_noul": 0.00077950908, "jev_choice": 0.000796474},
+      {"state_tokens": 32000, "modernbert_chunks": 5, "jev_requests": 2, "modernbert_trained": 0.0002693608635640771, "modernbert_zero_shot": 0.007285830565307408, "jev_noul": 0.00156977016, "jev_choice": 0.0016037}
     ]
   },
   "quality_variants": [

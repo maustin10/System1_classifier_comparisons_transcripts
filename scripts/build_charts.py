@@ -51,7 +51,7 @@ def metric_chart(metric: str, title: str, filename: str) -> None:
     values = [100 * item[metric] for item in models]
     colors = [COLORS[item["family"]] for item in models]
 
-    fig, ax = plt.subplots(figsize=(15.5, 8.2))
+    fig, ax = plt.subplots(figsize=(max(15.5, 1.62 * len(models)), 8.2))
     bars = ax.bar(range(len(models)), values, color=colors, width=0.72)
     ax.set_title(title, loc="left", pad=20)
     ax.text(
@@ -65,7 +65,7 @@ def metric_chart(metric: str, title: str, filename: str) -> None:
     ax.set_ylabel(f"{metric.upper()} (%)" if metric == "f1" else "Accuracy (%)")
     ax.set_ylim(80, 101.8)
     ax.set_xticks(range(len(models)), labels)
-    ax.tick_params(axis="x", labelrotation=0, pad=10)
+    ax.tick_params(axis="x", labelrotation=0, pad=10, labelsize=9)
     ax.grid(axis="y", color=GRID, linewidth=0.8)
     ax.set_axisbelow(True)
     ax.spines[["top", "right"]].set_visible(False)
@@ -157,7 +157,7 @@ def cost_chart() -> None:
     labels = [by_id[key]["label"] for key in ordered_ids]
     colors = [COLORS[by_id[key]["family"]] for key in ordered_ids]
 
-    fig, ax = plt.subplots(figsize=(15.5, 8.2))
+    fig, ax = plt.subplots(figsize=(max(15.5, 1.62 * len(ordered_ids)), 8.2))
     bars = ax.bar(range(len(ordered_ids)), values, color=colors, width=0.72)
     ax.set_title("Estimated marginal inference cost for 1,000 transcripts", loc="left", pad=20)
     ax.text(
@@ -175,7 +175,7 @@ def cost_chart() -> None:
     ax.yaxis.set_major_formatter(FuncFormatter(lambda value, _: "$0" if value == 0 else f"${value:g}"))
     ax.set_ylim(0, 12)
     ax.set_xticks(range(len(ordered_ids)), labels)
-    ax.tick_params(axis="x", pad=10)
+    ax.tick_params(axis="x", pad=10, labelsize=9)
     ax.grid(axis="y", color=GRID, linewidth=0.8)
     ax.set_axisbelow(True)
     ax.spines[["top", "right"]].set_visible(False)
@@ -321,25 +321,25 @@ def normalized_cost_state_length_chart() -> None:
     curves = [
         (
             "ModernBERT trained heads",
-            encoder_rate * (modernbert_encoded_state + trained_overhead * modernbert_chunks) / state_tokens,
+            encoder_rate * (modernbert_encoded_state + trained_overhead * modernbert_chunks) / 1_000_000,
             "#0B678B",
             "-",
         ),
         (
             "ModernBERT zero-shot",
-            encoder_rate * (questions * modernbert_encoded_state + zero_overhead * modernbert_chunks) / state_tokens,
+            encoder_rate * (questions * modernbert_encoded_state + zero_overhead * modernbert_chunks) / 1_000_000,
             "#2A9D8F",
             "-",
         ),
         (
             "JEV Noul",
-            jev_rate * (jev_billed_state + noul_overhead * jev_requests) / state_tokens,
+            jev_rate * (jev_billed_state + noul_overhead * jev_requests) / 1_000_000,
             "#8059C3",
             "-",
         ),
         (
             "JEV Choice",
-            jev_rate * (jev_billed_state + choice_overhead * jev_requests) / state_tokens,
+            jev_rate * (jev_billed_state + choice_overhead * jev_requests) / 1_000_000,
             "#A78BDB",
             "--",
         ),
@@ -352,32 +352,33 @@ def normalized_cost_state_length_chart() -> None:
     crossovers = sensitivity["crossovers_with_modernbert_zero_shot"]
     noul_cross = crossovers["jev_noul_state_tokens"]
     choice_cross = crossovers["jev_choice_state_tokens"]
-    zero_cost = lambda s: encoder_rate * (questions * s + zero_overhead) / s
+    zero_cost = lambda s: encoder_rate * (questions * s + zero_overhead) / 1_000_000
     ax.axvspan(noul_cross, upper, color="#8059C3", alpha=0.045, zorder=0)
     ax.axvline(224.46, color=MUTED, linewidth=1.2, linestyle=":")
-    ax.text(224.46, 1.72, "benchmark mean\n224 tokens", color=MUTED, fontsize=9, ha="center")
+    ax.text(224.46, 0.89, "benchmark mean\n224 tokens", transform=ax.get_xaxis_transform(), color=MUTED, fontsize=9, ha="center")
     for boundary, label, color in [
         (modernbert_payload, "ModernBERT chunking\nstarts near 8.2k", "#2A9D8F"),
         (jev_payload, "JEV request chunking\nstarts near 31.9k", "#8059C3"),
     ]:
         ax.axvline(boundary, color=color, linewidth=1.2, linestyle="--", alpha=0.8)
-        ax.text(boundary, 0.72, label, color=color, fontsize=9, ha="center")
-    for crossover, label, xytext in [
-        (noul_cross, "Noul crossover\n586 tokens", (430, 0.43)),
-        (choice_cross, "Choice crossover\n682 tokens", (850, 0.34)),
+        ax.text(boundary, 0.72, label, transform=ax.get_xaxis_transform(), color=color, fontsize=9, ha="center")
+    for crossover, label, offset in [
+        (noul_cross, "Noul crossover\n586 tokens", (-35, 52)),
+        (choice_cross, "Choice crossover\n682 tokens", (55, 30)),
     ]:
         ax.scatter(crossover, zero_cost(crossover), s=70, color="#8059C3", edgecolor="white", zorder=5)
         ax.annotate(
             label,
             xy=(crossover, zero_cost(crossover)),
-            xytext=xytext,
-            textcoords="data",
+            xytext=offset,
+            textcoords="offset points",
             fontsize=9.5,
             fontweight="bold",
+            ha="center",
             arrowprops={"arrowstyle": "-", "color": MUTED, "linewidth": 1},
         )
 
-    ax.set_title("Normalized serving cost with native limits and chunking", loc="left", pad=20)
+    ax.set_title("Estimated cost per transcript by state length", loc="left", pad=20)
     ax.text(
         0,
         1.015,
@@ -389,14 +390,14 @@ def normalized_cost_state_length_chart() -> None:
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xlim(lower, upper)
-    ax.set_ylim(0.006, 3.2)
-    ax.set_xlabel("Raw input tokens in each state (log scale)")
-    ax.set_ylabel("Estimated USD per million raw state tokens (log scale)")
+    ax.set_ylim(2e-7, 2e-2)
+    ax.set_xlabel("State length (tokens, log scale)")
+    ax.set_ylabel("Estimated cost per transcript (USD, log scale)")
     x_ticks = [50, 100, 250, 500, 1000, 2000, 4000, 8000, 16000, 32000]
     ax.xaxis.set_major_locator(FixedLocator([tick for tick in x_ticks if lower <= tick <= upper]))
     ax.xaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:,.0f}"))
-    ax.yaxis.set_major_locator(FixedLocator([0.008, 0.01, 0.03, 0.1, 0.3, 1, 3]))
-    ax.yaxis.set_major_formatter(FuncFormatter(lambda value, _: f"${value:g}"))
+    ax.yaxis.set_major_locator(FixedLocator([1e-6, 1e-5, 1e-4, 1e-3, 1e-2]))
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda value, _: f"${value:.6f}".rstrip("0")))
     ax.grid(color=GRID, linewidth=0.8, which="major")
     ax.set_axisbelow(True)
     ax.spines[["top", "right"]].set_visible(False)
@@ -404,7 +405,7 @@ def normalized_cost_state_length_chart() -> None:
     fig.text(
         0.01,
         0.01,
-        "Chunking repeats the 256-token overlap and question/request overhead for every chunk; aggregation compute is excluded. "
+        "Each curve is the estimated cost of processing one transcript. Chunking repeats the 256-token overlap and question/request overhead; aggregation compute is excluded. "
         "ModernBERT throughput is held at 170.3k processed tokens/s; tokenizer and long-context throughput differences are not modeled.",
         color=MUTED,
         fontsize=9,

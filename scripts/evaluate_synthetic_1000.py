@@ -51,6 +51,13 @@ def main() -> None:
     optimized_path = WORK / "modernbert_zero_shot_opt_threshold_results.json"
     if optimized_path.exists():
         sources["modernbert_zero_shot_opt_threshold"] = read(optimized_path)
+    for name in ("gliclass_modern_large_v3", "gliclass_large_v3"):
+        default_path = WORK / f"{name}_results.json"
+        optimized_gliclass_path = WORK / f"{name}_opt_threshold_results.json"
+        if default_path.exists():
+            sources[name] = read(default_path)
+        if optimized_gliclass_path.exists():
+            sources[f"{name}_opt_threshold"] = read(optimized_gliclass_path)
     expected_ids = [str(row["id"]) for row in test_rows]
     for model, source in sources.items():
         if list(source["rows"]) != expected_ids:
@@ -80,6 +87,14 @@ def main() -> None:
         elapsed["modernbert_zero_shot_opt_threshold"] = sources[
             "modernbert_zero_shot_opt_threshold"
         ]["metadata"]["inference_elapsed_seconds"]
+    for name in ("gliclass_modern_large_v3", "gliclass_large_v3"):
+        if name in sources:
+            elapsed[name] = sources[name]["metadata"]["elapsed_seconds"]
+        optimized_name = f"{name}_opt_threshold"
+        if optimized_name in sources:
+            elapsed[optimized_name] = sources[optimized_name]["metadata"][
+                "inference_elapsed_seconds"
+            ]
     timing_scope = {
         "modernbert_zero_shot": sources["modernbert_zero_shot"]["metadata"]["timing_scope"],
         "modernbert_trained": trained_timing["timing_scope"],
@@ -95,6 +110,14 @@ def main() -> None:
         timing_scope["modernbert_zero_shot_opt_threshold"] = sources[
             "modernbert_zero_shot_opt_threshold"
         ]["metadata"]["timing_scope"]
+    for name in ("gliclass_modern_large_v3", "gliclass_large_v3"):
+        if name in sources:
+            timing_scope[name] = sources[name]["metadata"]["timing_scope"]
+        optimized_name = f"{name}_opt_threshold"
+        if optimized_name in sources:
+            timing_scope[optimized_name] = sources[optimized_name]["metadata"][
+                "timing_scope"
+            ]
 
     report: dict[str, Any] = {
         "metadata": {

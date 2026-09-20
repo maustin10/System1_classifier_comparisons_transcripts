@@ -5,11 +5,13 @@
 
 ## Executive summary
 
-This study compares nine transcript-classification configurations on the same 150-conversation locked test set. Each conversation has 27 independently labeled binary attributes, producing 4,050 held-out decisions. The broader dataset contains 1,000 synthetic customer-care conversations split into 700 training, 150 validation, and 150 test rows.
+This study compares thirteen transcript-classification configurations on the same 150-conversation locked test set. Each conversation has 27 independently labeled binary attributes, producing 4,050 held-out decisions. The broader dataset contains 1,000 synthetic customer-care conversations split into 700 training, 150 validation, and 150 test rows.
 
 The highest measured quality came from GPT-5.6 Sol, with 99.93% accuracy and 99.86% micro F1. Validation-calibrated TypeSafe.ai JEV Noul was extremely close: 99.90% accuracy and 99.81% F1, with four errors rather than Sol's three. The trained ModernBERT system delivered the strongest fully local result at 99.16% accuracy and 98.41% F1.
 
 The experiment also demonstrates that calibration matters. Selecting one validation-only threshold for each unchanged ModernBERT NLI question raised accuracy from 92.96% to 96.42% without changing model weights. Training 27 lightweight logistic heads on frozen ModernBERT embeddings produced a further substantial gain to 99.16%.
+
+Among the additional uni-encoder checkpoints, GLiClass Modern Large v3 was strongest. Its unchanged zero-shot scores reached 94.10% accuracy at the default 0.50 threshold and 97.90% after validation-only per-attribute calibration. GLiClass Large v3 reached 96.59% after the same calibration procedure.
 
 The benchmark is deliberately a smoke test. Its deterministic synthetic templates and explicit evidence make it useful for controlled comparisons, but unsuitable as a production-accuracy claim.
 
@@ -27,8 +29,12 @@ The benchmark is deliberately a smoke test. Its deterministic synthetic template
 |---|---:|---:|---:|---:|---:|
 | DeBERTa v3 large zero-shot (`-c`) | 92.89% | 84.70% | 89.14% | 86.86% | 13.33% |
 | ModernBERT zero-shot | 92.96% | 84.74% | 89.42% | 87.02% | 14.00% |
+| GLiClass Large v3, 0.50 threshold | 93.04% | 81.90% | 94.48% | 87.74% | 12.00% |
+| GLiClass Modern Large v3, 0.50 threshold | 94.10% | 83.89% | 96.07% | 89.57% | 16.67% |
 | JEV Choice | 94.40% | 82.47% | 100.00% | 90.39% | 18.00% |
 | ModernBERT zero-shot, optimized thresholds | 96.42% | 92.53% | 94.01% | 93.27% | 34.67% |
+| GLiClass Large v3, optimized thresholds | 96.59% | 91.82% | 95.60% | 93.67% | 34.67% |
+| GLiClass Modern Large v3, optimized thresholds | 97.90% | 96.41% | 95.60% | 96.00% | 53.33% |
 | ModernBERT trained heads | 99.16% | 98.05% | 98.78% | 98.41% | 83.33% |
 | JEV Noul, 0.50 threshold | 99.26% | 97.27% | 100.00% | 98.61% | 80.67% |
 | GPT-5.6 Luna | 99.75% | 99.07% | 100.00% | 99.53% | 93.33% |
@@ -55,25 +61,31 @@ Threshold calibration alone eliminated 140 of zero-shot ModernBERT's 285 test er
 
 The commercially friendly DeBERTa-v3-large checkpoint was effectively tied with ModernBERT zero-shot but slightly lower on the main micro metrics. It made 288 errors versus ModernBERT's 285 and ran approximately 2.47 times slower on the same local CPU path. This does not imply ModernBERT is universally superior; it shows that substituting this encoder did not improve this particular taxonomy and prompt formulation.
 
+### GLiClass improved the zero-shot encoder frontier, but did not beat supervised heads
+
+GLiClass Modern Large v3 evaluates the transcript and all 27 natural-language labels in one uni-encoder pass. It made 85 errors after validation-only calibration, versus 145 for calibrated ModernBERT NLI and 34 for trained ModernBERT heads. GLiClass Large v3 made 138 errors after calibration. Because its 512-token context could not safely hold every full transcript plus all label descriptions, the labels were split into two deterministic groups; no transcript input was truncated.
+
+On the measured CPU path, GLiClass Modern Large produced the 4,050 test decisions in 94.55 seconds. GLiClass Large required 217.71 seconds for its two-pass input. These are local implementation measurements, not hardware-normalized throughput claims.
+
 ### Choice versus Noul is not a controlled primitive comparison
 
 The original JEV Choice run used a raw transcript string and generic present/absent criteria. The Noul run used structured speaker turns, detailed true/false boundaries, and validation refinement for three overlapping labels. Although a binary Choice argmax is mathematically equivalent to a 0.50 cutoff when both primitives expose the same probability, the API documentation does not guarantee identical internal scoring. More importantly, this experiment changed several factors simultaneously. A primitive-only A/B test remains future work.
 
-## Normalized serving cost with chunking
+## Estimated cost per transcript with chunking
 
-![Normalized serving cost versus state length](../charts/normalized-cost-vs-state-tokens.png)
+![Estimated cost per transcript versus state length](../charts/normalized-cost-vs-state-tokens.png)
 
 Chunking splits an over-limit state into overlapping pieces, scores every piece, and aggregates the piece-level probabilities. This scenario covers states up to **32k tokens** and uses NVIDIA H100s at **$5/GPU-hour**, 27 questions, 256 overlapping tokens, and near-100% utilization. ModernBERT's nominal state payload is 8,178 tokens per chunk; JEV's is 31,890 tokens per request after reserving 110 tokens for the nominal longest question. At the 32k endpoint, the nominal allowance makes this five ModernBERT chunks or two JEV requests.
 
-| Raw state tokens | MB chunks | JEV requests | MB trained | MB zero-shot | JEV Noul | JEV Choice |
+| State tokens | MB chunks | JEV requests | MB trained | MB zero-shot | JEV Noul | JEV Choice |
 |---:|---:|---:|---:|---:|---:|---:|
-| 224 benchmark mean | 1 | 1 | $0.0082 | $0.2338 | $0.5210 | $0.5965 |
-| 8,000 | 1 | 1 | $0.0082 | $0.2205 | $0.0554 | $0.0576 |
-| 8,192 | 2 | 1 | $0.0084 | $0.2278 | $0.0551 | $0.0572 |
-| 16,000 | 2 | 1 | $0.0083 | $0.2241 | $0.0487 | $0.0498 |
-| 32,000 | 5 | 2 | $0.0084 | $0.2277 | $0.0491 | $0.0501 |
+| 224 benchmark mean | 1 | 1 | $0.0000018 | $0.0000525 | $0.0001169 | $0.0001339 |
+| 8,000 | 1 | 1 | $0.0000652 | $0.0017643 | $0.0004435 | $0.0004605 |
+| 8,192 | 2 | 1 | $0.0000689 | $0.0018660 | $0.0004516 | $0.0004685 |
+| 16,000 | 2 | 1 | $0.0001326 | $0.0035850 | $0.0007795 | $0.0007965 |
+| 32,000 | 5 | 2 | $0.0002694 | $0.0072858 | $0.0015698 | $0.0016037 |
 
-All values are USD per one million raw state tokens. JEV Noul crosses below arbitrary-question ModernBERT zero-shot at approximately **586 state tokens**, while Choice crosses below at approximately **682 tokens**. Fixed-head trained ModernBERT stays much cheaper because it does not process question text at inference.
+All values are estimated USD to process one transcript, so every curve rises with state length. JEV Noul crosses below arbitrary-question ModernBERT zero-shot at approximately **586 state tokens**, while Choice crosses below at approximately **682 tokens**. Fixed-head trained ModernBERT stays much cheaper because it does not process question text at inference.
 
 With `S` as raw state tokens, `kM` as ModernBERT chunks, and `kJ` as JEV requests:
 
@@ -81,13 +93,14 @@ With `S` as raw state tokens, `kM` as ModernBERT chunks, and `kJ` as JEV request
 kM = max(1, ceil((S - 256) / (8178.11 - 256)))
 kJ = max(1, ceil((S - 256) / (31890 - 256)))
 
-ModernBERT trained:   0.008154 * [S + 256(kM-1) + 2kM] / S
-ModernBERT zero-shot: 0.008154 * {27[S + 256(kM-1)] + 375kM} / S
-JEV Noul:             0.042 * [S + 256(kJ-1) + 2559.74kJ] / S
-JEV Choice:           0.042 * [S + 256(kJ-1) + 2963.67kJ] / S
+ModernBERT trained:   0.008154 * [S + 256(kM-1) + 2kM] / 1,000,000
+ModernBERT zero-shot: 0.008154 * {27[S + 256(kM-1)] + 375kM} / 1,000,000
+JEV Noul:             0.042 * [S + 256(kJ-1) + 2559.74kJ] / 1,000,000
+JEV Choice:           0.042 * [S + 256(kJ-1) + 2963.67kJ] / 1,000,000
+GLiClass local:       measured H100 seconds/transcript * 5 / 3,600 (not estimated here)
 ```
 
-Parallel chunks reduce latency if sufficient hardware is available, but do not reduce billed or processed tokens. Zero-shot ModernBERT repeats all 27 questions for every chunk; trained ModernBERT encodes each chunk once; JEV repeats the question/request overhead for each request. Probability aggregation has negligible compute cost but requires validation because max or noisy-OR aggregation can change false-positive rates. The estimates hold ModernBERT token throughput constant and exclude orchestration, unused capacity, and untested JEV service-capacity constraints.
+Parallel chunks reduce latency if sufficient hardware is available, but do not reduce billed or processed tokens. Zero-shot ModernBERT repeats all 27 questions for every chunk; trained ModernBERT encodes each chunk once; JEV repeats the question/request overhead for each request. Probability aggregation has negligible compute cost but requires validation because max or noisy-OR aggregation can change false-positive rates. The estimates hold ModernBERT token throughput constant and exclude orchestration, unused capacity, and untested JEV service-capacity constraints. GLiClass is not placed on the H100 state-length curve because these benchmark runs measured CPU inference rather than equivalent H100 throughput.
 
 ### What each ModernBERT path actually computes
 
@@ -128,7 +141,7 @@ This chart estimates recurring API charges for 1,000 transcripts. It is not the 
 
 | Approach | Estimated API cost / 1,000 | Basis |
 |---|---:|---|
-| Local ModernBERT and DeBERTa variants | $0 API fee | Local compute; hardware and operations excluded |
+| Local ModernBERT, DeBERTa, and GLiClass variants | $0 API fee | Local compute; hardware and operations excluded |
 | JEV Noul variants | $0.117 | 2,784.2 measured mean input tokens; output free |
 | JEV Choice | $0.134 | 3,188.1 measured mean input tokens; output free |
 | GPT-5.6 Luna | $0.400 | Standardized 728-input/212-output-token prompt |
@@ -158,7 +171,9 @@ These are not total-cost-of-ownership figures. They exclude validation and train
 
 ### Open encoders
 
-The zero-shot encoders treat each transcript as a premise and each attribute description as a hypothesis. Entailment probability is interpreted as attribute-presence probability. All transcript-attribute pairs are batched, but every attribute still receives an independent NLI score.
+The NLI zero-shot encoders treat each transcript as a premise and each attribute description as a hypothesis. Entailment probability is interpreted as attribute-presence probability. All transcript-attribute pairs are batched, but every attribute still receives an independent cross-encoder score.
+
+GLiClass instead serializes natural-language labels and transcript text into a uni-encoder input and emits one independent score per label. GLiClass Modern Large fit all 27 labels in one pass. GLiClass Large used two label groups to preserve full text within its 512-token context. Both checkpoints were evaluated at 0.50 and with 27 thresholds selected exclusively on validation.
 
 The trained ModernBERT variant mean-pools the frozen final hidden state into a 1,024-dimensional transcript vector, fits one class-balanced logistic regression per attribute on training data, and selects per-label F1 thresholds on validation.
 
@@ -176,10 +191,11 @@ Sol and Luna received truth-free transcript inputs and the 27-label output schem
 2. Only 150 conversations are in the locked test set; one error changes accuracy by approximately 0.025 percentage points across all label decisions.
 3. Attribute decisions within a transcript are correlated, so 4,050 labels are not equivalent to 4,050 independent samples.
 4. The JEV Noul and Choice prompts differ beyond the API primitive.
-5. The normalized cost scenario uses an H100 throughput proxy derived from a ModernBERT-base observation and the official RTX 4090 large/base ratio, not a benchmark of this exact NLI checkpoint and serving stack; it also holds processed-token throughput constant as state length changes.
+5. The H100 serving-cost scenario uses a throughput proxy derived from a ModernBERT-base observation and the official RTX 4090 large/base ratio, not a benchmark of this exact NLI checkpoint and serving stack; it also holds processed-token throughput constant as state length changes.
 6. Continuous GPU-equivalents assume fleet-scale utilization; small deployments must round capacity up and will cost more per token.
 7. Thresholds and prompt boundaries may overfit the deterministic synthetic generator's ontology.
 8. JEV billing and latency are black-box observations and cannot reveal the proprietary internal compute graph.
+9. GLiClass Large used two label batches while GLiClass Modern Large used one; its measured latency is therefore not a one-pass checkpoint comparison.
 
 ## Recommended next steps
 
@@ -201,5 +217,7 @@ Sol and Luna received truth-free transcript inputs and the 27-label output schem
 - OpenAI, [GPT-5.6 Luna pricing update](https://openai.com/index/advancing-the-price-performance-frontier-with-gpt-5-6/).
 - Hugging Face, [ModernBERT-large-zeroshot-v2.0](https://huggingface.co/MoritzLaurer/ModernBERT-large-zeroshot-v2.0).
 - Hugging Face, [DeBERTa-v3-large-zeroshot-v2.0-c](https://huggingface.co/MoritzLaurer/deberta-v3-large-zeroshot-v2.0-c).
+- Knowledgator, [GLiClass Modern Large v3](https://huggingface.co/knowledgator/gliclass-modern-large-v3.0).
+- Knowledgator, [GLiClass Large v3](https://huggingface.co/knowledgator/gliclass-large-v3.0).
 
 All benchmark outputs, threshold values, cost assumptions, and generation scripts are retained in this repository for auditability.

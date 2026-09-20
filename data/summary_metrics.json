@@ -30,6 +30,26 @@
       "exact_match": 0.14
     },
     {
+      "id": "gliclass_large_v3",
+      "label": "GLiClass Large v3\n0.50 threshold",
+      "family": "Open encoder",
+      "accuracy": 0.9303703703703704,
+      "precision": 0.8189935064935064,
+      "recall": 0.9447565543071161,
+      "f1": 0.8773913043478261,
+      "exact_match": 0.12
+    },
+    {
+      "id": "gliclass_modern_large_v3",
+      "label": "GLiClass Modern v3\n0.50 threshold",
+      "family": "Open encoder",
+      "accuracy": 0.9409876543209876,
+      "precision": 0.83892068683565,
+      "recall": 0.9606741573033708,
+      "f1": 0.8956787429070275,
+      "exact_match": 0.16666666666666666
+    },
+    {
       "id": "jev_choice",
       "label": "JEV\nChoice",
       "family": "JEV",
@@ -48,6 +68,26 @@
       "recall": 0.9400749063670412,
       "f1": 0.9326521133302369,
       "exact_match": 0.3466666666666667
+    },
+    {
+      "id": "gliclass_large_v3_opt_threshold",
+      "label": "GLiClass Large v3\nvalidation-calibrated",
+      "family": "Open encoder",
+      "accuracy": 0.965925925925926,
+      "precision": 0.9181654676258992,
+      "recall": 0.9559925093632958,
+      "f1": 0.9366972477064219,
+      "exact_match": 0.3466666666666667
+    },
+    {
+      "id": "gliclass_modern_large_v3_opt_threshold",
+      "label": "GLiClass Modern v3\nvalidation-calibrated",
+      "family": "Open encoder",
+      "accuracy": 0.9790123456790123,
+      "precision": 0.9641170915958451,
+      "recall": 0.9559925093632958,
+      "f1": 0.9600376116596144,
+      "exact_match": 0.5333333333333333
     },
     {
       "id": "modernbert_trained",

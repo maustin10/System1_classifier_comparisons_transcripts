@@ -139,8 +139,9 @@ def executive_page(c: canvas.Canvas, page_number: int) -> None:
         "Validation-calibrated JEV Noul was one decision behind Sol: 99.90% accuracy and 99.81% F1. Its estimated recurring API charge is about $0.117 per 1,000 transcripts under the measured prompt shape.",
         "The strongest fully local result was frozen ModernBERT plus 27 supervised logistic heads: 99.16% accuracy and 98.41% F1.",
         "Threshold calibration alone improved unchanged zero-shot ModernBERT from 92.96% to 96.42% accuracy and cut errors from 285 to 145.",
+        "GLiClass Modern Large v3 was the strongest zero-shot open encoder: validation-only calibration reached 97.90% accuracy and 96.00% F1.",
         "DeBERTa-v3-large zero-shot (-c) did not beat ModernBERT zero-shot and was approximately 2.47x slower on the measured CPU path.",
-        "At the 224-token benchmark mean, zero-shot ModernBERT is cheaper than JEV; above about 586 state tokens, JEV Noul becomes cheaper per raw state token under the stated H100 assumptions.",
+        "At the 224-token benchmark mean, zero-shot ModernBERT is cheaper than JEV; above about 586 state tokens, JEV Noul becomes cheaper per transcript under the stated H100 assumptions.",
     ]
     y = bullet_list(c, findings, 48, PAGE_H - 100, 690, font_size=11)
 
@@ -180,6 +181,7 @@ def methodology_page(c: canvas.Canvas, page_number: int) -> None:
     sections_right = [
         ("Encoder variants", [
             "Zero-shot: fixed premise/hypothesis NLI probabilities.",
+            "GLiClass: uni-encoder label scoring; Modern v3 used one pass, while the 512-token Large v3 used two label groups to prevent truncation.",
             "Optimized threshold: 27 validation-selected scalar cutoffs; no weight training.",
             "Trained: frozen 1,024-d embedding plus 27 logistic heads and validation thresholds.",
         ]),
@@ -266,6 +268,78 @@ def operating_model_page(c: canvas.Canvas, page_number: int) -> None:
     c.showPage()
 
 
+def cost_formulas_page(c: canvas.Canvas, page_number: int) -> None:
+    page_title(c, "Cost formulas and assumptions", "Dollar cost per transcript - not normalized cost per token")
+
+    c.setFillColor(PALE)
+    c.roundRect(44, PAGE_H - 174, 704, 82, 7, fill=1, stroke=0)
+    c.setFillColor(NAVY)
+    c.setFont("Helvetica-Bold", 10.5)
+    c.drawString(60, PAGE_H - 116, "Definitions")
+    c.setFont("Courier", 8.8)
+    c.drawString(60, PAGE_H - 137, "S = state tokens        q = 27 questions        overlap = 256 tokens")
+    c.drawString(60, PAGE_H - 154, "kM = max(1, ceil((S - 256) / (8178.11 - 256)))")
+    c.drawString(400, PAGE_H - 154, "kJ = max(1, ceil((S - 256) / (31890 - 256)))")
+
+    formulas = [
+        (
+            "ModernBERT trained heads",
+            "0.008154 * [S + 256*(kM - 1) + 2*kM] / 1,000,000",
+            BLUE,
+        ),
+        (
+            "ModernBERT zero-shot",
+            "0.008154 * {27*[S + 256*(kM - 1)] + 375*kM} / 1,000,000",
+            HexColor("#2A9D8F"),
+        ),
+        (
+            "JEV Noul",
+            "0.042 * [S + 256*(kJ - 1) + 2559.74*kJ] / 1,000,000",
+            PURPLE,
+        ),
+        (
+            "JEV Choice",
+            "0.042 * [S + 256*(kJ - 1) + 2963.67*kJ] / 1,000,000",
+            HexColor("#A78BDB"),
+        ),
+    ]
+    y = PAGE_H - 212
+    for label, formula, color in formulas:
+        c.setStrokeColor(GRID)
+        c.setFillColor(white)
+        c.roundRect(44, y - 39, 704, 43, 6, fill=1, stroke=1)
+        c.setFillColor(color)
+        c.setFont("Helvetica-Bold", 9.5)
+        c.drawString(60, y - 13, label)
+        c.setFillColor(NAVY)
+        c.setFont("Courier", 8.6)
+        c.drawString(250, y - 13, formula)
+        y -= 53
+
+    c.setFillColor(PALE)
+    c.roundRect(44, 53, 704, 91, 7, fill=1, stroke=0)
+    wrapped(
+        c,
+        "<b>Rates.</b> The H100 scenario converts USD 5/GPU-hour and 170.3k processed tokens/second into USD 0.008154 per million ModernBERT processed tokens. JEV uses USD 0.042 per million billed input tokens.",
+        60,
+        124,
+        672,
+        font_size=9.2,
+        leading=12,
+    )
+    wrapped(
+        c,
+        "<b>GLiClass.</b> The new checkpoints appear in the API-cost chart as USD 0 API fee. An H100 cost curve is not estimated because these runs measured CPU inference; the general formula is measured H100 seconds per transcript * USD 5 / 3,600.",
+        60,
+        87,
+        672,
+        font_size=9.2,
+        leading=12,
+    )
+    footer(c, page_number)
+    c.showPage()
+
+
 def conclusions_page(c: canvas.Canvas, page_number: int) -> None:
     page_title(c, "Conclusions, limitations, and sources")
     c.setFillColor(NAVY)
@@ -273,8 +347,9 @@ def conclusions_page(c: canvas.Canvas, page_number: int) -> None:
     c.drawString(45, PAGE_H - 95, "Practical interpretation")
     y = bullet_list(c, [
         "For the highest measured quality, Sol led by one decision over calibrated JEV Noul.",
-        "JEV Noul combined near-frontier quality with arbitrary runtime questions; its normalized cost crosses below zero-shot ModernBERT at about 586 state tokens under the stated H100 assumptions.",
+        "JEV Noul combined near-frontier quality with arbitrary runtime questions; its estimated per-transcript cost crosses below zero-shot ModernBERT at about 586 state tokens under the stated H100 assumptions.",
         "Trained ModernBERT was by far the cheapest path, but only because its 27 questions were converted into fixed supervised heads.",
+        "GLiClass Modern Large improved the calibrated zero-shot open-encoder result to 97.90% accuracy, but remained below trained ModernBERT.",
         "Threshold calibration is worthwhile, but it does not replace supervised heads when enough labeled examples exist.",
     ], 45, PAGE_H - 118, 702, font_size=9.5)
 
@@ -287,6 +362,7 @@ def conclusions_page(c: canvas.Canvas, page_number: int) -> None:
         "The H100 scenario uses a throughput proxy and holds token throughput constant across state lengths, not a benchmark of this exact checkpoint and serving stack.",
         "JEV cost is extrapolated from billing; hosted capacity at the normalized throughput was not tested.",
         "Sol/Luna standardized cost estimates exclude unavailable hidden reasoning-token usage.",
+        "GLiClass Large used two label groups while GLiClass Modern Large used one; their local timings are not a one-pass checkpoint comparison.",
     ], 45, y - 30, 702, font_size=9.1)
 
     c.setFont("Helvetica-Bold", 12)
@@ -300,6 +376,8 @@ def conclusions_page(c: canvas.Canvas, page_number: int) -> None:
         "OpenAI Sol pricing: https://developers.openai.com/api/docs/models/gpt-5.6-sol",
         "OpenAI Luna pricing: https://openai.com/index/advancing-the-price-performance-frontier-with-gpt-5-6/",
         "Model cards: https://huggingface.co/MoritzLaurer",
+        "GLiClass Modern Large v3: https://huggingface.co/knowledgator/gliclass-modern-large-v3.0",
+        "GLiClass Large v3: https://huggingface.co/knowledgator/gliclass-large-v3.0",
     ]
     y = bullet_list(c, sources, 45, y - 25, 702, font_size=8.2)
     footer(c, page_number)
@@ -311,7 +389,7 @@ def main() -> None:
     c = canvas.Canvas(str(OUTPUT), pagesize=(PAGE_W, PAGE_H), pageCompression=1)
     c.setTitle("System1 classifier comparisons for customer-care transcripts")
     c.setAuthor("Mark Austin")
-    c.setSubject("Independent comparison of ModernBERT, DeBERTa, TypeSafe.ai JEV, GPT-5.6 Sol, and GPT-5.6 Luna")
+    c.setSubject("Independent comparison of ModernBERT, DeBERTa, GLiClass, TypeSafe.ai JEV, GPT-5.6 Sol, and GPT-5.6 Luna")
     cover(c)
     executive_page(c, 2)
     chart_page(c, 3, "f1-comparison.png")
@@ -319,9 +397,10 @@ def main() -> None:
     chart_page(c, 5, "all-metrics-table.png")
     chart_page(c, 6, "estimated-cost-1000-transcripts.png")
     chart_page(c, 7, "normalized-cost-vs-state-tokens.png")
-    operating_model_page(c, 8)
-    methodology_page(c, 9)
-    conclusions_page(c, 10)
+    cost_formulas_page(c, 8)
+    operating_model_page(c, 9)
+    methodology_page(c, 10)
+    conclusions_page(c, 11)
     c.save()
     print(OUTPUT)
 
