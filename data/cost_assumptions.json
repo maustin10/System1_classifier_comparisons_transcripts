@@ -39,6 +39,8 @@
     "sol": 7.151972
   },
   "important_caveats": [
+    "JEV usage is treated as shared state tokens plus N times question tokens plus fixed request overhead, based on the observed token-scaling experiment; it is not modeled as N times the full state-plus-question prompt.",
+    "The near-flat observed JEV latency from 1 to 16 questions supports parallel question evaluation, but does not prove that the hidden neural architecture encodes the state exactly once.",
     "Local encoder entries have zero API fees, not zero total cost. CPU/GPU electricity, hardware, hosting, and operations are excluded.",
     "Sol and Luna are standardized API estimates, not invoices from the Codex evaluation run; hidden reasoning tokens were unavailable and are excluded.",
     "JEV Noul calibration requires validation calls once, but recurring production inference uses the same per-transcript token cost as uncalibrated Noul.",

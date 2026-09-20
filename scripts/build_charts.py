@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CHARTS = ROOT / "charts"
 SUMMARY = json.loads((ROOT / "data" / "summary_metrics.json").read_text())
 COSTS = json.loads((ROOT / "data" / "cost_assumptions.json").read_text())
+LATENCY = json.loads((ROOT / "data" / "latency_comparison.json").read_text())
 
 COLORS = {
     "Open encoder": "#0B678B",
@@ -204,12 +205,88 @@ def cost_chart() -> None:
     plt.close(fig)
 
 
+def latency_quality_chart() -> None:
+    by_id = {item["id"]: item for item in SUMMARY["models"]}
+    paths = LATENCY["paths"]
+    variants = LATENCY["quality_variants"]
+
+    fig, ax = plt.subplots(figsize=(15.5, 8.2))
+    offsets = {
+        "modernbert_zero_shot": (8, -20),
+        "modernbert_zero_shot_opt_threshold": (8, 8),
+        "modernbert_trained": (8, -4),
+        "jev_choice": (8, -18),
+        "jev_noul_default": (8, -17),
+        "jev_noul_calibrated": (8, 8),
+    }
+    for variant in variants:
+        item = by_id[variant["id"]]
+        latency = paths[variant["path"]]["effective_ms_per_transcript"]
+        accuracy = 100 * item["accuracy"]
+        ax.scatter(
+            latency,
+            accuracy,
+            s=180,
+            color=COLORS[item["family"]],
+            edgecolor="white",
+            linewidth=1.5,
+            zorder=3,
+        )
+        dx, dy = offsets[variant["id"]]
+        ax.annotate(
+            f"{item['label'].replace(chr(10), ' ')}\n{accuracy:.2f}% · {latency:,.0f} ms",
+            (latency, accuracy),
+            xytext=(dx, dy),
+            textcoords="offset points",
+            fontsize=9.2,
+            ha="left",
+            va="center",
+        )
+
+    ax.set_title("Accuracy at a common 27-decision transcript work unit", loc="left", pad=20)
+    ax.text(
+        0,
+        1.015,
+        "Effective wall-clock time per transcript · model load excluded · lower latency and higher accuracy are better",
+        transform=ax.transAxes,
+        color=MUTED,
+        fontsize=11,
+    )
+    ax.set_xscale("log")
+    ax.set_xlim(240, 7200)
+    ax.set_ylim(92, 100.7)
+    ax.set_xlabel("Effective milliseconds per transcript for all 27 decisions (log scale)")
+    ax.set_ylabel("Accuracy (%)")
+    ax.xaxis.set_major_locator(FixedLocator([250, 500, 1000, 2000, 5000]))
+    ax.xaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:,.0f}"))
+    ax.grid(color=GRID, linewidth=0.8)
+    ax.set_axisbelow(True)
+    ax.spines[["top", "right"]].set_visible(False)
+    handles = [
+        plt.Line2D([0], [0], marker="o", linestyle="", markersize=9, color=color)
+        for color in (COLORS["Open encoder"], COLORS["JEV"])
+    ]
+    ax.legend(handles, ["ModernBERT", "TypeSafe.ai JEV"], frameon=False, ncol=2, loc="lower left")
+    fig.text(
+        0.01,
+        0.01,
+        "Same output unit, different deployment paths: ModernBERT is local CPU; JEV is hosted and includes network time. "
+        "Values are elapsed/150 effective times, not batch-1 p50/p95 latency.",
+        color=MUTED,
+        fontsize=9,
+    )
+    fig.tight_layout(rect=(0, 0.06, 1, 0.96))
+    fig.savefig(CHARTS / "accuracy-vs-equivalent-latency.png", dpi=180, bbox_inches="tight")
+    plt.close(fig)
+
+
 def main() -> None:
     setup()
     metric_chart("f1", "F1 comparison across transcript classifiers", "f1-comparison.png")
     metric_chart("accuracy", "Accuracy comparison across transcript classifiers", "accuracy-comparison.png")
     metrics_table()
     cost_chart()
+    latency_quality_chart()
     print(f"Wrote charts to {CHARTS}")
 
 

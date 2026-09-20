@@ -140,6 +140,7 @@ def executive_page(c: canvas.Canvas, page_number: int) -> None:
         "The strongest fully local result was frozen ModernBERT plus 27 supervised logistic heads: 99.16% accuracy and 98.41% F1.",
         "Threshold calibration alone improved unchanged zero-shot ModernBERT from 92.96% to 96.42% accuracy and cut errors from 285 to 145.",
         "DeBERTa-v3-large zero-shot (-c) did not beat ModernBERT zero-shot and was approximately 2.47x slower on the measured CPU path.",
+        "For one transcript producing all 27 decisions, effective time was 293 ms for JEV Noul, 1,146 ms for trained ModernBERT, and 5,217 ms for zero-shot ModernBERT on the recorded paths.",
     ]
     y = bullet_list(c, findings, 48, PAGE_H - 100, 690, font_size=11)
 
@@ -214,6 +215,54 @@ def methodology_page(c: canvas.Canvas, page_number: int) -> None:
     c.showPage()
 
 
+def operating_model_page(c: canvas.Canvas, page_number: int) -> None:
+    page_title(c, "Comparable cost and latency units", "Shared-state JEV accounting and one-transcript-to-27-decisions timing")
+    left_x, right_x, col_w = 45, 410, 337
+
+    c.setFillColor(PURPLE)
+    c.setFont("Helvetica-Bold", 13)
+    c.drawString(left_x, PAGE_H - 105, "JEV token accounting")
+    y = wrapped(
+        c,
+        "<b>Observed model:</b> billable input ~= state tokens + N x question tokens + fixed request overhead.",
+        left_x,
+        PAGE_H - 132,
+        col_w,
+        font_size=11,
+        leading=15,
+    )
+    y = bullet_list(c, [
+        "The cost estimate does not multiply the full transcript state by all 27 questions.",
+        "Observed latency stayed approximately flat from 1 to 16 questions, supporting parallel evaluation.",
+        "The external behavior does not prove that the hidden neural architecture encodes state exactly once.",
+    ], left_x, y - 18, col_w, font_size=9.5)
+
+    c.setFillColor(BLUE)
+    c.setFont("Helvetica-Bold", 13)
+    c.drawString(right_x, PAGE_H - 105, "Equivalent latency work unit")
+    y2 = bullet_list(c, [
+        "One transcript enters; all 27 binary decisions are available.",
+        "JEV Noul: 293 ms effective time per transcript.",
+        "JEV Choice: 313 ms effective time per transcript.",
+        "Trained ModernBERT: 1,146 ms on the measured local CPU path.",
+        "Zero-shot ModernBERT: 5,217 ms on the measured local CPU path.",
+    ], right_x, PAGE_H - 132, col_w, font_size=9.5)
+
+    c.setFillColor(PALE)
+    c.roundRect(45, 59, 702, 106, 7, fill=1, stroke=0)
+    wrapped(
+        c,
+        "<b>Interpretation:</b> the common work unit fixes the output obligation, not the hardware. JEV includes hosted network time; ModernBERT uses local CPU timing and recorded batching. Elapsed time divided by 150 is an effective throughput-derived time. A production SLA comparison still needs warm batch-1 p50/p95 on target hardware and matched concurrency.",
+        62,
+        140,
+        668,
+        font_size=10.2,
+        leading=13.5,
+    )
+    footer(c, page_number)
+    c.showPage()
+
+
 def conclusions_page(c: canvas.Canvas, page_number: int) -> None:
     page_title(c, "Conclusions, limitations, and sources")
     c.setFillColor(NAVY)
@@ -232,7 +281,7 @@ def conclusions_page(c: canvas.Canvas, page_number: int) -> None:
         "Synthetic templates are more explicit and regular than production conversations.",
         "Only 150 transcripts were held out; attribute decisions within a transcript are correlated.",
         "Choice versus Noul changed multiple factors and is not a clean primitive-only comparison.",
-        "Latency paths and hardware differed; cost figures are measured or estimated as labeled, not full TCO.",
+        "Latency paths and hardware differed; normalized times are throughput-derived, not matched-hardware batch-1 p50/p95 measurements.",
         "Sol/Luna standardized cost estimates exclude unavailable hidden reasoning-token usage.",
     ], 45, y - 30, 702, font_size=9.1)
 
@@ -262,8 +311,10 @@ def main() -> None:
     chart_page(c, 4, "accuracy-comparison.png")
     chart_page(c, 5, "all-metrics-table.png")
     chart_page(c, 6, "estimated-cost-1000-transcripts.png")
-    methodology_page(c, 7)
-    conclusions_page(c, 8)
+    chart_page(c, 7, "accuracy-vs-equivalent-latency.png")
+    operating_model_page(c, 8)
+    methodology_page(c, 9)
+    conclusions_page(c, 10)
     c.save()
     print(OUTPUT)
 

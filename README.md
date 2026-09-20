@@ -23,6 +23,23 @@ The principal findings are:
 - Per-label threshold calibration improved unchanged zero-shot ModernBERT from 92.96% to 96.42% accuracy without training new weights.
 - DeBERTa-v3-large-zeroshot-v2.0-c did not beat ModernBERT zero-shot on this dataset and was approximately 2.47 times slower on the same CPU path.
 
+## Accuracy at an equivalent output unit
+
+![Accuracy versus effective latency for ModernBERT and JEV](charts/accuracy-vs-equivalent-latency.png)
+
+The comparable work unit is **one transcript in, all 27 decisions out**. Dividing each measured 150-transcript run by 150 gives the following effective wall-clock times:
+
+| Inference path | Effective time / transcript | What is produced |
+|---|---:|---|
+| JEV Noul | 293 ms | One hosted request containing 27 shared-state questions |
+| JEV Choice | 313 ms | One hosted request containing 27 shared-state questions |
+| ModernBERT trained heads | 1,146 ms | One local CPU encoder pass plus 27 logistic heads |
+| ModernBERT zero-shot | 5,217 ms | 27 local CPU premise/hypothesis NLI scores |
+
+This is more comparable than milliseconds per individual Boolean decision because JEV evaluates a set of questions together and trained ModernBERT emits all 27 labels after one transcript encoding. Threshold calibration does not materially change inference latency, so calibrated and uncalibrated variants share the same latency coordinate.
+
+The numbers are still not a hardware-normalized architectural benchmark. ModernBERT ran locally on CPU with recorded batching, while JEV ran on hosted infrastructure and includes network time. These are effective throughput-derived times, not warm batch-1 p50/p95 measurements. A strict production comparison should run the local models on the intended CPU/GPU target and report batch-1 p50/p95 as well as throughput at matched concurrency.
+
 ## Complete quality table
 
 ![Accuracy, precision, recall, F1, and exact-match results](charts/all-metrics-table.png)
@@ -52,6 +69,14 @@ The chart estimates marginal inference charges for 1,000 transcripts, not total 
 - Sol and Luna use a standardized compact one-call-per-transcript prompt measured with `o200k_base`: 728 mean input tokens and 212 output tokens. Estimated costs are $7.15 for Sol and $0.40 for Luna at prices available on September 19, 2026.
 - Local encoders show zero API charges. Hardware, electricity, hosting, engineering, and operations are not zero and are deliberately excluded.
 - Hidden reasoning tokens for the original Codex Sol/Luna evaluation were unavailable, so the LLM amounts are standardized scenario estimates rather than invoices from the benchmark run.
+
+The JEV accounting used here follows the observed scaling behavior:
+
+```text
+billable input ~= state tokens + N * question tokens + fixed request overhead
+```
+
+It does **not** assume `N * (state tokens + question tokens)`. In the separate scaling check, latency remained approximately flat as question count increased from 1 to 16. That is consistent with TypeSafe's claim that questions are evaluated in parallel, but it does not prove that the hidden neural architecture encodes the state exactly once.
 
 Pricing sources: [TypeSafe.ai JEV launch and pricing](https://typesafe.ai/blog/introducing-system-one-models-and-jev), [GPT-5.6 Sol pricing](https://developers.openai.com/api/docs/models/gpt-5.6-sol), and [GPT-5.6 Luna pricing update](https://openai.com/index/advancing-the-price-performance-frontier-with-gpt-5-6/).
 

@@ -59,6 +59,23 @@ The commercially friendly DeBERTa-v3-large checkpoint was effectively tied with 
 
 The original JEV Choice run used a raw transcript string and generic present/absent criteria. The Noul run used structured speaker turns, detailed true/false boundaries, and validation refinement for three overlapping labels. Although a binary Choice argmax is mathematically equivalent to a 0.50 cutoff when both primitives expose the same probability, the API documentation does not guarantee identical internal scoring. More importantly, this experiment changed several factors simultaneously. A primitive-only A/B test remains future work.
 
+## Equivalent-latency comparison
+
+![Accuracy versus effective latency](../charts/accuracy-vs-equivalent-latency.png)
+
+Latency is normalized to the same business work unit: **one transcript producing all 27 attribute decisions**.
+
+| Inference path | Observed elapsed time, 150 transcripts | Effective time / transcript | Execution shape |
+|---|---:|---:|---|
+| JEV Noul | 44.01 s | 293 ms | One sequential hosted request per transcript with 27 shared-state questions |
+| JEV Choice | 46.91 s | 313 ms | One sequential hosted request per transcript with 27 shared-state questions |
+| ModernBERT trained heads | 171.92 s | 1,146 ms | Local CPU; encode each transcript once and apply 27 logistic heads; batch size 4 |
+| ModernBERT zero-shot | 782.56 s | 5,217 ms | Local CPU; score 4,050 premise/hypothesis pairs; pair batch size 64 |
+
+The optimized-threshold ModernBERT variant has the same inference path as ordinary zero-shot ModernBERT. Likewise, validation calibration changes the JEV Noul decision cutoffs, not the hosted scoring call. Those variants therefore share latency coordinates in the chart.
+
+This normalization prevents a misleading comparison between JEV's multi-question request and a single ModernBERT Boolean score. It is still a deployment-path comparison rather than an architecture-only benchmark: the local models ran on CPU, whereas JEV used remote TypeSafe infrastructure and included network time. Dividing total elapsed time by 150 gives an effective throughput-derived time, not a batch-1 latency distribution. The next rigorous step is warm batch-1 p50/p95 testing on the intended local hardware, plus throughput at matched concurrency.
+
 ## Estimated marginal cost
 
 ![Estimated recurring API cost](../charts/estimated-cost-1000-transcripts.png)
@@ -74,6 +91,14 @@ The cost chart estimates recurring marginal inference charges for 1,000 transcri
 | GPT-5.6 Sol | $7.152 | Standardized 728-input/212-output-token prompt |
 
 JEV uses the published rate of $0.042 per million input tokens with free output. JEV Choice usage is measured over all 150 locked test requests; Noul usage is measured over a 10-transcript length-spanning sample. Sol and Luna use current standard API prices and a compact standardized classification prompt tokenized with `o200k_base`.
+
+The JEV estimate follows the token-scaling behavior observed in the separate question-count experiment:
+
+```text
+billable input ~= state tokens + N * question tokens + fixed request overhead
+```
+
+It does not model the request as `N * (state tokens + question tokens)`. Latency also remained approximately flat as the request increased from 1 to 16 questions. This supports the claim that JEV evaluates questions in parallel, while stopping short of claiming that its hidden neural architecture necessarily encodes the state only once.
 
 These are not total-cost-of-ownership figures. They exclude validation and training runs, hardware purchase or rental, electricity, service engineering, monitoring, and human review. Sol/Luna hidden reasoning tokens from the original Codex runs were unavailable, so the displayed LLM figures exclude them and may understate actual reasoning-model charges.
 
@@ -107,7 +132,7 @@ Sol and Luna received truth-free transcript inputs and the 27-label output schem
 2. Only 150 conversations are in the locked test set; one error changes accuracy by approximately 0.025 percentage points across all label decisions.
 3. Attribute decisions within a transcript are correlated, so 4,050 labels are not equivalent to 4,050 independent samples.
 4. The JEV Noul and Choice prompts differ beyond the API primitive.
-5. Encoder timing was local CPU; JEV included hosted network time; Sol timing was an end-to-end Codex task; Luna inference timing was not reliably available.
+5. Encoder timing was local CPU and JEV included hosted network time. The normalized values are throughput-derived effective times, not matched-hardware batch-1 p50/p95 latency.
 6. Cost values use different evidence levels and are clearly labeled as measured or standardized estimates.
 7. Thresholds and prompt boundaries may overfit the deterministic synthetic generator's ontology.
 

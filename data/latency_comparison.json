@@ -1,0 +1,41 @@
+{
+  "work_unit": "One transcript to all 27 binary attribute decisions",
+  "test_transcripts": 150,
+  "timing_method": "Effective wall-clock time per transcript: observed end-to-end elapsed seconds divided by 150. Model loading is excluded. No concurrency was used for JEV. Local encoder runs used the recorded CPU batching configuration.",
+  "paths": {
+    "modernbert_zero_shot": {
+      "elapsed_seconds": 782.5591327080037,
+      "effective_ms_per_transcript": 5217.060884720025,
+      "execution": "4,050 transcript-attribute NLI pairs, CPU, batch size 64; thresholds do not change inference time"
+    },
+    "modernbert_trained": {
+      "elapsed_seconds": 171.92204149998724,
+      "effective_ms_per_transcript": 1146.1469433332482,
+      "execution": "One frozen-encoder pass per transcript plus 27 logistic heads, CPU, transcript batch size 4"
+    },
+    "jev_choice": {
+      "elapsed_seconds": 46.905400292016566,
+      "effective_ms_per_transcript": 312.7026686134438,
+      "execution": "One sequential hosted request per transcript containing 27 shared-state Choice questions; network and parsing included"
+    },
+    "jev_noul": {
+      "elapsed_seconds": 44.01060691708699,
+      "effective_ms_per_transcript": 293.40404611391325,
+      "execution": "One sequential hosted request per transcript containing 27 shared-state Noul questions; network and parsing included"
+    }
+  },
+  "quality_variants": [
+    {"id": "modernbert_zero_shot", "path": "modernbert_zero_shot"},
+    {"id": "modernbert_zero_shot_opt_threshold", "path": "modernbert_zero_shot"},
+    {"id": "modernbert_trained", "path": "modernbert_trained"},
+    {"id": "jev_choice", "path": "jev_choice"},
+    {"id": "jev_noul_default", "path": "jev_noul"},
+    {"id": "jev_noul_calibrated", "path": "jev_noul"}
+  ],
+  "caveats": [
+    "These values normalize every system to the same output unit, but they are effective throughput-derived times, not per-request percentile latency measurements.",
+    "ModernBERT ran locally on CPU while JEV ran on hosted TypeSafe infrastructure and includes network time, so this is a measured deployment-path comparison rather than a hardware-normalized architecture benchmark.",
+    "Threshold calibration changes quality but adds negligible inference work; variants sharing a path therefore have the same latency value.",
+    "A production comparison should additionally report warm batch-1 p50/p95, concurrency, hardware, transcript-token distribution, and cold-start behavior."
+  ]
+}
