@@ -295,9 +295,6 @@ def normalized_cost_state_length_chart() -> None:
     trained_overhead = assumptions["modernbert_trained_special_tokens_per_transcript"]
     gliclass_modern_rate = assumptions["gliclass_modern_cost_usd_per_million_processed_tokens"]
     gliclass_modern_overhead = assumptions["gliclass_modern_non_state_tokens_per_pass"]
-    gliclass_large_rate = assumptions["gliclass_large_cost_usd_per_million_processed_tokens"]
-    gliclass_large_overhead = assumptions["gliclass_large_non_state_tokens_per_chunk_total"]
-    gliclass_large_passes = assumptions["gliclass_large_forward_passes_per_chunk"]
     jev_rate = assumptions["jev_price_usd_per_million_billed_input_tokens"]
     noul_overhead = assumptions["jev_noul_non_state_billed_tokens_per_transcript"]
     choice_overhead = assumptions["jev_choice_non_state_billed_tokens_per_transcript"]
@@ -310,7 +307,6 @@ def normalized_cost_state_length_chart() -> None:
     overlap = assumptions["chunk_overlap_tokens"]
     modernbert_payload = assumptions["modernbert_nominal_state_payload_tokens_per_chunk"]
     gliclass_modern_payload = assumptions["gliclass_modern_nominal_state_payload_tokens_per_chunk"]
-    gliclass_large_payload = assumptions["gliclass_large_nominal_state_payload_tokens_per_chunk"]
     jev_payload = assumptions["jev_nominal_state_payload_tokens_per_request"]
 
     def chunk_breaks(payload: float) -> list[float]:
@@ -325,7 +321,6 @@ def normalized_cost_state_length_chart() -> None:
         np.geomspace(lower, upper, 900).tolist()
         + chunk_breaks(modernbert_payload)
         + chunk_breaks(gliclass_modern_payload)
-        + chunk_breaks(gliclass_large_payload)
         + chunk_breaks(jev_payload)
     )))
 
@@ -334,11 +329,9 @@ def normalized_cost_state_length_chart() -> None:
 
     modernbert_chunks = chunk_count(state_tokens, modernbert_payload)
     gliclass_modern_chunks = chunk_count(state_tokens, gliclass_modern_payload)
-    gliclass_large_chunks = chunk_count(state_tokens, gliclass_large_payload)
     jev_requests = chunk_count(state_tokens, jev_payload)
     modernbert_encoded_state = state_tokens + overlap * (modernbert_chunks - 1)
     gliclass_modern_encoded_state = state_tokens + overlap * (gliclass_modern_chunks - 1)
-    gliclass_large_encoded_state = state_tokens + overlap * (gliclass_large_chunks - 1)
     jev_billed_state = state_tokens + overlap * (jev_requests - 1)
 
     curves = [
@@ -357,18 +350,6 @@ def normalized_cost_state_length_chart() -> None:
             "#D47900",
             "-.",
             "o",
-        ),
-        (
-            "GLiClass Large, 2 groups (sim.)",
-            gliclass_large_rate
-            * (
-                gliclass_large_passes * gliclass_large_encoded_state
-                + gliclass_large_overhead * gliclass_large_chunks
-            )
-            / 1_000,
-            "#C44E52",
-            "-.",
-            "s",
         ),
         (
             "ModernBERT zero-shot",
@@ -441,7 +422,6 @@ def normalized_cost_state_length_chart() -> None:
     ax.axvline(224.46, color=MUTED, linewidth=1.2, linestyle=":")
     ax.text(224.46, 0.89, "benchmark mean\n224 tokens", transform=ax.get_xaxis_transform(), color=MUTED, fontsize=9, ha="center")
     for boundary, label, color, y_position in [
-        (gliclass_large_payload, "GLiClass Large payload\n357 state tokens", "#C44E52", 0.47),
         (modernbert_payload, "ModernBERT / GLiClass Modern\nchunking starts near 8k", "#2A9D8F", 0.72),
         (jev_payload, "JEV request chunking\nstarts near 31.9k", "#8059C3", 0.72),
     ]:
@@ -491,7 +471,7 @@ def normalized_cost_state_length_chart() -> None:
         0.01,
         0.01,
         "Each curve is the estimated cost of 1,000 transcripts. Sol/Luna include standardized input plus 212 output tokens; hidden reasoning tokens are excluded. "
-        "GLiClass curves use H100 throughput proxies, not measured H100 results. Long-context throughput changes are not modeled.",
+        "GLiClass Modern uses an H100 throughput proxy, not a measured H100 result. Long-context throughput changes are not modeled.",
         color=MUTED,
         fontsize=9,
     )
