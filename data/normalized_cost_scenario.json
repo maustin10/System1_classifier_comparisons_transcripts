@@ -169,6 +169,42 @@
       {"state_tokens": 32000, "modernbert_chunks": 5, "gliclass_modern_chunks": 5, "gliclass_large_chunks": 315, "jev_requests": 2, "modernbert_trained": 0.2693608635640771, "gliclass_modern_large_v3": 0.2813880862363849, "gliclass_large_v3": 4.02075289775161, "modernbert_zero_shot": 7.285830565307408, "jev_noul": 1.56977016, "jev_choice": 1.6037, "gpt_5_6_luna": 6.755106666666666, "gpt_5_6_sol": 134.25413333333333}
     ]
   },
+  "generic_transcript_sensitivity": {
+    "purpose": "Illustrative transcript-workload scaling across transcript duration and taxonomy size",
+    "state_tokens_per_minute": 200.0,
+    "duration_minutes": [5, 15, 30, 60, 120],
+    "question_facets": [10, 25, 50],
+    "question_count_range": [1, 100],
+    "transcript_scenarios": [
+      {"label": "Short", "minutes": 5, "state_tokens": 1000},
+      {"label": "Medium", "minutes": 30, "state_tokens": 6000},
+      {"label": "Long", "minutes": 120, "state_tokens": 24000}
+    ],
+    "approaches": [
+      "modernbert_trained",
+      "gliclass_modern_large_v3",
+      "modernbert_zero_shot",
+      "jev_noul",
+      "gpt_5_6_luna",
+      "gpt_5_6_sol"
+    ],
+    "question_scaling_proxies": {
+      "modernbert_zero_shot_non_state_tokens_per_question": 13.88888888888889,
+      "gliclass_modern_non_state_tokens_per_label": 11.0,
+      "jev_noul_non_state_billed_tokens_per_question": 94.80518518518518,
+      "llm_non_state_input_tokens_per_label": 18.649382716049382,
+      "llm_output_tokens_per_label": 7.851851851851852
+    },
+    "assumptions": [
+      "Transcript duration converts to state length at 200 tokens per minute; this is a scenario assumption, not a universal speech-to-token conversion.",
+      "Question-dependent overhead is allocated proportionally from the measured 27-question workload because separate intercept and per-question token measurements are unavailable.",
+      "Trained ModernBERT head compute is treated as negligible relative to one encoder pass, but every head is fixed and must be trained before deployment.",
+      "GLiClass Modern accepts runtime labels in one serialized input; its label text consumes context and scales at 11 measured tokens per label in this workload.",
+      "Zero-shot ModernBERT creates one state-hypothesis pair per question, so state processing scales approximately with N times S.",
+      "JEV represents observed shared-state-like billing, not verified internal state reuse.",
+      "Sol and Luna use one request containing the state and all requested labels; hidden reasoning tokens are excluded."
+    ]
+  },
   "quality_variants": [
     {"id": "modernbert_zero_shot", "cost_path": "modernbert_zero_shot"},
     {"id": "modernbert_zero_shot_opt_threshold", "cost_path": "modernbert_zero_shot"},

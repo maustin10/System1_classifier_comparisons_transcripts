@@ -480,6 +480,206 @@ def normalized_cost_state_length_chart() -> None:
     plt.close(fig)
 
 
+GENERIC_APPROACHES = [
+    ("modernbert_trained", "Fixed trained encoder", "#0B678B", "-", None),
+    ("gliclass_modern_large_v3", "Shared-state zero-shot encoder", "#D47900", "-.", "o"),
+    ("modernbert_zero_shot", "Pairwise zero-shot encoder", "#2A9D8F", "-", None),
+    ("jev_noul", "Hosted shared-state billing", "#8059C3", "-", None),
+    ("gpt_5_6_luna", "Single-call LLM: Luna", "#F4A261", ":", "D"),
+    ("gpt_5_6_sol", "Single-call LLM: Sol", "#303846", ":", "^"),
+]
+
+
+def generic_transcript_costs(state_tokens: np.ndarray | float, questions: np.ndarray | float) -> dict[str, np.ndarray]:
+    """Return cost per 1,000 transcripts for generic state-length/taxonomy scenarios."""
+    base = NORMALIZED_COST["state_length_sensitivity"]["assumptions"]
+    generic = NORMALIZED_COST["generic_transcript_sensitivity"]
+    proxy = generic["question_scaling_proxies"]
+    state, question_count = np.broadcast_arrays(
+        np.asarray(state_tokens, dtype=float),
+        np.asarray(questions, dtype=float),
+    )
+    overlap = base["chunk_overlap_tokens"]
+
+    def chunks(payload: np.ndarray | float) -> np.ndarray:
+        return np.maximum(1, np.ceil((state - overlap) / (payload - overlap))).astype(int)
+
+    modernbert_payload = base["modernbert_nominal_state_payload_tokens_per_chunk"]
+    modernbert_chunks = chunks(modernbert_payload)
+    modernbert_state = state + overlap * (modernbert_chunks - 1)
+
+    label_tokens = proxy["gliclass_modern_non_state_tokens_per_label"] * question_count
+    gliclass_payload = base["gliclass_modern_max_sequence_tokens"] - label_tokens
+    gliclass_chunks = chunks(gliclass_payload)
+    gliclass_state = state + overlap * (gliclass_chunks - 1)
+
+    jev_payload = base["jev_nominal_state_payload_tokens_per_request"]
+    jev_requests = chunks(jev_payload)
+    jev_state = state + overlap * (jev_requests - 1)
+
+    nli_question_tokens = proxy["modernbert_zero_shot_non_state_tokens_per_question"] * question_count
+    jev_question_tokens = proxy["jev_noul_non_state_billed_tokens_per_question"] * question_count
+    llm_input_tokens = proxy["llm_non_state_input_tokens_per_label"] * question_count
+    llm_output_tokens = proxy["llm_output_tokens_per_label"] * question_count
+
+    return {
+        "modernbert_trained": base["modernbert_cost_usd_per_million_processed_tokens"]
+        * (
+            modernbert_state
+            + base["modernbert_trained_special_tokens_per_transcript"] * modernbert_chunks
+        )
+        / 1_000,
+        "gliclass_modern_large_v3": base["gliclass_modern_cost_usd_per_million_processed_tokens"]
+        * (gliclass_state + label_tokens * gliclass_chunks)
+        / 1_000,
+        "modernbert_zero_shot": base["modernbert_cost_usd_per_million_processed_tokens"]
+        * (question_count * modernbert_state + nli_question_tokens * modernbert_chunks)
+        / 1_000,
+        "jev_noul": base["jev_price_usd_per_million_billed_input_tokens"]
+        * (jev_state + jev_question_tokens * jev_requests)
+        / 1_000,
+        "gpt_5_6_luna": (
+            base["gpt_5_6_luna_input_usd_per_million_tokens"] * (state + llm_input_tokens)
+            + base["gpt_5_6_luna_output_usd_per_million_tokens"] * llm_output_tokens
+        )
+        / 1_000,
+        "gpt_5_6_sol": (
+            base["gpt_5_6_sol_input_usd_per_million_tokens"] * (state + llm_input_tokens)
+            + base["gpt_5_6_sol_output_usd_per_million_tokens"] * llm_output_tokens
+        )
+        / 1_000,
+    }
+
+
+def style_generic_axis(ax: plt.Axes) -> None:
+    ax.set_yscale("log")
+    ax.set_ylim(2e-3, 2e2)
+    ax.yaxis.set_major_locator(FixedLocator([1e-2, 1e-1, 1, 10, 100]))
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda value, _: f"${value:g}"))
+    ax.grid(color=GRID, linewidth=0.8, which="major")
+    ax.set_axisbelow(True)
+    ax.spines[["top", "right"]].set_visible(False)
+
+
+def generic_duration_chart() -> None:
+    generic = NORMALIZED_COST["generic_transcript_sensitivity"]
+    tokens_per_minute = generic["state_tokens_per_minute"]
+    duration_ticks = generic["duration_minutes"]
+    durations = np.geomspace(min(duration_ticks), max(duration_ticks), 420)
+    state_tokens = durations * tokens_per_minute
+
+    fig, axes = plt.subplots(1, 3, figsize=(18, 7.7), sharex=True, sharey=True)
+    for ax, questions in zip(axes, generic["question_facets"]):
+        costs = generic_transcript_costs(state_tokens, questions)
+        marker_positions = np.unique(np.linspace(0, len(durations) - 1, 10, dtype=int))
+        for key, label, color, linestyle, marker in GENERIC_APPROACHES:
+            ax.plot(
+                durations,
+                costs[key],
+                label=label,
+                color=color,
+                linewidth=2.6,
+                linestyle=linestyle,
+                marker=marker,
+                markevery=marker_positions if marker else None,
+                markersize=5.5,
+                markeredgecolor="white" if marker else None,
+                markeredgewidth=0.8 if marker else None,
+            )
+        style_generic_axis(ax)
+        ax.set_xscale("log")
+        ax.set_xlim(min(duration_ticks), max(duration_ticks))
+        ax.xaxis.set_major_locator(FixedLocator(duration_ticks))
+        ax.xaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:g}"))
+        ax.set_title(f"{questions} questions", fontsize=14, pad=30)
+        ax.set_xlabel("Transcript duration (minutes)")
+        top = ax.secondary_xaxis(
+            "top",
+            functions=(lambda minutes: minutes * tokens_per_minute, lambda tokens: tokens / tokens_per_minute),
+        )
+        top.set_xticks([value * tokens_per_minute for value in duration_ticks])
+        top.set_xticklabels([f"{value * tokens_per_minute / 1000:g}k" for value in duration_ticks])
+        top.tick_params(labelsize=8, colors=MUTED, pad=3)
+    axes[0].set_ylabel("Estimated USD per 1,000 transcripts (log scale)")
+
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, ncol=3, frameon=False, loc="upper center", bbox_to_anchor=(0.5, 0.905), fontsize=10)
+    fig.suptitle("Transcript classification cost by duration and taxonomy size", x=0.055, ha="left", fontsize=21, fontweight="bold")
+    fig.text(
+        0.055,
+        0.925,
+        "Top axes show state tokens · 200 state tokens/minute scenario · fixed encoder heads versus runtime questions",
+        color=MUTED,
+        fontsize=11,
+    )
+    fig.text(
+        0.01,
+        0.012,
+        "Question overhead is scaled proportionally from the measured 27-question workload. Fixed trained heads require prior training; JEV shows billed tokens, not verified internal compute. Hidden LLM reasoning tokens are excluded.",
+        color=MUTED,
+        fontsize=8.8,
+    )
+    fig.tight_layout(rect=(0.02, 0.065, 0.995, 0.82), w_pad=2.0)
+    fig.savefig(CHARTS / "generic-cost-vs-transcript-duration.png", dpi=180, bbox_inches="tight")
+    plt.close(fig)
+
+
+def generic_question_count_chart() -> None:
+    generic = NORMALIZED_COST["generic_transcript_sensitivity"]
+    lower, upper = generic["question_count_range"]
+    questions = np.linspace(lower, upper, 400)
+
+    fig, axes = plt.subplots(1, 3, figsize=(18, 7.5), sharex=True, sharey=True)
+    for ax, scenario in zip(axes, generic["transcript_scenarios"]):
+        costs = generic_transcript_costs(scenario["state_tokens"], questions)
+        marker_positions = np.unique(np.linspace(0, len(questions) - 1, 10, dtype=int))
+        for key, label, color, linestyle, marker in GENERIC_APPROACHES:
+            ax.plot(
+                questions,
+                costs[key],
+                label=label,
+                color=color,
+                linewidth=2.6,
+                linestyle=linestyle,
+                marker=marker,
+                markevery=marker_positions if marker else None,
+                markersize=5.5,
+                markeredgecolor="white" if marker else None,
+                markeredgewidth=0.8 if marker else None,
+            )
+        style_generic_axis(ax)
+        ax.set_xlim(lower, upper)
+        ax.xaxis.set_major_locator(FixedLocator([1, 10, 25, 50, 75, 100]))
+        ax.set_title(
+            f"{scenario['label']}: {scenario['minutes']} min / {scenario['state_tokens'] / 1000:g}k tokens",
+            fontsize=13,
+            pad=14,
+        )
+        ax.set_xlabel("Classification questions / labels")
+    axes[0].set_ylabel("Estimated USD per 1,000 transcripts (log scale)")
+
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, ncol=3, frameon=False, loc="upper center", bbox_to_anchor=(0.5, 0.895), fontsize=10)
+    fig.suptitle("Transcript classification cost as the taxonomy grows", x=0.055, ha="left", fontsize=21, fontweight="bold")
+    fig.text(
+        0.055,
+        0.925,
+        "Short, medium, and long transcript scenarios · pairwise NLI repeats the state for every runtime question",
+        color=MUTED,
+        fontsize=11,
+    )
+    fig.text(
+        0.01,
+        0.012,
+        "Fixed trained-head cost is nearly flat because head compute is treated as negligible. Runtime-label systems scale label, billing, or output overhead without repeating the full state in the external cost model.",
+        color=MUTED,
+        fontsize=8.8,
+    )
+    fig.tight_layout(rect=(0.02, 0.065, 0.995, 0.81), w_pad=2.0)
+    fig.savefig(CHARTS / "generic-cost-vs-question-count.png", dpi=180, bbox_inches="tight")
+    plt.close(fig)
+
+
 def main() -> None:
     setup()
     metric_chart("f1", "F1 comparison across transcript classifiers", "f1-comparison.png")
@@ -488,6 +688,8 @@ def main() -> None:
     cost_chart()
     normalized_cost_quality_chart()
     normalized_cost_state_length_chart()
+    generic_duration_chart()
+    generic_question_count_chart()
     print(f"Wrote charts to {CHARTS}")
 
 

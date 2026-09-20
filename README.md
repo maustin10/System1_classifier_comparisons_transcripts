@@ -71,6 +71,30 @@ Sol and Luna use the standardized one-call prompt already used by the API-cost c
 
 Context-limit sources: [ModernBERT documentation](https://huggingface.co/docs/transformers/en/model_doc/modernbert) and [JEV models and limits](https://docs.typesafe.ai/models).
 
+## Generic transcript workload views
+
+The original chart above preserves the measured 27-question workload. The following projections make the comparison easier to reuse for other transcript-classification problems by varying both transcript duration and taxonomy size.
+
+### Cost by transcript duration and taxonomy size
+
+![Estimated transcript-classification cost at 10, 25, and 50 questions](charts/generic-cost-vs-transcript-duration.png)
+
+The panels use **10, 25, and 50 questions**. The bottom axes show transcript duration and the top axes show the corresponding state-token assumption. The architecture labels generalize the tested implementations:
+
+- **Fixed trained encoder:** ModernBERT trained heads; one state encoding, but every label must be trained in advance.
+- **Shared-state zero-shot encoder:** GLiClass Modern; runtime labels are serialized with the state.
+- **Pairwise zero-shot encoder:** ModernBERT NLI; the state is repeated once for every question.
+- **Hosted shared-state billing:** JEV Noul; the curve represents observed billing behavior, not verified internal compute.
+- **Single-call LLM:** Luna or Sol; one prompt contains the state and all requested labels.
+
+### Cost as the taxonomy grows
+
+![Estimated transcript-classification cost from 1 to 100 questions](charts/generic-cost-vs-question-count.png)
+
+This view fixes three representative transcript scenarios and varies the taxonomy from 1 to 100 questions. It makes the pairwise-NLI penalty explicit: longer transcripts make every additional state copy more expensive, while shared-state and one-call systems primarily add label, billing, or output overhead.
+
+These are scenario projections rather than additional measured benchmarks. They assume 200 state tokens per transcript minute. Question-dependent overhead is allocated proportionally from the measured 27-question workload because separate fixed-intercept and per-question measurements are unavailable. Hidden Sol/Luna reasoning tokens remain excluded, and the trained-head curve treats logistic-head compute as negligible relative to the encoder pass.
+
 ## What ModernBERT actually processes
 
 Your distinction is correct for zero-shot ModernBERT, but the trained model is even more specialized than `state + N * question_size`:

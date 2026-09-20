@@ -178,6 +178,11 @@ def methodology_page(c: canvas.Canvas, page_number: int) -> None:
             "Micro accuracy, precision, recall, and F1 over 4,050 decisions.",
             "Exact match requires all 27 labels in a transcript to be correct.",
         ]),
+        ("Generic cost projections", [
+            "Duration scenarios assume 200 state tokens per minute.",
+            "Duration panels use 10, 25, and 50 questions; taxonomy panels span 1 to 100.",
+            "Question overhead scales proportionally from the measured 27-question workload.",
+        ]),
     ]
     sections_right = [
         ("Encoder variants", [
@@ -420,10 +425,12 @@ def main() -> None:
     chart_page(c, 5, "all-metrics-table.png")
     chart_page(c, 6, "estimated-cost-1000-transcripts.png")
     chart_page(c, 7, "normalized-cost-vs-state-tokens.png")
-    cost_formulas_page(c, 8)
-    operating_model_page(c, 9)
-    methodology_page(c, 10)
-    conclusions_page(c, 11)
+    chart_page(c, 8, "generic-cost-vs-transcript-duration.png")
+    chart_page(c, 9, "generic-cost-vs-question-count.png")
+    cost_formulas_page(c, 10)
+    operating_model_page(c, 11)
+    methodology_page(c, 12)
+    conclusions_page(c, 13)
     c.save()
     print(OUTPUT)
 

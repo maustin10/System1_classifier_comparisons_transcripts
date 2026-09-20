@@ -109,6 +109,24 @@ GLiClass Modern uses the 170.3k processed-token/s ModernBERT-large proxy. GLiCla
 
 Sol and Luna use the standardized compact prompt already used in the API-cost comparison: 728 mean input tokens at the 224.46-token benchmark state and a fixed 212-token binary JSON response. Their curves approximate input as `S + 503.53`, assume each added state token contributes one LLM input token, and exclude unavailable hidden reasoning tokens. The state axis uses ModernBERT tokens while the LLM prompt estimate used `o200k_base`, so this scaling is approximate. Current official rates are [Sol: $4/M input and $20/M output](https://developers.openai.com/api/docs/models/gpt-5.6-sol) and [Luna: $0.20/M input and $1.20/M output](https://developers.openai.com/api/docs/models).
 
+## Generic transcript workload views
+
+The measured chart retains the original 27-question workload. Two additional projections expose the dimensions that matter for other transcript-classification deployments.
+
+### Cost by transcript duration and taxonomy size
+
+![Estimated transcript-classification cost at 10, 25, and 50 questions](../charts/generic-cost-vs-transcript-duration.png)
+
+The three panels use **10, 25, and 50 questions**, with transcript duration on the bottom axes and the corresponding state-token assumption on the top axes. The lines represent generic operating patterns: a fixed trained encoder, a shared-state zero-shot encoder, a pairwise NLI encoder, hosted shared-state-like billing, and single-call Luna or Sol.
+
+### Cost as the taxonomy grows
+
+![Estimated transcript-classification cost from 1 to 100 questions](../charts/generic-cost-vs-question-count.png)
+
+This view holds short, medium, and long transcript scenarios fixed while varying the taxonomy from 1 to 100 questions. Pairwise NLI repeats the transcript for every question. The other runtime-label systems add label, billing, or output overhead without repeating the full state in the external cost model.
+
+The generic views assume 200 state tokens per transcript minute. Question-dependent overhead is allocated proportionally from the measured 27-question workload because separate fixed-intercept and per-question measurements are unavailable. They are scenario projections, not additional measured benchmarks. JEV represents external billing rather than verified internal compute; hidden Sol/Luna reasoning tokens are excluded; and trained-head compute is treated as negligible relative to the encoder pass.
+
 ### What each ModernBERT path actually computes
 
 The zero-shot path creates one premise/hypothesis sequence for every attribute. On the locked set, the mean raw transcript was 224.46 ModernBERT tokens, while the 27 NLI pairs contained 6,435.42 total tokens per transcript. That is a measured **28.67x compute-token amplification** and is approximately:
