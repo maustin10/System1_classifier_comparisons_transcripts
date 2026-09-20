@@ -8,6 +8,22 @@ The benchmark contains 1,000 synthetic conversations, each labeled for 27 binary
 
 > This is a controlled synthetic benchmark, not a claim of production accuracy. The conversations use explicit, template-driven evidence and do not represent the ambiguity, distribution shift, or annotation disagreement of live calls.
 
+## Executive decision view
+
+![Executive decision matrix showing cost and runtime-question flexibility](charts/executive-decision-matrix.png)
+
+For a generic reference workload of **6,000 state tokens and 25 questions**, the executive interpretation is:
+
+- **Stable, known taxonomy:** trained ModernBERT is the lowest-cost high-quality option, but new questions require training.
+- **Runtime questions with self-hosted economics:** GLiClass Modern is the leading open zero-shot option in this test.
+- **Runtime questions through a managed API:** calibrated JEV Noul provides the strongest measured balance of quality and modeled cost.
+- **Maximum general-model quality:** Luna and Sol score extremely well, but their estimated serving costs are materially higher.
+- **Pairwise NLI:** useful as a transparent baseline, but repeating the state for every question becomes expensive as both dimensions grow.
+
+![Executive cost bars for generic state-length and question-count workloads](charts/executive-state-question-cost-bars.png)
+
+These snapshots avoid converting state size into transcript minutes. The three scenarios directly combine the two workload drivers: **state length** and **number of questions**. Costs are estimates per 1,000 states; they are not measured invoices or H100 benchmarks.
+
 ## Key results
 
 ![F1 comparison across all transcript classifiers](charts/f1-comparison.png)
@@ -187,6 +203,7 @@ data/
 report/
   transcript-classifier-comparison.md
   transcript-classifier-comparison.pdf
+  transcript-classifier-executive-summary.pdf
 results/                        Consolidated JSON, model outputs, and workbook
 scripts/                        Benchmark, calibration, chart, and report code
 models/                         Local model downloads; ignored by Git
@@ -232,6 +249,7 @@ cp .env.example .env
 ```bash
 MPLBACKEND=Agg python scripts/build_charts.py
 python scripts/build_report.py
+python scripts/build_executive_report.py
 ```
 
 ## Reproduce encoder scoring and calibration

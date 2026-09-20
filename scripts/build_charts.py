@@ -680,6 +680,157 @@ def generic_question_count_chart() -> None:
     plt.close(fig)
 
 
+EXECUTIVE_MODELS = [
+    ("modernbert_trained", "Fixed trained encoder", "ModernBERT trained", "modernbert_trained", 0.20, "#0B678B"),
+    ("gliclass_modern_large_v3", "Shared-state zero-shot", "GLiClass Modern", "gliclass_modern_large_v3_opt_threshold", 0.74, "#D47900"),
+    ("jev_noul", "Hosted shared-state API", "JEV Noul", "jev_noul_calibrated", 0.86, "#8059C3"),
+    ("modernbert_zero_shot", "Pairwise zero-shot", "ModernBERT NLI", "modernbert_zero_shot_opt_threshold", 0.67, "#2A9D8F"),
+    ("gpt_5_6_luna", "Single-call LLM", "Luna", "luna", 0.94, "#F4A261"),
+    ("gpt_5_6_sol", "Single-call LLM", "Sol", "sol", 0.94, "#303846"),
+]
+
+
+def executive_decision_matrix() -> None:
+    """Build an executive 2x2 using one generic state/question workload."""
+    generic = NORMALIZED_COST["generic_transcript_sensitivity"]
+    reference = generic["executive_matrix_reference"]
+    costs = generic_transcript_costs(reference["state_tokens"], reference["questions"])
+    quality = {item["id"]: 100 * item["accuracy"] for item in SUMMARY["models"]}
+    boundary = reference["economical_cost_boundary_usd_per_1000"]
+
+    fig, ax = plt.subplots(figsize=(15.5, 8.2))
+    ax.set_xlim(0, 1.08)
+    ax.set_ylim(50, 0.025)
+    ax.set_yscale("log")
+    ax.axvline(0.5, color=GRID, linewidth=1.4)
+    ax.axhline(boundary, color=GRID, linewidth=1.4)
+    ax.axvspan(0.5, 1.08, ymin=0.5, ymax=1, color="#EAF5EF", alpha=0.9, zorder=0)
+
+    ax.text(0.04, 0.96, "ECONOMICAL / FIXED", transform=ax.transAxes, color=MUTED, fontsize=10, fontweight="bold", va="top")
+    ax.text(0.53, 0.96, "ECONOMICAL / FLEXIBLE", transform=ax.transAxes, color="#27805A", fontsize=10, fontweight="bold", va="top")
+    ax.text(0.04, 0.06, "PREMIUM / FIXED", transform=ax.transAxes, color=MUTED, fontsize=10, fontweight="bold", va="bottom")
+    ax.text(0.53, 0.06, "PREMIUM / FLEXIBLE", transform=ax.transAxes, color=MUTED, fontsize=10, fontweight="bold", va="bottom")
+
+    offsets = {
+        "modernbert_trained": (12, -22),
+        "gliclass_modern_large_v3": (12, 18),
+        "jev_noul": (12, 12),
+        "modernbert_zero_shot": (-142, -30),
+        "gpt_5_6_luna": (-155, -5),
+        "gpt_5_6_sol": (-125, -5),
+    }
+    for cost_key, _, product, quality_key, x, color in EXECUTIVE_MODELS:
+        cost = float(costs[cost_key])
+        accuracy = quality[quality_key]
+        ax.scatter(x, cost, s=260, color=color, edgecolor="white", linewidth=1.8, zorder=4)
+        dx, dy = offsets[cost_key]
+        ax.annotate(
+            f"{product}\n${cost:.3f} / 1k · {accuracy:.2f}% accuracy",
+            (x, cost),
+            xytext=(dx, dy),
+            textcoords="offset points",
+            fontsize=9.6,
+            fontweight="bold",
+            ha="left",
+            va="center",
+            arrowprops={"arrowstyle": "-", "color": color, "linewidth": 1.0},
+        )
+
+    ax.set_xticks([0.20, 0.80], ["Fixed taxonomy", "Questions can change at runtime"])
+    ax.tick_params(axis="x", labelsize=11, pad=10)
+    ax.yaxis.set_major_locator(FixedLocator([0.03, 0.1, 0.3, 1, 3, 10, 30]))
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda value, _: f"${value:g}"))
+    ax.set_ylabel("Estimated USD per 1,000 states (lower is better)")
+    ax.grid(axis="y", color=GRID, linewidth=0.7, which="major")
+    ax.set_axisbelow(True)
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.set_title("Executive decision map: economics versus runtime flexibility", loc="left", pad=22)
+    ax.text(
+        0,
+        1.015,
+        f"Reference workload: {reference['state_tokens']:,} state tokens × {reference['questions']} questions · accuracy from the locked synthetic test",
+        transform=ax.transAxes,
+        color=MUTED,
+        fontsize=11,
+    )
+    fig.text(
+        0.01,
+        0.012,
+        "The $1/1,000 boundary is an executive guide, not a universal purchasing threshold. Flexible systems accept new questions without retraining; trained heads do not.",
+        color=MUTED,
+        fontsize=9,
+    )
+    fig.tight_layout(rect=(0.03, 0.07, 0.99, 0.95))
+    fig.savefig(CHARTS / "executive-decision-matrix.png", dpi=180, bbox_inches="tight")
+    plt.close(fig)
+
+
+def executive_scenario_bars() -> None:
+    """Build bar snapshots that use generic state length and question count."""
+    generic = NORMALIZED_COST["generic_transcript_sensitivity"]
+    models = [
+        ("modernbert_trained", "Fixed encoder", "#0B678B"),
+        ("gliclass_modern_large_v3", "Shared-state ZS", "#D47900"),
+        ("jev_noul", "Hosted shared-state", "#8059C3"),
+        ("modernbert_zero_shot", "Pairwise ZS", "#2A9D8F"),
+        ("gpt_5_6_luna", "LLM: Luna", "#F4A261"),
+        ("gpt_5_6_sol", "LLM: Sol", "#303846"),
+    ]
+
+    fig, axes = plt.subplots(1, 3, figsize=(18, 8.2), sharex=True)
+    for ax, scenario in zip(axes, generic["executive_scenarios"]):
+        costs = generic_transcript_costs(scenario["state_tokens"], scenario["questions"])
+        ordered = sorted(models, key=lambda item: float(costs[item[0]]), reverse=True)
+        values = [float(costs[key]) for key, _, _ in ordered]
+        labels = [label for _, label, _ in ordered]
+        colors = [color for _, _, color in ordered]
+        y = np.arange(len(ordered))
+        bars = ax.barh(y, values, color=colors, height=0.62)
+        ax.set_xscale("log")
+        ax.set_xlim(0.005, 200)
+        ax.xaxis.set_major_locator(FixedLocator([0.01, 0.1, 1, 10, 100]))
+        ax.xaxis.set_major_formatter(FuncFormatter(lambda value, _: f"${value:g}"))
+        ax.set_yticks(y, labels)
+        ax.tick_params(axis="y", labelsize=9.5)
+        ax.grid(axis="x", color=GRID, linewidth=0.8, which="major")
+        ax.set_axisbelow(True)
+        ax.spines[["top", "right", "left"]].set_visible(False)
+        ax.set_title(
+            f"{scenario['label']}\n{scenario['state_tokens'] / 1000:g}k state tokens × {scenario['questions']} questions",
+            fontsize=13.5,
+            pad=14,
+        )
+        ax.set_xlabel("USD per 1,000 states (log scale)")
+        for bar, value in zip(bars, values):
+            ax.text(
+                min(value * 1.16, 150),
+                bar.get_y() + bar.get_height() / 2,
+                f"${value:.3f}" if value < 10 else f"${value:.1f}",
+                va="center",
+                fontsize=9.2,
+                fontweight="bold",
+            )
+
+    fig.suptitle("Executive cost snapshots across generic state/question workloads", x=0.055, ha="left", fontsize=21, fontweight="bold")
+    fig.text(
+        0.055,
+        0.925,
+        "No transcript-duration assumption · each panel specifies state length and question count directly · lower is better",
+        color=MUTED,
+        fontsize=11,
+    )
+    fig.text(
+        0.01,
+        0.012,
+        "Costs are modeled per 1,000 states. Fixed encoder heads require training; shared-state zero-shot and hosted approaches permit runtime labels/questions. Hidden LLM reasoning tokens are excluded.",
+        color=MUTED,
+        fontsize=8.8,
+    )
+    fig.tight_layout(rect=(0.03, 0.065, 0.995, 0.88), w_pad=3.0)
+    fig.savefig(CHARTS / "executive-state-question-cost-bars.png", dpi=180, bbox_inches="tight")
+    plt.close(fig)
+
+
 def main() -> None:
     setup()
     metric_chart("f1", "F1 comparison across transcript classifiers", "f1-comparison.png")
@@ -690,6 +841,8 @@ def main() -> None:
     normalized_cost_state_length_chart()
     generic_duration_chart()
     generic_question_count_chart()
+    executive_decision_matrix()
+    executive_scenario_bars()
     print(f"Wrote charts to {CHARTS}")
 
 

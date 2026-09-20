@@ -15,6 +15,16 @@ Among the additional uni-encoder checkpoints, GLiClass Modern Large v3 was stron
 
 The benchmark is deliberately a smoke test. Its deterministic synthetic templates and explicit evidence make it useful for controlled comparisons, but unsuitable as a production-accuracy claim.
 
+## Executive decision view
+
+![Executive decision matrix](../charts/executive-decision-matrix.png)
+
+At a generic reference workload of **6,000 state tokens and 25 questions**, trained ModernBERT is the economic choice when the taxonomy is fixed. GLiClass Modern is the leading self-hosted option when labels must change at runtime. Calibrated JEV Noul is the strongest managed-API cost/quality compromise in this benchmark. Luna and Sol deliver near-ceiling measured quality at materially higher modeled cost. Pairwise ModernBERT NLI remains a useful baseline, but its repeated-state design scales poorly when both state length and question count grow.
+
+![Executive workload cost snapshots](../charts/executive-state-question-cost-bars.png)
+
+The three snapshots use state length and number of questions directly, without a transcript-duration conversion. They represent 1k × 10, 6k × 25, and 24k × 50 state/question workloads. All costs are scenario estimates per 1,000 states.
+
 ## Results
 
 ![F1 comparison](../charts/f1-comparison.png)

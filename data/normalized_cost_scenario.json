@@ -180,6 +180,16 @@
       {"label": "Medium", "minutes": 30, "state_tokens": 6000},
       {"label": "Long", "minutes": 120, "state_tokens": 24000}
     ],
+    "executive_scenarios": [
+      {"label": "Small workload", "state_tokens": 1000, "questions": 10},
+      {"label": "Core workload", "state_tokens": 6000, "questions": 25},
+      {"label": "Large workload", "state_tokens": 24000, "questions": 50}
+    ],
+    "executive_matrix_reference": {
+      "state_tokens": 6000,
+      "questions": 25,
+      "economical_cost_boundary_usd_per_1000": 1.0
+    },
     "approaches": [
       "modernbert_trained",
       "gliclass_modern_large_v3",
