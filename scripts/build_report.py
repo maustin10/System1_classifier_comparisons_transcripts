@@ -421,7 +421,7 @@ def main() -> None:
     cover(c)
     executive_page(c, 2)
     chart_page(c, 3, "executive-decision-matrix.png")
-    chart_page(c, 4, "executive-state-question-cost-bars.png")
+    chart_page(c, 4, "executive-cost-vs-gpu-utilization.png")
     chart_page(c, 5, "f1-comparison.png")
     chart_page(c, 6, "accuracy-comparison.png")
     chart_page(c, 7, "all-metrics-table.png")

@@ -681,10 +681,10 @@ def generic_question_count_chart() -> None:
 
 
 EXECUTIVE_MODELS = [
-    ("modernbert_trained", "Fixed trained encoder", "ModernBERT trained", "modernbert_trained", 0.20, "#0B678B"),
-    ("gliclass_modern_large_v3", "Shared-state zero-shot", "GLiClass Modern", "gliclass_modern_large_v3_opt_threshold", 0.74, "#D47900"),
-    ("jev_noul", "Hosted shared-state API", "JEV Noul", "jev_noul_calibrated", 0.86, "#8059C3"),
-    ("modernbert_zero_shot", "Pairwise zero-shot", "ModernBERT NLI", "modernbert_zero_shot_opt_threshold", 0.67, "#2A9D8F"),
+    ("modernbert_trained", "Fixed trained encoder", "ModernBERT-large + trained heads", "modernbert_trained", 0.20, "#0B678B"),
+    ("gliclass_modern_large_v3", "Shared-state zero-shot", "GLiClass Modern Large v3", "gliclass_modern_large_v3_opt_threshold", 0.74, "#D47900"),
+    ("jev_noul", "Hosted shared-state API", "TypeSafe.ai JEV Noul", "jev_noul_calibrated", 0.86, "#8059C3"),
+    ("modernbert_zero_shot", "Pairwise zero-shot", "ModernBERT-large NLI", "modernbert_zero_shot_opt_threshold", 0.67, "#2A9D8F"),
     ("gpt_5_6_luna", "Single-call LLM", "Luna", "luna", 0.94, "#F4A261"),
     ("gpt_5_6_sol", "Single-call LLM", "Sol", "sol", 0.94, "#303846"),
 ]
@@ -748,7 +748,7 @@ def executive_decision_matrix() -> None:
     ax.text(
         0,
         1.015,
-        f"Reference workload: {reference['state_tokens']:,} state tokens × {reference['questions']} questions · accuracy from the locked synthetic test",
+        f"Reference workload: {reference['state_tokens']:,} state tokens × {reference['questions']} questions · self-hosted cost at 100% H100 utilization",
         transform=ax.transAxes,
         color=MUTED,
         fontsize=11,
@@ -765,69 +765,94 @@ def executive_decision_matrix() -> None:
     plt.close(fig)
 
 
-def executive_scenario_bars() -> None:
-    """Build bar snapshots that use generic state length and question count."""
+def executive_gpu_utilization_bars() -> None:
+    """Show the effect of paid H100 utilization on self-hosted economics."""
     generic = NORMALIZED_COST["generic_transcript_sensitivity"]
+    reference = generic["executive_matrix_reference"]
+    utilizations = generic["executive_gpu_utilization_percent"]
+    base_costs = generic_transcript_costs(reference["state_tokens"], reference["questions"])
     models = [
-        ("modernbert_trained", "Fixed encoder", "#0B678B"),
-        ("gliclass_modern_large_v3", "Shared-state ZS", "#D47900"),
-        ("jev_noul", "Hosted shared-state", "#8059C3"),
-        ("modernbert_zero_shot", "Pairwise ZS", "#2A9D8F"),
-        ("gpt_5_6_luna", "LLM: Luna", "#F4A261"),
-        ("gpt_5_6_sol", "LLM: Sol", "#303846"),
+        ("modernbert_trained", "Fixed trained encoder\nModernBERT-large + heads", "#0B678B", True),
+        ("gliclass_modern_large_v3", "Shared-state zero-shot\nGLiClass Modern Large v3", "#D47900", True),
+        ("jev_noul", "Hosted shared-state API\nTypeSafe.ai JEV Noul", "#8059C3", False),
+        ("modernbert_zero_shot", "Pairwise zero-shot\nModernBERT-large NLI", "#2A9D8F", True),
+        ("gpt_5_6_luna", "Single-call LLM\nGPT-5.6 Luna", "#F4A261", False),
+        ("gpt_5_6_sol", "Single-call LLM\nGPT-5.6 Sol", "#303846", False),
     ]
 
-    fig, axes = plt.subplots(1, 3, figsize=(18, 8.2), sharex=True)
-    for ax, scenario in zip(axes, generic["executive_scenarios"]):
-        costs = generic_transcript_costs(scenario["state_tokens"], scenario["questions"])
-        ordered = sorted(models, key=lambda item: float(costs[item[0]]), reverse=True)
-        values = [float(costs[key]) for key, _, _ in ordered]
-        labels = [label for _, label, _ in ordered]
-        colors = [color for _, _, color in ordered]
+    fig, axes = plt.subplots(2, 2, figsize=(18, 10.5), sharex=True)
+    for ax, utilization_pct in zip(axes.flat, utilizations):
+        utilization = utilization_pct / 100
+        costs = {
+            key: float(base_costs[key]) / utilization if self_hosted else float(base_costs[key])
+            for key, _, _, self_hosted in models
+        }
+        ordered = sorted(models, key=lambda item: costs[item[0]], reverse=True)
+        values = [costs[key] for key, _, _, _ in ordered]
+        labels = [label for _, label, _, _ in ordered]
+        colors = [color for _, _, color, _ in ordered]
         y = np.arange(len(ordered))
-        bars = ax.barh(y, values, color=colors, height=0.62)
+        bars = ax.barh(
+            y,
+            values,
+            color=colors,
+            height=0.62,
+            edgecolor=["#4B2A79" if key == "jev_noul" else "white" for key, _, _, _ in ordered],
+            linewidth=[2.4 if key == "jev_noul" else 0.8 for key, _, _, _ in ordered],
+        )
         ax.set_xscale("log")
-        ax.set_xlim(0.005, 200)
+        ax.set_xlim(0.025, 400)
         ax.xaxis.set_major_locator(FixedLocator([0.01, 0.1, 1, 10, 100]))
         ax.xaxis.set_major_formatter(FuncFormatter(lambda value, _: f"${value:g}"))
         ax.set_yticks(y, labels)
-        ax.tick_params(axis="y", labelsize=9.5)
+        ax.tick_params(axis="y", labelsize=9.2)
         ax.grid(axis="x", color=GRID, linewidth=0.8, which="major")
         ax.set_axisbelow(True)
         ax.spines[["top", "right", "left"]].set_visible(False)
-        ax.set_title(
-            f"{scenario['label']}\n{scenario['state_tokens'] / 1000:g}k state tokens × {scenario['questions']} questions",
-            fontsize=13.5,
-            pad=14,
-        )
-        ax.set_xlabel("USD per 1,000 states (log scale)")
+        ax.set_title(f"{utilization_pct}% paid H100 utilization", fontsize=14, pad=12)
         for bar, value in zip(bars, values):
             ax.text(
-                min(value * 1.16, 150),
+                min(value * 1.14, 330),
                 bar.get_y() + bar.get_height() / 2,
                 f"${value:.3f}" if value < 10 else f"${value:.1f}",
                 va="center",
                 fontsize=9.2,
                 fontweight="bold",
             )
+        ax.text(
+            0.98,
+            0.97,
+            "Purple JEV stays at $0.352",
+            transform=ax.transAxes,
+            ha="right",
+            va="top",
+            color="#6841A8",
+            fontsize=9,
+            fontweight="bold",
+        )
 
-    fig.suptitle("Executive cost snapshots across generic state/question workloads", x=0.055, ha="left", fontsize=21, fontweight="bold")
+    for ax in axes[1, :]:
+        ax.set_xlabel("Estimated USD per 1,000 states (log scale)")
+
+    trained_break_even = 100 * float(base_costs["modernbert_trained"]) / float(base_costs["jev_noul"])
+    gliclass_break_even = 100 * float(base_costs["gliclass_modern_large_v3"]) / float(base_costs["jev_noul"])
+    fig.suptitle("GPU utilization determines self-hosted encoder economics", x=0.055, ha="left", fontsize=21, fontweight="bold")
     fig.text(
         0.055,
-        0.925,
-        "No transcript-duration assumption · each panel specifies state length and question count directly · lower is better",
+        0.94,
+        f"Fixed workload: {reference['state_tokens'] / 1000:g}k state tokens × {reference['questions']} questions · NVIDIA H100 at USD 5/hour · lower is better",
         color=MUTED,
         fontsize=11,
     )
     fig.text(
         0.01,
         0.012,
-        "Costs are modeled per 1,000 states. Fixed encoder heads require training; shared-state zero-shot and hosted approaches permit runtime labels/questions. Hidden LLM reasoning tokens are excluded.",
+        f"Self-hosted encoder cost is divided by paid GPU utilization; hosted JEV/Luna/Sol prices remain usage-based. In this scenario, JEV crosses trained ModernBERT near {trained_break_even:.1f}% utilization and GLiClass Modern near {gliclass_break_even:.1f}%. Hidden LLM reasoning tokens are excluded.",
         color=MUTED,
         fontsize=8.8,
     )
-    fig.tight_layout(rect=(0.03, 0.065, 0.995, 0.88), w_pad=3.0)
-    fig.savefig(CHARTS / "executive-state-question-cost-bars.png", dpi=180, bbox_inches="tight")
+    fig.tight_layout(rect=(0.03, 0.055, 0.995, 0.90), w_pad=4.0, h_pad=2.1)
+    fig.savefig(CHARTS / "executive-cost-vs-gpu-utilization.png", dpi=180, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -842,7 +867,7 @@ def main() -> None:
     generic_duration_chart()
     generic_question_count_chart()
     executive_decision_matrix()
-    executive_scenario_bars()
+    executive_gpu_utilization_bars()
     print(f"Wrote charts to {CHARTS}")
 
 

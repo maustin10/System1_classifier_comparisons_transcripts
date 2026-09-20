@@ -12,17 +12,17 @@ The benchmark contains 1,000 synthetic conversations, each labeled for 27 binary
 
 ![Executive decision matrix showing cost and runtime-question flexibility](charts/executive-decision-matrix.png)
 
-For a generic reference workload of **6,000 state tokens and 25 questions**, the executive interpretation is:
+For a generic reference workload of **6,000 state tokens and 25 questions**, with self-hosted costs shown at 100% paid H100 utilization, the executive interpretation is:
 
-- **Stable, known taxonomy:** trained ModernBERT is the lowest-cost high-quality option, but new questions require training.
-- **Runtime questions with self-hosted economics:** GLiClass Modern is the leading open zero-shot option in this test.
-- **Runtime questions through a managed API:** calibrated JEV Noul provides the strongest measured balance of quality and modeled cost.
-- **Maximum general-model quality:** Luna and Sol score extremely well, but their estimated serving costs are materially higher.
-- **Pairwise NLI:** useful as a transparent baseline, but repeating the state for every question becomes expensive as both dimensions grow.
+- **Fixed trained encoder:** `MoritzLaurer/ModernBERT-large-zeroshot-v2.0` embeddings plus 27 trained logistic heads. It is the lowest-cost high-quality option when the taxonomy is stable, but new questions require training.
+- **Shared-state zero-shot encoder:** `knowledgator/gliclass-modern-large-v3.0`. It is the leading self-hosted runtime-label option in this test.
+- **Hosted shared-state API:** **TypeSafe.ai JEV Noul**. It provides the strongest measured managed-service balance of quality and modeled cost.
+- **Pairwise zero-shot encoder:** `MoritzLaurer/ModernBERT-large-zeroshot-v2.0`. It is a transparent baseline, but repeats the state for every question.
+- **Single-call LLMs:** GPT-5.6 Luna and Sol. They score extremely well, but their estimated serving costs are materially higher.
 
-![Executive cost bars for generic state-length and question-count workloads](charts/executive-state-question-cost-bars.png)
+![Executive cost comparison across paid H100 utilization levels](charts/executive-cost-vs-gpu-utilization.png)
 
-These snapshots avoid converting state size into transcript minutes. The three scenarios directly combine the two workload drivers: **state length** and **number of questions**. Costs are estimates per 1,000 states; they are not measured invoices or H100 benchmarks.
+This view holds the workload at **6,000 state tokens × 25 questions** and varies paid H100 utilization from 10% to 100%. Self-hosted encoder costs scale as `full-utilization cost / utilization`; hosted JEV, Luna, and Sol remain usage-priced. In this scenario, **JEV becomes cheaper than trained ModernBERT below approximately 13.9% utilization and cheaper than GLiClass Modern below approximately 14.6%**. These are modeled crossovers, not measured H100 benchmarks or invoices.
 
 ## Key results
 

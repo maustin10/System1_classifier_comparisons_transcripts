@@ -41,9 +41,9 @@ def cover(c: canvas.Canvas) -> None:
     c.drawString(47, PAGE_H - 148, "State length × question count × quality × cost")
 
     cards = [
-        ("Fixed labels", "ModernBERT trained", "lowest modeled cost", BLUE),
-        ("Runtime labels", "GLiClass Modern", "self-hosted flexibility", ORANGE),
-        ("Managed API", "JEV Noul", "quality / cost balance", PURPLE),
+        ("Fixed labels", "ModernBERT-large + heads", "economics depend on utilization", BLUE),
+        ("Runtime labels", "GLiClass Modern Large v3", "self-hosted flexibility", ORANGE),
+        ("Managed API", "TypeSafe.ai JEV Noul", "usage-priced; no idle GPU", PURPLE),
     ]
     x = 47
     for heading, model, detail, color in cards:
@@ -73,9 +73,9 @@ def recommendation_page(c: canvas.Canvas, page_number: int) -> None:
     page_title(c, "What should an executive choose?", "Select the operating model before selecting the model")
 
     recommendations = [
-        ("Known, stable taxonomy", "ModernBERT trained heads", "Best modeled economics with 99.16% test accuracy. New questions require labeled data and retraining."),
-        ("Runtime labels, self-hosted", "GLiClass Modern", "Best open zero-shot trade-off tested: 97.90% calibrated accuracy and near-trained-encoder modeled cost."),
-        ("Runtime questions, managed service", "JEV Noul", "99.90% calibrated accuracy with shared-state-like billing and substantially lower modeled cost than the general LLMs."),
+        ("Known, stable taxonomy", "ModernBERT-large + trained heads", "Best modeled economics with 99.16% test accuracy when utilization is sustained. New questions require labeled data and retraining."),
+        ("Runtime labels, self-hosted", "GLiClass Modern Large v3", "Best open zero-shot trade-off tested. In the reference workload it becomes cheaper than JEV above about 14.6% paid GPU utilization."),
+        ("Runtime questions, managed service", "TypeSafe.ai JEV Noul", "99.90% calibrated accuracy and no customer-owned idle GPU cost. It leads the reference scenario below roughly 14% utilization."),
         ("Broad reasoning or maximum test score", "Luna or Sol", "Near-ceiling quality, but use when semantic breadth justifies the premium. Sol's advantage over calibrated JEV was one decision in 4,050."),
     ]
 
@@ -97,12 +97,12 @@ def recommendation_page(c: canvas.Canvas, page_number: int) -> None:
 
     c.setFillColor(NAVY)
     c.setFont("Helvetica-Bold", 12)
-    c.drawString(44, 114, "Executive guardrails")
+    c.drawString(44, 135, "Executive guardrails")
     bullet_list(c, [
         "Quality results come from a synthetic, explicit-evidence test and are not production guarantees.",
         "Cost curves are modeled from token shapes, published/API rates, and H100 throughput proxies.",
         "Validate with real states, real questions, target hardware, and operational error costs before procurement.",
-    ], 44, 94, 704, font_size=8.8)
+    ], 44, 114, 704, font_size=8.6)
     footer(c, page_number)
     c.showPage()
 
@@ -115,7 +115,7 @@ def main() -> None:
     c.setSubject("Executive comparison of fixed encoders, runtime-label classifiers, JEV, and LLM classifiers")
     cover(c)
     chart_page(c, 2, "executive-decision-matrix.png")
-    chart_page(c, 3, "executive-state-question-cost-bars.png")
+    chart_page(c, 3, "executive-cost-vs-gpu-utilization.png")
     recommendation_page(c, 4)
     c.save()
     print(OUTPUT)

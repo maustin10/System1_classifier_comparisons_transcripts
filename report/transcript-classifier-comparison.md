@@ -19,11 +19,11 @@ The benchmark is deliberately a smoke test. Its deterministic synthetic template
 
 ![Executive decision matrix](../charts/executive-decision-matrix.png)
 
-At a generic reference workload of **6,000 state tokens and 25 questions**, trained ModernBERT is the economic choice when the taxonomy is fixed. GLiClass Modern is the leading self-hosted option when labels must change at runtime. Calibrated JEV Noul is the strongest managed-API cost/quality compromise in this benchmark. Luna and Sol deliver near-ceiling measured quality at materially higher modeled cost. Pairwise ModernBERT NLI remains a useful baseline, but its repeated-state design scales poorly when both state length and question count grow.
+At a generic reference workload of **6,000 state tokens and 25 questions**, and at 100% paid H100 utilization, trained ModernBERT is the economic choice when the taxonomy is fixed. GLiClass Modern is the leading self-hosted option when labels must change at runtime. Calibrated TypeSafe.ai JEV Noul is the strongest managed-API cost/quality compromise in this benchmark. Luna and Sol deliver near-ceiling measured quality at materially higher modeled cost. Pairwise ModernBERT NLI remains a useful baseline, but its repeated-state design scales poorly when both state length and question count grow.
 
-![Executive workload cost snapshots](../charts/executive-state-question-cost-bars.png)
+![Executive cost comparison across paid H100 utilization levels](../charts/executive-cost-vs-gpu-utilization.png)
 
-The three snapshots use state length and number of questions directly, without a transcript-duration conversion. They represent 1k × 10, 6k × 25, and 24k × 50 state/question workloads. All costs are scenario estimates per 1,000 states.
+The utilization view holds state length and question count fixed at 6,000 × 25. Self-hosted encoder costs are divided by paid GPU utilization, while hosted JEV/Luna/Sol prices remain usage-based. In this scenario, JEV crosses trained ModernBERT near 13.9% utilization and GLiClass Modern near 14.6%. Example implementations are: trained and pairwise `MoritzLaurer/ModernBERT-large-zeroshot-v2.0`, shared-state zero-shot `knowledgator/gliclass-modern-large-v3.0`, hosted shared-state TypeSafe.ai JEV Noul, and single-call GPT-5.6 Luna/Sol.
 
 ## Results
 
