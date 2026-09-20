@@ -119,6 +119,7 @@ flowchart LR
     P2 --> E
     PN --> E
     E --> Y["N probabilities"]
+    E -. cost driver .-> C["Cost: about N x state + questions<br/>Reference MB NLI: USD 1.226 / 1k"]
 ```
 
 ### Shared-state runtime questions
@@ -129,6 +130,7 @@ flowchart LR
     Q["Questions Q1...QN"] --> R
     R --> Y["All N probabilities"]
     Y --> T["Thresholds / policy"]
+    R -. external cost shape .-> C["Cost: state once + question overhead<br/>Reference: GLiClass USD 0.051; JEV USD 0.352 / 1k"]
 ```
 
 The GLiClass diagram describes its uni-encoder input. For JEV it describes observable API and billing behavior, not verified internal compute.
@@ -143,6 +145,7 @@ flowchart LR
     E --> V["Embedding h"]
     V --> H
     H --> Y["N probabilities"]
+    H -. inference cost .-> C["Cost: one state encoding + cheap heads<br/>Reference trained MB: USD 0.049 / 1k"]
 ```
 
 ### Choice versus Noul is not a controlled primitive comparison

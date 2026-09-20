@@ -88,6 +88,7 @@ flowchart LR
     P2 --> E
     PN --> E
     E --> Y["N probabilities"]
+    E -. cost driver .-> C["Cost: about N x state + questions<br/>Reference MB NLI: USD 1.226 / 1k"]
 ```
 
 ### Shared state: questions remain available at runtime
@@ -98,6 +99,7 @@ flowchart LR
     Q["Questions Q1...QN"] --> R
     R --> Y["All N probabilities"]
     Y --> T["Thresholds / decision policy"]
+    R -. external cost shape .-> C["Cost: state once + question overhead<br/>Reference: GLiClass USD 0.051; JEV USD 0.352 / 1k"]
 ```
 
 For GLiClass, this is a documented uni-encoder input pattern. For JEV, it represents the observable API and billing boundary—not a verified diagram of the private model internals.
@@ -112,6 +114,7 @@ flowchart LR
     E --> V["Embedding h"]
     V --> H
     H --> Y["N probabilities"]
+    H -. inference cost .-> C["Cost: one state encoding + cheap heads<br/>Reference trained MB: USD 0.049 / 1k"]
 ```
 
 The systems do not consume the workload in the same way.

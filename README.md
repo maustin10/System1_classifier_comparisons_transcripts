@@ -172,6 +172,7 @@ flowchart LR
     PN --> E
     E --> Y["N probabilities"]
     Y --> T["Per-label thresholds"]
+    E -. cost driver .-> C["Cost: about N x state + questions<br/>Reference MB NLI: USD 1.226 / 1k"]
 ```
 
 ModernBERT zero-shot uses this pattern. Questions remain arbitrary, but the state is repeated once per question. Calibration changes the final thresholds, not this token-processing pattern.
@@ -184,6 +185,7 @@ flowchart LR
     Q["Questions Q1...QN"] --> R
     R --> Y["All N probabilities"]
     Y --> T["Per-label thresholds or policy"]
+    R -. external cost shape .-> C["Cost: state once + question overhead<br/>Reference: GLiClass USD 0.051; JEV USD 0.352 / 1k"]
 ```
 
 GLiClass explicitly serializes the state and label descriptions into a shared uni-encoder input. JEV exposes this pattern at its API and billing boundary; the diagram does not claim that JEV's undisclosed internal compute graph encodes the state exactly once.
@@ -198,6 +200,7 @@ flowchart LR
     E --> V["Shared embedding h"]
     V --> H
     H --> Y["N probabilities"]
+    H -. inference cost .-> C["Cost: one state encoding + cheap heads<br/>Reference trained MB: USD 0.049 / 1k"]
 ```
 
 Trained ModernBERT uses this pattern. It is efficient because question text is absent at inference, but a new question requires labeled examples and a new or retrained head.

@@ -238,14 +238,14 @@ def architecture_patterns_chart() -> None:
         ax.annotate("", xy=(x2, y2), xytext=(x1, y1), arrowprops={"arrowstyle": "-|>", "color": color, "linewidth": 1.8, "linestyle": style})
 
     rows = [
-        (0.68, "PAIRWISE ZERO-SHOT", "Runtime-flexible · state repeated N times", "#E8F4F7"),
-        (0.39, "SHARED-STATE RUNTIME QUESTIONS", "Runtime-flexible · one external request / shared input", "#F1ECFA"),
-        (0.10, "FIXED-TAXONOMY TRAINED HEADS", "Highest efficiency · questions learned into weights", "#EAF5EF"),
+        (0.68, "PAIRWISE ZERO-SHOT", "Cost: about N x state + questions; reference ModernBERT NLI = USD 1.226 per 1,000 transcripts", "#E8F4F7"),
+        (0.39, "SHARED-STATE RUNTIME QUESTIONS", "Cost: state once + question overhead; reference GLiClass = USD 0.051 and JEV = USD 0.352 per 1,000", "#F1ECFA"),
+        (0.10, "FIXED-TAXONOMY TRAINED HEADS", "Cost: one state encoding + cheap heads; reference trained ModernBERT = USD 0.049 per 1,000", "#EAF5EF"),
     ]
     for y, title, subtitle, face in rows:
         ax.add_patch(FancyBboxPatch((0.015, y - 0.045), 0.97, 0.235, boxstyle="round,pad=0.008,rounding_size=0.015", facecolor=face, edgecolor=GRID, linewidth=1.0))
         ax.text(0.035, y + 0.16, title, fontsize=11, color=INK, fontweight="bold", va="center")
-        ax.text(0.035, y + 0.127, subtitle, fontsize=9.5, color=MUTED, va="center")
+        ax.text(0.035, y + 0.127, subtitle, fontsize=9.0, color=MUTED, va="center")
 
     # Pairwise: visually separate state and questions, then show N state copies.
     box(0.205, 0.65, 0.12, 0.06, "State S", "white")
@@ -275,7 +275,7 @@ def architecture_patterns_chart() -> None:
     arrow(0.325, 0.167, 0.39, 0.167); arrow(0.52, 0.167, 0.585, 0.167); arrow(0.705, 0.167, 0.765, 0.167); arrow(0.895, 0.167, 0.935, 0.167); arrow(0.705, 0.088, 0.80, 0.135, color="#27805A", style="--")
 
     ax.set_title("Three ways to combine state and classification questions", loc="left", pad=20, fontsize=21, fontweight="bold")
-    ax.text(0, 1.01, "The efficiency/flexibility trade-off is determined by where question meaning enters the system", transform=ax.transAxes, fontsize=11, color=MUTED)
+    ax.text(0, 1.01, "Reference: 6k state tokens x 25 questions, 1,000 transcripts, 100% paid H100 utilization; JEV remains usage-priced", transform=ax.transAxes, fontsize=11, color=MUTED)
     fig.text(0.02, 0.012, "Calibration changes gates after scoring; it does not change whether the state is repeated, shared, or encoded once for fixed learned heads.", color=MUTED, fontsize=9.2)
     fig.tight_layout(rect=(0.015, 0.04, 0.99, 0.96))
     fig.savefig(CHARTS / "architecture-patterns.png", dpi=180, bbox_inches="tight")
