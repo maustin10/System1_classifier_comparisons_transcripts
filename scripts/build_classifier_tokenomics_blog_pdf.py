@@ -231,7 +231,7 @@ def parse_markdown(md: str, s: dict[str, ParagraphStyle]) -> tuple[list, int]:
         if stripped.startswith("## "):
             flush_paragraph()
             heading = stripped[3:]
-            if heading.startswith(("4.", "7.", "8.", "10.")):
+            if heading.startswith(("4.", "7.", "8.", "9.")):
                 story.append(PageBreak())
             story.append(Spacer(1, 6))
             story.append(Paragraph(markup(heading), s["h1"]))
@@ -314,8 +314,8 @@ def build() -> None:
     markdown = SOURCE.read_text()
     title = clean_ascii(markdown.splitlines()[0].removeprefix("# "))
     output_body, figure_count = parse_markdown(markdown, s)
-    if figure_count != 12:
-        raise ValueError(f"Expected 12 embedded charts, found {figure_count}")
+    if figure_count != 13:
+        raise ValueError(f"Expected 13 embedded charts, found {figure_count}")
 
     contents = [
         "1. One classification task, five execution patterns",
@@ -338,7 +338,7 @@ def build() -> None:
         Paragraph("How state length, question count, model quality, GPU utilization, and latency change the right classifier architecture", s["cover_sub"]),
         Spacer(1, 0.15 * inch),
         Table(
-            [[Paragraph("12", s["callout"]), Paragraph("5", s["callout"]), Paragraph("2", s["callout"])],
+            [[Paragraph("13", s["callout"]), Paragraph("5", s["callout"]), Paragraph("2", s["callout"])],
              [Paragraph("embedded decision charts", s["small"]), Paragraph("variables that move the answer", s["small"]), Paragraph("operating perspectives", s["small"])]],
             colWidths=[2.15 * inch] * 3,
             style=TableStyle([

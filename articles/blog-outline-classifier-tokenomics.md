@@ -143,6 +143,10 @@ For readers who need all three variables at once, include the paired decision ma
 
 *Figure 11. The same state-length, question-count, and utilization grid when fixed trained heads are not eligible.*
 
+![Savings advantage of the runtime-question winner](../charts/executive-runtime-winner-confidence.png)
+
+*Figure 12. The winning runtime-flexible approach's percentage cost advantage over the runner-up. Low-percentage cells identify close decisions where quality, support, latency, data residency, or operational simplicity may matter more than the modeled savings.*
+
 ## 9. What we are testing now
 
 - Whether the strongest open-source shared-state option can provide the same practical state-plus-questions experience.
@@ -156,7 +160,7 @@ Before the implementation diagram, summarize the available operating positions i
 
 ![Executive decision map of economics and runtime-question flexibility](../charts/executive-decision-matrix.png)
 
-*Figure 12. There is no single classifier winner. Trained ModernBERT leads the economical/fixed corner, GLiClass represents economical/runtime-flexible self-hosting, JEV provides a managed flexible option, and LLMs occupy the premium reasoning tier.*
+*Figure 13. There is no single classifier winner. Trained ModernBERT leads the economical/fixed corner, GLiClass represents economical/runtime-flexible self-hosting, JEV provides a managed flexible option, and LLMs occupy the premium reasoning tier.*
 
 ```mermaid
 flowchart LR
@@ -188,7 +192,8 @@ flowchart LR
 - Keep the detailed state-token chart after the generic charts, where technical readers can inspect chunking effects.
 - Put the utilization bars and crossover bands in the cloud-versus-self-hosting section.
 - Put the two heatmaps together; they are a paired comparison and use the same axes.
+- Follow the runtime winner map with the savings-advantage heatmap so readers can distinguish decisive wins from near ties.
 - Use the 2x2 matrix immediately before the reference architecture as the executive synthesis.
 - Do not use `estimated-cost-1000-transcripts.png` in the article because it compares API charges with local models whose hardware cost is shown as zero.
 - Do not use `accuracy-vs-equivalent-latency.png`; the measurements mix hosted round trips, local CPU runs, and H100 resource-time estimates.
-- Keep `accuracy-comparison.png`, `all-metrics-table.png`, and `executive-runtime-winner-confidence.png` as optional supporting figures for the technical report rather than the main article.
+- Keep `accuracy-comparison.png` and `all-metrics-table.png` as optional supporting figures for the technical report rather than the main article.
