@@ -65,6 +65,14 @@ The principal findings are:
 - GLiClass Large v3 reached 96.59% accuracy / 93.67% F1 after calibration. Its 512-token context required two label batches to retain every transcript token; GLiClass Modern Large fit all 27 labels in one pass with no truncation.
 - DeBERTa-v3-large-zeroshot-v2.0-c did not beat ModernBERT zero-shot on this dataset and was approximately 2.47 times slower on the same CPU path.
 
+### Calibration gets surprisingly close to training
+
+![ModernBERT calibration versus trained heads](charts/calibration-vs-training.png)
+
+For ModernBERT, selecting 27 validation-only probability thresholds raised accuracy from **92.96% to 96.42%** without changing model weights. Full trained heads reached **99.16%**. Calibration therefore finished within **2.74 accuracy points** of the trained system and closed **55.8% of the accuracy gap** and **54.8% of the F1 gap** from the default zero-shot baseline. Test errors fell from 285 to 145; trained heads reduced them further to 34.
+
+This retains the zero-shot model's ability to score new natural-language questions, but with an important qualification: the measured gain belongs to the 27 labels whose thresholds were calibrated. A brand-new question remains possible at runtime, but it does not automatically inherit a validated threshold.
+
 ## Estimated cost per 1,000 transcripts with chunking
 
 ![Estimated cost per 1,000 transcripts versus state length for ModernBERT, GLiClass, JEV, Sol, and Luna](charts/normalized-cost-vs-state-tokens.png)
@@ -146,6 +154,53 @@ Your distinction is correct for zero-shot ModernBERT, but the trained model is e
 | JEV | One state plus arbitrary typed questions in one request | Yes |
 
 Across the locked test set, the ModernBERT tokenizer measured a 224.46-token average state. Zero-shot NLI processed 6,435.42 tokens per transcript across the 27 pairs, a **28.67x amplification**. The trained model processed about 226.46 tokens once. It does not tokenize the 27 question descriptions at inference: their meaning has been absorbed into the trained head weights. A new attribute therefore requires a new or retrained head.
+
+![State and question processing patterns](charts/architecture-patterns.png)
+
+### Pairwise zero-shot: flexible questions, repeated state
+
+```mermaid
+flowchart LR
+    S["State / transcript S"] --> P1["Pair S + Q1"]
+    S --> P2["Pair S + Q2"]
+    S --> PN["Pair S + QN"]
+    Q1["Question Q1"] --> P1
+    Q2["Question Q2"] --> P2
+    QN["Question QN"] --> PN
+    P1 --> E["Same encoder over N pairs"]
+    P2 --> E
+    PN --> E
+    E --> Y["N probabilities"]
+    Y --> T["Per-label thresholds"]
+```
+
+ModernBERT zero-shot uses this pattern. Questions remain arbitrary, but the state is repeated once per question. Calibration changes the final thresholds, not this token-processing pattern.
+
+### Shared-state runtime questions: flexible questions, one external request
+
+```mermaid
+flowchart LR
+    S["State / transcript S"] --> R["Shared-state classifier or API request"]
+    Q["Questions Q1...QN"] --> R
+    R --> Y["All N probabilities"]
+    Y --> T["Per-label thresholds or policy"]
+```
+
+GLiClass explicitly serializes the state and label descriptions into a shared uni-encoder input. JEV exposes this pattern at its API and billing boundary; the diagram does not claim that JEV's undisclosed internal compute graph encodes the state exactly once.
+
+### Fixed taxonomy: encode state once, then apply learned heads
+
+```mermaid
+flowchart LR
+    D["Labeled training data"] -. offline training .-> H["N trained classifier heads"]
+    Q["Question meanings"] -. absorbed into weights .-> H
+    S["State / transcript S"] --> E["Encoder once"]
+    E --> V["Shared embedding h"]
+    V --> H
+    H --> Y["N probabilities"]
+```
+
+Trained ModernBERT uses this pattern. It is efficient because question text is absent at inference, but a new question requires labeled examples and a new or retrained head.
 
 ## Does this prove JEV has a new architecture?
 

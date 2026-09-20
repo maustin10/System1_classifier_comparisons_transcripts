@@ -7,9 +7,11 @@ import os
 from pathlib import Path
 
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/system1-transcript-matplotlib")
+os.environ.setdefault("MPLBACKEND", "Agg")
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.patches import FancyBboxPatch
 from matplotlib.ticker import FuncFormatter, FixedLocator
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -146,6 +148,137 @@ def metrics_table() -> None:
                 cell.get_text().set_color("#A85E00")
     fig.tight_layout()
     fig.savefig(CHARTS / "all-metrics-table.png", dpi=180, bbox_inches="tight")
+    plt.close(fig)
+
+
+def calibration_vs_training_chart() -> None:
+    """Pull out the ModernBERT quality/flexibility trade-off from the full table."""
+    by_id = {item["id"]: item for item in SUMMARY["models"]}
+    variants = [
+        ("modernbert_zero_shot", "Zero-shot\n0.50 threshold", "#7A8797"),
+        ("modernbert_zero_shot_opt_threshold", "Zero-shot\n27 calibrated thresholds", "#2A9D8F"),
+        ("modernbert_trained", "Frozen encoder\n27 trained heads", "#0B678B"),
+    ]
+    accuracy = [100 * by_id[key]["accuracy"] for key, _, _ in variants]
+    f1 = [100 * by_id[key]["f1"] for key, _, _ in variants]
+    errors = [round((1 - by_id[key]["accuracy"]) * SUMMARY["benchmark"]["test_decisions"]) for key, _, _ in variants]
+    colors = [color for _, _, color in variants]
+    labels = [label for _, label, _ in variants]
+    accuracy_gap_closed = (accuracy[1] - accuracy[0]) / (accuracy[2] - accuracy[0])
+    f1_gap_closed = (f1[1] - f1[0]) / (f1[2] - f1[0])
+
+    fig, axes = plt.subplots(1, 3, figsize=(17.5, 7.6), gridspec_kw={"width_ratios": [1, 1, 1.08]})
+    for ax, values, title, lower in [
+        (axes[0], accuracy, "Accuracy", 84),
+        (axes[1], f1, "Micro F1", 84),
+    ]:
+        bars = ax.bar(range(3), values, color=colors, width=0.68)
+        ax.set_ylim(lower, 101)
+        ax.set_title(title, fontsize=15, pad=12)
+        ax.set_xticks(range(3), labels, fontsize=9)
+        ax.set_ylabel("Percent")
+        ax.grid(axis="y", color=GRID, linewidth=0.8)
+        ax.set_axisbelow(True)
+        ax.spines[["top", "right"]].set_visible(False)
+        for bar, value in zip(bars, values):
+            ax.text(bar.get_x() + bar.get_width() / 2, value + 0.35, f"{value:.2f}%", ha="center", va="bottom", fontsize=10.5, fontweight="bold")
+
+    error_bars = axes[2].barh(range(3), errors, color=colors, height=0.62)
+    axes[2].invert_yaxis()
+    axes[2].set_title("Incorrect test decisions", fontsize=15, pad=12)
+    axes[2].set_yticks(range(3), labels, fontsize=9)
+    axes[2].set_xlabel("Errors out of 4,050")
+    axes[2].grid(axis="x", color=GRID, linewidth=0.8)
+    axes[2].set_axisbelow(True)
+    axes[2].spines[["top", "right"]].set_visible(False)
+    for bar, value in zip(error_bars, errors):
+        axes[2].text(value + 7, bar.get_y() + bar.get_height() / 2, str(value), va="center", fontsize=11, fontweight="bold")
+    axes[2].set_xlim(0, max(errors) * 1.2)
+
+    fig.suptitle("Threshold calibration captures much of training's gain without changing model weights", x=0.04, ha="left", fontsize=21, fontweight="bold")
+    fig.text(
+        0.04,
+        0.92,
+        f"ModernBERT-large · same 4,050 locked test decisions · calibration closes {accuracy_gap_closed:.1%} of the accuracy gap and {f1_gap_closed:.1%} of the F1 gap",
+        color=MUTED,
+        fontsize=11,
+    )
+    fig.text(
+        0.04,
+        0.055,
+        "Calibration changes only 27 scalar cutoffs: accuracy rises 3.46 points and errors fall from 285 to 145. Trained heads learn 27 x (1,024 weights + intercept), reaching 34 errors.",
+        color=INK,
+        fontsize=10.2,
+        fontweight="bold",
+    )
+    fig.text(
+        0.04,
+        0.025,
+        "The zero-shot architecture still accepts new questions at runtime, but a new question does not inherit a validated label-specific threshold. Trained heads require labeled data and retraining.",
+        color=MUTED,
+        fontsize=9.2,
+    )
+    fig.tight_layout(rect=(0.03, 0.11, 0.99, 0.86), w_pad=2.4)
+    fig.savefig(CHARTS / "calibration-vs-training.png", dpi=180, bbox_inches="tight")
+    plt.close(fig)
+
+
+def architecture_patterns_chart() -> None:
+    """Show how state and questions flow through the three classifier patterns."""
+    fig, ax = plt.subplots(figsize=(16.5, 8.1))
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis("off")
+
+    def box(x: float, y: float, w: float, h: float, text: str, face: str, edge: str = "#D8E0E8", fontsize: float = 10) -> None:
+        ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.012,rounding_size=0.012", facecolor=face, edgecolor=edge, linewidth=1.2))
+        ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=fontsize, color=INK, fontweight="bold")
+
+    def arrow(x1: float, y1: float, x2: float, y2: float, color: str = "#66758A", style: str = "-") -> None:
+        ax.annotate("", xy=(x2, y2), xytext=(x1, y1), arrowprops={"arrowstyle": "-|>", "color": color, "linewidth": 1.8, "linestyle": style})
+
+    rows = [
+        (0.68, "PAIRWISE ZERO-SHOT", "Runtime-flexible · state repeated N times", "#E8F4F7"),
+        (0.39, "SHARED-STATE RUNTIME QUESTIONS", "Runtime-flexible · one external request / shared input", "#F1ECFA"),
+        (0.10, "FIXED-TAXONOMY TRAINED HEADS", "Highest efficiency · questions learned into weights", "#EAF5EF"),
+    ]
+    for y, title, subtitle, face in rows:
+        ax.add_patch(FancyBboxPatch((0.015, y - 0.045), 0.97, 0.235, boxstyle="round,pad=0.008,rounding_size=0.015", facecolor=face, edgecolor=GRID, linewidth=1.0))
+        ax.text(0.035, y + 0.16, title, fontsize=11, color=INK, fontweight="bold", va="center")
+        ax.text(0.035, y + 0.127, subtitle, fontsize=9.5, color=MUTED, va="center")
+
+    # Pairwise: visually separate state and questions, then show N state copies.
+    box(0.205, 0.65, 0.12, 0.06, "State S", "white")
+    box(0.205, 0.735, 0.12, 0.06, "Questions Q1...QN", "white", fontsize=9.2)
+    box(0.38, 0.68, 0.15, 0.075, "Build N pairs\n(S,Q1)...(S,QN)", "white")
+    box(0.585, 0.68, 0.15, 0.075, "Encoder batch\nN state copies", "white", edge="#2A9D8F")
+    box(0.79, 0.68, 0.11, 0.075, "N probabilities", "white", fontsize=9.2)
+    box(0.935, 0.68, 0.045, 0.075, "Gate", "white", fontsize=9.2)
+    arrow(0.325, 0.68, 0.38, 0.705); arrow(0.325, 0.765, 0.38, 0.73); arrow(0.53, 0.718, 0.585, 0.718); arrow(0.735, 0.718, 0.79, 0.718); arrow(0.90, 0.718, 0.935, 0.718)
+
+    # Shared-state: one state and a set of questions enter one external unit.
+    box(0.205, 0.36, 0.12, 0.06, "State S", "white")
+    box(0.205, 0.445, 0.12, 0.06, "Questions Q1...QN", "white", fontsize=9.2)
+    box(0.40, 0.39, 0.22, 0.085, "Shared-state classifier\nor managed API request", "white", edge="#8059C3")
+    box(0.70, 0.39, 0.13, 0.085, "All N scores", "white")
+    box(0.89, 0.39, 0.09, 0.085, "Per-label gates", "white", fontsize=9.0)
+    arrow(0.325, 0.39, 0.40, 0.42); arrow(0.325, 0.475, 0.40, 0.45); arrow(0.62, 0.432, 0.70, 0.432); arrow(0.83, 0.432, 0.89, 0.432)
+    ax.text(0.40, 0.36, "GLiClass: direct uni-encoder input. JEV: observable API behavior, not verified internals.", fontsize=8.2, color=MUTED)
+
+    # Fixed heads: question semantics live in learned parameters, not inference input.
+    box(0.205, 0.135, 0.12, 0.065, "State S only", "white")
+    box(0.39, 0.135, 0.13, 0.065, "Encoder once", "white", edge="#0B678B")
+    box(0.585, 0.135, 0.12, 0.065, "Embedding h", "white")
+    box(0.765, 0.135, 0.13, 0.065, "27 trained heads", "white")
+    box(0.935, 0.135, 0.045, 0.065, "Scores", "white", fontsize=8.7)
+    box(0.585, 0.07, 0.12, 0.035, "Labeled training data", "white", edge="#27805A", fontsize=7.8)
+    arrow(0.325, 0.167, 0.39, 0.167); arrow(0.52, 0.167, 0.585, 0.167); arrow(0.705, 0.167, 0.765, 0.167); arrow(0.895, 0.167, 0.935, 0.167); arrow(0.705, 0.088, 0.80, 0.135, color="#27805A", style="--")
+
+    ax.set_title("Three ways to combine state and classification questions", loc="left", pad=20, fontsize=21, fontweight="bold")
+    ax.text(0, 1.01, "The efficiency/flexibility trade-off is determined by where question meaning enters the system", transform=ax.transAxes, fontsize=11, color=MUTED)
+    fig.text(0.02, 0.012, "Calibration changes gates after scoring; it does not change whether the state is repeated, shared, or encoded once for fixed learned heads.", color=MUTED, fontsize=9.2)
+    fig.tight_layout(rect=(0.015, 0.04, 0.99, 0.96))
+    fig.savefig(CHARTS / "architecture-patterns.png", dpi=180, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -1193,6 +1326,8 @@ def main() -> None:
     metric_chart("f1", "F1 comparison across transcript classifiers", "f1-comparison.png")
     metric_chart("accuracy", "Accuracy comparison across transcript classifiers", "accuracy-comparison.png")
     metrics_table()
+    calibration_vs_training_chart()
+    architecture_patterns_chart()
     cost_chart()
     normalized_cost_quality_chart()
     normalized_cost_state_length_chart()

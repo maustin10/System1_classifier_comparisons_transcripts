@@ -64,7 +64,55 @@ The gap between raw and calibrated classifiers was more informative. ModernBERT 
 
 This is a practical lesson: **the decision policy around a probability can matter almost as much as the model that produced it.**
 
+![ModernBERT calibration versus trained heads](../charts/calibration-vs-training.png)
+
+For ModernBERT, threshold calibration closed **55.8% of the accuracy gap** between the default zero-shot model and trained heads. It reached 96.42% accuracy versus 99.16% for the trained system—a difference of 2.74 points—while cutting test errors from 285 to 145. Trained heads reduced the error count further to 34.
+
+That is meaningful, but “calibration preserves flexibility” needs one qualification. The NLI model can still score arbitrary new questions; its weights have not been specialized to the 27-label taxonomy. The measured improvement, however, comes from 27 label-specific thresholds. A new question is technically accepted, but it arrives without a validated cutoff until new calibration data is collected.
+
 ## The architecture distinction that drives economics
+
+![Three state and question processing patterns](../charts/architecture-patterns.png)
+
+### Pairwise zero-shot: the state is repeated
+
+```mermaid
+flowchart LR
+    S["State S"] --> P1["Pair S + Q1"]
+    S --> P2["Pair S + Q2"]
+    S --> PN["Pair S + QN"]
+    Q1["Question Q1"] --> P1
+    Q2["Question Q2"] --> P2
+    QN["Question QN"] --> PN
+    P1 --> E["Encoder over N pairs"]
+    P2 --> E
+    PN --> E
+    E --> Y["N probabilities"]
+```
+
+### Shared state: questions remain available at runtime
+
+```mermaid
+flowchart LR
+    S["State S"] --> R["Shared-state classifier or API request"]
+    Q["Questions Q1...QN"] --> R
+    R --> Y["All N probabilities"]
+    Y --> T["Thresholds / decision policy"]
+```
+
+For GLiClass, this is a documented uni-encoder input pattern. For JEV, it represents the observable API and billing boundary—not a verified diagram of the private model internals.
+
+### Fixed taxonomy: questions move into trained weights
+
+```mermaid
+flowchart LR
+    D["Labeled examples"] -. offline training .-> H["N trained heads"]
+    Q["Question meanings"] -. learned into weights .-> H
+    S["State S"] --> E["Encoder once"]
+    E --> V["Embedding h"]
+    V --> H
+    H --> Y["N probabilities"]
+```
 
 The systems do not consume the workload in the same way.
 
@@ -187,4 +235,3 @@ The complete code, synthetic dataset, model outputs, cost formulas, and report a
 [^typesafe-launch]: TypeSafe.ai, [“Introducing System One Models & Jev”](https://typesafe.ai/blog/introducing-system-one-models-and-jev), September 15, 2026. The performance, architecture, and pricing statements in this paragraph are TypeSafe’s claims.
 [^typesafe-home]: [TypeSafe.ai product site](https://typesafe.ai/), accessed September 20, 2026.
 [^typesafe-team]: [TypeSafe.ai team](https://typesafe.ai/team), accessed September 20, 2026.
-

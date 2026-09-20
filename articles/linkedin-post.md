@@ -30,6 +30,8 @@ The headline results:
 - **GLiClass Modern, validation-calibrated:** 97.90% / 96.00%
 - **ModernBERT zero-shot, validation-calibrated:** 96.42% / 93.27%
 
+One of the most useful findings was how far simple threshold calibration moved ModernBERT. Selecting 27 validation-only cutoffs raised accuracy from 92.96% to 96.42% without changing a single model weight—closing 55.8% of the gap to the 99.16% trained-head result. The model can still accept new questions, although an unseen question will not have a validated label-specific threshold.
+
 The more interesting result was not a universal winner. It was the decision boundary.
 
 For a fixed taxonomy and a well-utilized self-hosted H100, trained ModernBERT was the modeled cost leader. But those heads cannot accept a brand-new question at runtime. JEV can—and at low GPU utilization its usage-based economics can beat the self-hosted option. At our 6,000-token, 25-question reference workload, the modeled JEV/ModernBERT crossover was about **13.9% paid H100 utilization**.
@@ -53,9 +55,10 @@ I independently compared TypeSafe.ai JEV with ModernBERT, GLiClass, and GPT-5.6 
 
 JEV reached **99.90% accuracy and 99.81% F1**, nearly matching Sol at 99.93% / 99.86%. Trained ModernBERT reached 99.16% / 98.41% and was the modeled cost winner when the taxonomy was fixed and an H100 stayed busy. JEV became attractive when questions had to change at runtime or GPU utilization fell.
 
+Threshold calibration was the low-complexity surprise: it moved unchanged zero-shot ModernBERT from 92.96% to 96.42% accuracy, closing 55.8% of the gap to trained heads while preserving the ability to score runtime questions.
+
 The takeaway is not “JEV wins everything.” It is more useful: **fixed taxonomy favors trained encoders; runtime questions and managed-service economics make JEV compelling; GLiClass offers an intriguing open-source middle ground.**
 
 This is a synthetic smoke test, not a production benchmark—and it verifies external behavior, not TypeSafe’s undisclosed architecture.
 
 https://github.com/maustin10/System1_classifier_comparisons_transcripts
-

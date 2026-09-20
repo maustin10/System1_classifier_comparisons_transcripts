@@ -87,6 +87,10 @@ The trained ModernBERT configuration was a frozen encoder plus 27 logistic heads
 
 Threshold calibration alone eliminated 140 of zero-shot ModernBERT's 285 test errors. The trained heads reduced the remaining error count from 145 to 34, showing that both calibration and supervised feature weighting contributed.
 
+![ModernBERT calibration versus trained heads](../charts/calibration-vs-training.png)
+
+Calibration reached 96.42% accuracy versus 99.16% for trained heads, closing **55.8% of the accuracy gap** and **54.8% of the F1 gap** from the default zero-shot baseline. It stays architecturally capable of accepting new questions, but the validated improvement applies only to the 27 labels with tuned thresholds; an unseen question has no learned cutoff.
+
 ### DeBERTa did not improve this task
 
 The commercially friendly DeBERTa-v3-large checkpoint was effectively tied with ModernBERT zero-shot but slightly lower on the main micro metrics. It made 288 errors versus ModernBERT's 285 and ran approximately 2.47 times slower on the same local CPU path. This does not imply ModernBERT is universally superior; it shows that substituting this encoder did not improve this particular taxonomy and prompt formulation.
@@ -96,6 +100,50 @@ The commercially friendly DeBERTa-v3-large checkpoint was effectively tied with 
 GLiClass Modern Large v3 evaluates the transcript and all 27 natural-language labels in one uni-encoder pass. It made 85 errors after validation-only calibration, versus 145 for calibrated ModernBERT NLI and 34 for trained ModernBERT heads. GLiClass Large v3 made 138 errors after calibration. Because its 512-token context could not safely hold every full transcript plus all label descriptions, the labels were split into two deterministic groups; no transcript input was truncated.
 
 On the measured CPU path, GLiClass Modern Large produced the 4,050 test decisions in 94.55 seconds. GLiClass Large required 217.71 seconds for its two-pass input. These are local implementation measurements, not hardware-normalized throughput claims.
+
+## State and question processing patterns
+
+![Three state and question processing patterns](../charts/architecture-patterns.png)
+
+### Pairwise zero-shot
+
+```mermaid
+flowchart LR
+    S["State S"] --> P1["Pair S + Q1"]
+    S --> P2["Pair S + Q2"]
+    S --> PN["Pair S + QN"]
+    Q1["Question Q1"] --> P1
+    Q2["Question Q2"] --> P2
+    QN["Question QN"] --> PN
+    P1 --> E["Encoder over N pairs"]
+    P2 --> E
+    PN --> E
+    E --> Y["N probabilities"]
+```
+
+### Shared-state runtime questions
+
+```mermaid
+flowchart LR
+    S["State S"] --> R["Shared-state classifier or API request"]
+    Q["Questions Q1...QN"] --> R
+    R --> Y["All N probabilities"]
+    Y --> T["Thresholds / policy"]
+```
+
+The GLiClass diagram describes its uni-encoder input. For JEV it describes observable API and billing behavior, not verified internal compute.
+
+### Fixed-taxonomy trained heads
+
+```mermaid
+flowchart LR
+    D["Labeled examples"] -. offline training .-> H["N trained heads"]
+    Q["Question meanings"] -. learned into weights .-> H
+    S["State S"] --> E["Encoder once"]
+    E --> V["Embedding h"]
+    V --> H
+    H --> Y["N probabilities"]
+```
 
 ### Choice versus Noul is not a controlled primitive comparison
 
