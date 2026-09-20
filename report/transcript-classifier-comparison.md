@@ -1,7 +1,7 @@
 # System1 classifier comparisons for customer-care transcripts
 
 **An independent synthetic benchmark of open encoders, TypeSafe.ai JEV, and GPT-5.6 Sol/Luna**  
-**Mark Austin · September 19, 2026**
+**Mark Austin · September 20, 2026**
 
 ## Executive summary
 
@@ -75,17 +75,17 @@ The original JEV Choice run used a raw transcript string and generic present/abs
 
 ![Estimated cost per 1,000 transcripts versus state length](../charts/normalized-cost-vs-state-tokens.png)
 
-Chunking splits an over-limit state into overlapping pieces, scores every piece, and aggregates the piece-level probabilities. This scenario covers states up to **32k tokens** and uses NVIDIA H100s at **$5/GPU-hour**, 27 questions or labels, 256 overlapping tokens, and near-100% utilization. GLiClass Modern uses the ModernBERT-large H100 throughput proxy and one pass per chunk. GLiClass Large uses two label-group passes and a 512-token context, leaving a 357-token state payload. At 32k this becomes five ModernBERT chunks, five GLiClass Modern chunks, 315 GLiClass Large chunks, or two JEV requests.
+Chunking splits an over-limit state into overlapping pieces, scores every piece, and aggregates the piece-level probabilities. This scenario covers states up to **32k tokens** and uses NVIDIA H100s at **$5/GPU-hour**, 27 questions or labels, 256 overlapping tokens, and near-100% utilization. GLiClass Modern uses the ModernBERT-large H100 throughput proxy and one pass per chunk. GLiClass Large uses two label-group passes and a 512-token context, leaving a 357-token state payload. At 32k this becomes five ModernBERT chunks, five GLiClass Modern chunks, 315 GLiClass Large chunks, or two JEV requests. Sol and Luna remain a single API request throughout this range.
 
-| State tokens | MB trained | GLiClass Modern | GLiClass Large | MB zero-shot | JEV Noul | JEV Choice |
-|---:|---:|---:|---:|---:|---:|---:|
-| 224 benchmark mean | $0.0018 | $0.0043 | $0.0094 | $0.0525 | $0.1169 | $0.1339 |
-| 8,000 | $0.0652 | $0.0722 | $0.9825 | $1.7643 | $0.4435 | $0.4605 |
-| 8,192 | $0.0689 | $0.0737 | $1.0077 | $1.8660 | $0.4516 | $0.4685 |
-| 16,000 | $0.1326 | $0.1419 | $1.9918 | $3.5850 | $0.7795 | $0.7965 |
-| 32,000 | $0.2694 | $0.2814 | $4.0208 | $7.2858 | $1.5698 | $1.6037 |
+| State tokens | MB trained | GLiClass Modern | GLiClass Large | MB zero-shot | JEV Noul | JEV Choice | Luna | Sol |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 224 benchmark mean | $0.0018 | $0.0043 | $0.0094 | $0.0525 | $0.1169 | $0.1339 | $0.4000 | $7.1520 |
+| 8,000 | $0.0652 | $0.0722 | $0.9825 | $1.7643 | $0.4435 | $0.4605 | $1.9551 | $38.2541 |
+| 8,192 | $0.0689 | $0.0737 | $1.0077 | $1.8660 | $0.4516 | $0.4685 | $1.9935 | $39.0221 |
+| 16,000 | $0.1326 | $0.1419 | $1.9918 | $3.5850 | $0.7795 | $0.7965 | $3.5551 | $70.2541 |
+| 32,000 | $0.2694 | $0.2814 | $4.0208 | $7.2858 | $1.5698 | $1.6037 | $6.7551 | $134.2541 |
 
-All values are estimated USD per **1,000 transcripts**. GLiClass Modern retains arbitrary runtime labels while staying close to the fixed-head ModernBERT cost curve in this simulation. At the 224-token benchmark mean it is approximately $0.0043 per 1,000 transcripts, versus $0.0018 for trained ModernBERT, $0.0525 for zero-shot ModernBERT NLI, and $0.1169 for JEV Noul. GLiClass Large remains inexpensive for short transcripts but becomes costly for long states because of its two label groups and 512-token context.
+All values are estimated USD per **1,000 transcripts**. GLiClass Modern retains arbitrary runtime labels while staying close to the fixed-head ModernBERT cost curve in this simulation. At the 224-token benchmark mean it is approximately $0.0043 per 1,000 transcripts, versus $0.0018 for trained ModernBERT, $0.0525 for zero-shot ModernBERT NLI, $0.1169 for JEV Noul, $0.4000 for Luna, and $7.1520 for Sol. GLiClass Large remains inexpensive for short transcripts but becomes costly for long states because of its two label groups and 512-token context.
 
 With `S` as raw state tokens, `kM` as ModernBERT chunks, `kGM` and `kGL` as the two GLiClass chunk counts, and `kJ` as JEV requests:
 
@@ -101,9 +101,13 @@ GLiClass Large:       0.012669 * {2[S + 256(kGL-1)] + 294kGL} / 1,000
 ModernBERT zero-shot: 0.008154 * {27[S + 256(kM-1)] + 375kM} / 1,000
 JEV Noul:             0.042 * [S + 256(kJ-1) + 2559.74kJ] / 1,000
 JEV Choice:           0.042 * [S + 256(kJ-1) + 2963.67kJ] / 1,000
+GPT-5.6 Luna:         [0.20(S + 503.53) + 1.20(212)] / 1,000
+GPT-5.6 Sol:          [4.00(S + 503.53) + 20.00(212)] / 1,000
 ```
 
 GLiClass Modern uses the 170.3k processed-token/s ModernBERT-large proxy. GLiClass Large uses 109.6k processed tokens/s, obtained by scaling that proxy with the official 32-label A6000 sample-throughput ratio `28.79 / 44.73`. These are simulations, not measured H100 results. Parallel chunks reduce latency if sufficient hardware is available but do not reduce processed tokens. Probability aggregation has negligible compute cost but requires validation.
+
+Sol and Luna use the standardized compact prompt already used in the API-cost comparison: 728 mean input tokens at the 224.46-token benchmark state and a fixed 212-token binary JSON response. Their curves approximate input as `S + 503.53`, assume each added state token contributes one LLM input token, and exclude unavailable hidden reasoning tokens. The state axis uses ModernBERT tokens while the LLM prompt estimate used `o200k_base`, so this scaling is approximate. Current official rates are [Sol: $4/M input and $20/M output](https://developers.openai.com/api/docs/models/gpt-5.6-sol) and [Luna: $0.20/M input and $1.20/M output](https://developers.openai.com/api/docs/models).
 
 ### What each ModernBERT path actually computes
 
@@ -217,7 +221,7 @@ Sol and Luna received truth-free transcript inputs and the 27-label output schem
 - Hugging Face, [ModernBERT efficiency benchmark](https://huggingface.co/blog/modernbert).
 - Michael Feil, [ModernBERT-base H100 deployment observation](https://www.linkedin.com/posts/michael-feil_the-latest-release-of-infinity-httpslnkdin-activity-7280971190632943616-E07N).
 - OpenAI, [GPT-5.6 Sol model and pricing](https://developers.openai.com/api/docs/models/gpt-5.6-sol).
-- OpenAI, [GPT-5.6 Luna pricing update](https://openai.com/index/advancing-the-price-performance-frontier-with-gpt-5-6/).
+- OpenAI, [model catalog and GPT-5.6 Luna pricing](https://developers.openai.com/api/docs/models).
 - Hugging Face, [ModernBERT-large-zeroshot-v2.0](https://huggingface.co/MoritzLaurer/ModernBERT-large-zeroshot-v2.0).
 - Hugging Face, [DeBERTa-v3-large-zeroshot-v2.0-c](https://huggingface.co/MoritzLaurer/deberta-v3-large-zeroshot-v2.0-c).
 - Knowledgator, [GLiClass Modern Large v3](https://huggingface.co/knowledgator/gliclass-modern-large-v3.0).

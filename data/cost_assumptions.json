@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-09-19",
+  "as_of": "2026-09-20",
   "scope": "Estimated recurring marginal inference cost for 1,000 transcripts; calibration, training, hardware acquisition, and engineering are excluded.",
   "pricing_usd_per_million_tokens": {
     "jev_input": 0.042,
@@ -53,6 +53,6 @@
   "sources": {
     "jev": "https://typesafe.ai/blog/introducing-system-one-models-and-jev",
     "openai_sol": "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
-    "openai_pricing": "https://openai.com/index/advancing-the-price-performance-frontier-with-gpt-5-6/"
+    "openai_pricing": "https://developers.openai.com/api/docs/models"
   }
 }

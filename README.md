@@ -27,23 +27,23 @@ The principal findings are:
 
 ## Estimated cost per 1,000 transcripts with chunking
 
-![Estimated cost per 1,000 transcripts versus state length for ModernBERT, GLiClass, and JEV](charts/normalized-cost-vs-state-tokens.png)
+![Estimated cost per 1,000 transcripts versus state length for ModernBERT, GLiClass, JEV, Sol, and Luna](charts/normalized-cost-vs-state-tokens.png)
 
 **Chunking** splits a state that exceeds a model's native context into overlapping pieces, runs the same classifier on every piece, and combines the chunk-level probabilities into one transcript-level result. For these presence-style attributes, a maximum or calibrated noisy-OR is a plausible aggregator, but it must be validation-tuned because additional chunks can increase false positives.
 
-This sensitivity analysis covers states up to **32k tokens** and uses NVIDIA H100s at **$5/GPU-hour**, 27 questions or labels, near-100% utilization, and 256 overlapping tokens between adjacent chunks. ModernBERT uses approximately 8,178 state tokens per chunk. GLiClass Modern Large uses the same ModernBERT-large H100 throughput proxy and fits approximately 7,895 state tokens plus all 27 labels in one pass. GLiClass Large has a 512-token context and used two label groups, leaving a 357-token state payload and repeating the state twice per chunk. JEV uses approximately 31,890 state tokens per request. At 32k this becomes five ModernBERT chunks, five GLiClass Modern chunks, 315 GLiClass Large chunks, or two JEV requests under the shared 256-token-overlap assumption.
+This sensitivity analysis covers states up to **32k tokens** and uses NVIDIA H100s at **$5/GPU-hour**, 27 questions or labels, near-100% utilization, and 256 overlapping tokens between adjacent chunks. ModernBERT uses approximately 8,178 state tokens per chunk. GLiClass Modern Large uses the same ModernBERT-large H100 throughput proxy and fits approximately 7,895 state tokens plus all 27 labels in one pass. GLiClass Large has a 512-token context and used two label groups, leaving a 357-token state payload and repeating the state twice per chunk. JEV uses approximately 31,890 state tokens per request. At 32k this becomes five ModernBERT chunks, five GLiClass Modern chunks, 315 GLiClass Large chunks, or two JEV requests under the shared 256-token-overlap assumption. Sol and Luna remain one API call because their 1.05M-token contexts exceed this range.
 
-| State tokens | ModernBERT trained | GLiClass Modern | GLiClass Large | ModernBERT zero-shot | JEV Noul | JEV Choice |
-|---:|---:|---:|---:|---:|---:|---:|
-| 100 | $0.0008 | $0.0032 | $0.0063 | $0.0251 | $0.1117 | $0.1287 |
-| 224 benchmark mean | $0.0018 | $0.0043 | $0.0094 | $0.0525 | $0.1169 | $0.1339 |
-| 600 | $0.0049 | $0.0073 | $0.0496 | $0.1352 | $0.1327 | $0.1497 |
-| 8,000 | $0.0652 | $0.0722 | $0.9825 | $1.7643 | $0.4435 | $0.4605 |
-| 8,192 | $0.0689 | $0.0737 | $1.0077 | $1.8660 | $0.4516 | $0.4685 |
-| 16,000 | $0.1326 | $0.1419 | $1.9918 | $3.5850 | $0.7795 | $0.7965 |
-| 32,000 | $0.2694 | $0.2814 | $4.0208 | $7.2858 | $1.5698 | $1.6037 |
+| State tokens | ModernBERT trained | GLiClass Modern | GLiClass Large | ModernBERT zero-shot | JEV Noul | JEV Choice | Luna | Sol |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 100 | $0.0008 | $0.0032 | $0.0063 | $0.0251 | $0.1117 | $0.1287 | $0.3751 | $6.6541 |
+| 224 benchmark mean | $0.0018 | $0.0043 | $0.0094 | $0.0525 | $0.1169 | $0.1339 | $0.4000 | $7.1520 |
+| 600 | $0.0049 | $0.0073 | $0.0496 | $0.1352 | $0.1327 | $0.1497 | $0.4751 | $8.6541 |
+| 8,000 | $0.0652 | $0.0722 | $0.9825 | $1.7643 | $0.4435 | $0.4605 | $1.9551 | $38.2541 |
+| 8,192 | $0.0689 | $0.0737 | $1.0077 | $1.8660 | $0.4516 | $0.4685 | $1.9935 | $39.0221 |
+| 16,000 | $0.1326 | $0.1419 | $1.9918 | $3.5850 | $0.7795 | $0.7965 | $3.5551 | $70.2541 |
+| 32,000 | $0.2694 | $0.2814 | $4.0208 | $7.2858 | $1.5698 | $1.6037 | $6.7551 | $134.2541 |
 
-All values are estimated USD per **1,000 transcripts**. GLiClass Modern is the notable result: it retains arbitrary runtime labels while remaining close to the fixed-head ModernBERT cost curve in this simulation. At the 224-token benchmark mean it is approximately $0.0043 per 1,000 transcripts, versus $0.0018 for trained ModernBERT, $0.0525 for zero-shot ModernBERT NLI, and $0.1169 for JEV Noul. GLiClass Large is also inexpensive for short transcripts, but its 512-token context and two label groups make long-state chunking costly.
+All values are estimated USD per **1,000 transcripts**. GLiClass Modern is the notable result: it retains arbitrary runtime labels while remaining close to the fixed-head ModernBERT cost curve in this simulation. At the 224-token benchmark mean it is approximately $0.0043 per 1,000 transcripts, versus $0.0018 for trained ModernBERT, $0.0525 for zero-shot ModernBERT NLI, $0.1169 for JEV Noul, $0.4000 for Luna, and $7.1520 for Sol. GLiClass Large is also inexpensive for short transcripts, but its 512-token context and two label groups make long-state chunking costly.
 
 The cost model counts repeated overlap and label/request overhead. With `S` as raw state tokens, `kM` as ModernBERT chunks, `kGM` and `kGL` as the two GLiClass chunk counts, and `kJ` as JEV requests:
 
@@ -59,11 +59,15 @@ GLiClass Large:       0.012669 * {2[S + 256(kGL-1)] + 294kGL} / 1,000
 ModernBERT zero-shot: 0.008154 * {27[S + 256(kM-1)] + 375kM} / 1,000
 JEV Noul:             0.042 * [S + 256(kJ-1) + 2559.74kJ] / 1,000
 JEV Choice:           0.042 * [S + 256(kJ-1) + 2963.67kJ] / 1,000
+GPT-5.6 Luna:         [0.20(S + 503.53) + 1.20(212)] / 1,000
+GPT-5.6 Sol:          [4.00(S + 503.53) + 20.00(212)] / 1,000
 ```
 
 Chunks may execute in parallel, but parallelism changes latency rather than total token-compute cost. Zero-shot ModernBERT evaluates all 27 questions against every chunk; trained ModernBERT encodes each chunk once; GLiClass Modern encodes each chunk once with all labels; GLiClass Large encodes each chunk twice for its two label groups; JEV uses one request per state chunk. Aggregation compute is excluded and aggregation quality requires validation.
 
 GLiClass Modern is assigned the 170.3k processed-token/s ModernBERT-large H100 proxy because it uses that backbone. GLiClass Large is assigned 109.6k processed tokens/s by scaling that proxy with the official 32-label A6000 sample-throughput ratio, `28.79 / 44.73`. These are simulations rather than H100 measurements. Throughput sources: [official ModernBERT efficiency comparison](https://huggingface.co/blog/modernbert), [third-party H100 ModernBERT-base observation](https://www.linkedin.com/posts/michael-feil_the-latest-release-of-infinity-httpslnkdin-activity-7280971190632943616-E07N), and the [GLiClass model-card throughput table](https://huggingface.co/knowledgator/gliclass-large-v3.0). The $5/H100-hour price is a scenario assumption.
+
+Sol and Luna use the standardized one-call prompt already used by the API-cost comparison: 728 mean input tokens at the 224.46-token benchmark state and a fixed 212-token binary JSON response. The state-length curves therefore use `S + 503.53` input tokens and assume each added state token contributes one LLM input token. This is approximate because the state axis uses ModernBERT token counts while the LLM estimate used `o200k_base`. Hidden reasoning tokens remain excluded. Current OpenAI API rates are [Sol: $4/M input and $20/M output](https://developers.openai.com/api/docs/models/gpt-5.6-sol) and [Luna: $0.20/M input and $1.20/M output](https://developers.openai.com/api/docs/models).
 
 Context-limit sources: [ModernBERT documentation](https://huggingface.co/docs/transformers/en/model_doc/modernbert) and [JEV models and limits](https://docs.typesafe.ai/models).
 
@@ -117,7 +121,7 @@ This older chart reports marginal API charges for 1,000 transcripts. It should n
 
 - JEV Choice uses the actual mean input usage from all 150 test calls: approximately $0.134 per 1,000 transcripts at $0.042 per million input tokens.
 - JEV Noul uses actual input usage from a 10-transcript length-spanning sample: approximately $0.117 per 1,000 transcripts. Output is free under the published pricing.
-- Sol and Luna use a standardized compact one-call-per-transcript prompt measured with `o200k_base`: 728 mean input tokens and 212 output tokens. Estimated costs are $7.15 for Sol and $0.40 for Luna at prices available on September 19, 2026.
+- Sol and Luna use a standardized compact one-call-per-transcript prompt measured with `o200k_base`: 728 mean input tokens and 212 output tokens. Estimated costs are $7.15 for Sol and $0.40 for Luna at prices verified on September 20, 2026.
 - Local encoders show zero API charges. Hardware, electricity, hosting, engineering, and operations are not zero and are deliberately excluded.
 - Hidden reasoning tokens for the original Codex Sol/Luna evaluation were unavailable, so the LLM amounts are standardized scenario estimates rather than invoices from the benchmark run.
 
@@ -129,7 +133,7 @@ billable input ~= state tokens + N * question tokens + fixed request overhead
 
 It does **not** assume `N * (state tokens + question tokens)`. In the separate scaling check, latency remained approximately flat as question count increased from 1 to 16. That is consistent with TypeSafe's claim that questions are evaluated in parallel, but it does not prove that the hidden neural architecture encodes the state exactly once.
 
-Pricing sources: [TypeSafe.ai JEV launch and pricing](https://typesafe.ai/blog/introducing-system-one-models-and-jev), [GPT-5.6 Sol pricing](https://developers.openai.com/api/docs/models/gpt-5.6-sol), and [GPT-5.6 Luna pricing update](https://openai.com/index/advancing-the-price-performance-frontier-with-gpt-5-6/).
+Pricing sources: [TypeSafe.ai JEV launch and pricing](https://typesafe.ai/blog/introducing-system-one-models-and-jev), [GPT-5.6 Sol pricing](https://developers.openai.com/api/docs/models/gpt-5.6-sol), and the [official OpenAI model catalog](https://developers.openai.com/api/docs/models) for Luna.
 
 ## What each variant means
 

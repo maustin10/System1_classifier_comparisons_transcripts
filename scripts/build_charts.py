@@ -301,6 +301,12 @@ def normalized_cost_state_length_chart() -> None:
     jev_rate = assumptions["jev_price_usd_per_million_billed_input_tokens"]
     noul_overhead = assumptions["jev_noul_non_state_billed_tokens_per_transcript"]
     choice_overhead = assumptions["jev_choice_non_state_billed_tokens_per_transcript"]
+    llm_input_overhead = assumptions["llm_non_state_input_tokens_per_transcript_proxy"]
+    llm_output_tokens = assumptions["llm_standardized_mean_output_tokens_per_transcript"]
+    sol_input_rate = assumptions["gpt_5_6_sol_input_usd_per_million_tokens"]
+    sol_output_rate = assumptions["gpt_5_6_sol_output_usd_per_million_tokens"]
+    luna_input_rate = assumptions["gpt_5_6_luna_input_usd_per_million_tokens"]
+    luna_output_rate = assumptions["gpt_5_6_luna_output_usd_per_million_tokens"]
     overlap = assumptions["chunk_overlap_tokens"]
     modernbert_payload = assumptions["modernbert_nominal_state_payload_tokens_per_chunk"]
     gliclass_modern_payload = assumptions["gliclass_modern_nominal_state_payload_tokens_per_chunk"]
@@ -385,6 +391,28 @@ def normalized_cost_state_length_chart() -> None:
             "--",
             None,
         ),
+        (
+            "GPT-5.6 Luna",
+            (
+                luna_input_rate * (state_tokens + llm_input_overhead)
+                + luna_output_rate * llm_output_tokens
+            )
+            / 1_000,
+            "#F4A261",
+            ":",
+            "D",
+        ),
+        (
+            "GPT-5.6 Sol",
+            (
+                sol_input_rate * (state_tokens + llm_input_overhead)
+                + sol_output_rate * llm_output_tokens
+            )
+            / 1_000,
+            "#303846",
+            ":",
+            "^",
+        ),
     ]
 
     fig, ax = plt.subplots(figsize=(15.5, 8.2))
@@ -447,23 +475,23 @@ def normalized_cost_state_length_chart() -> None:
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xlim(lower, upper)
-    ax.set_ylim(2e-4, 2e1)
+    ax.set_ylim(2e-4, 2e2)
     ax.set_xlabel("State length (tokens, log scale)")
     ax.set_ylabel("Estimated USD per 1,000 transcripts (log scale)")
     x_ticks = [50, 100, 250, 500, 1000, 2000, 4000, 8000, 16000, 32000]
     ax.xaxis.set_major_locator(FixedLocator([tick for tick in x_ticks if lower <= tick <= upper]))
     ax.xaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:,.0f}"))
-    ax.yaxis.set_major_locator(FixedLocator([1e-3, 1e-2, 1e-1, 1, 10]))
+    ax.yaxis.set_major_locator(FixedLocator([1e-3, 1e-2, 1e-1, 1, 10, 100]))
     ax.yaxis.set_major_formatter(FuncFormatter(lambda value, _: f"${value:g}"))
     ax.grid(color=GRID, linewidth=0.8, which="major")
     ax.set_axisbelow(True)
     ax.spines[["top", "right"]].set_visible(False)
-    ax.legend(frameon=False, ncol=3, loc="upper right")
+    ax.legend(frameon=False, ncol=4, loc="upper right", fontsize=9.5)
     fig.text(
         0.01,
         0.01,
-        "Each curve is the estimated cost of 1,000 transcripts. GLiClass Modern uses the 170.3k token/s H100 proxy; GLiClass Large uses 109.6k token/s, "
-        "scaled by the official 32-label A6000 throughput ratio. These are simulations, not measured H100 results. Long-context throughput changes are not modeled.",
+        "Each curve is the estimated cost of 1,000 transcripts. Sol/Luna include standardized input plus 212 output tokens; hidden reasoning tokens are excluded. "
+        "GLiClass curves use H100 throughput proxies, not measured H100 results. Long-context throughput changes are not modeled.",
         color=MUTED,
         fontsize=9,
     )

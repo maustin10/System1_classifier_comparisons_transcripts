@@ -34,7 +34,7 @@ def footer(c: canvas.Canvas, page_number: int) -> None:
     c.line(36, 25, PAGE_W - 36, 25)
     c.setFont("Helvetica", 7.5)
     c.setFillColor(MUTED)
-    c.drawString(36, 13, "Independent synthetic transcript classifier benchmark · Mark Austin · September 19, 2026")
+    c.drawString(36, 13, "Independent synthetic transcript classifier benchmark · Mark Austin · September 20, 2026")
     c.drawRightString(PAGE_W - 36, 13, str(page_number))
 
 
@@ -128,7 +128,7 @@ def cover(c: canvas.Canvas) -> None:
     c.drawString(47, 65, "Mark Austin")
     c.setFont("Helvetica", 9)
     c.setFillColor(HexColor("#C8D3E3"))
-    c.drawString(47, 48, "Independent evaluation · September 19, 2026")
+    c.drawString(47, 48, "Independent evaluation · September 20, 2026")
     c.showPage()
 
 
@@ -142,6 +142,7 @@ def executive_page(c: canvas.Canvas, page_number: int) -> None:
         "GLiClass Modern Large v3 was the strongest zero-shot open encoder: validation-only calibration reached 97.90% accuracy and 96.00% F1.",
         "DeBERTa-v3-large zero-shot (-c) did not beat ModernBERT zero-shot and was approximately 2.47x slower on the measured CPU path.",
         "At the 224-token benchmark mean, simulated cost per 1,000 transcripts is $0.0018 for trained ModernBERT, $0.0043 for GLiClass Modern, $0.0525 for zero-shot ModernBERT, and $0.1169 for JEV Noul.",
+        "The standardized one-call API estimates are $0.4000 for Luna and $7.1520 for Sol per 1,000 benchmark-mean transcripts; hidden reasoning tokens are excluded.",
     ]
     y = bullet_list(c, findings, 48, PAGE_H - 100, 690, font_size=11)
 
@@ -314,39 +315,49 @@ def cost_formulas_page(c: canvas.Canvas, page_number: int) -> None:
             "0.042 * [S + 256*(kJ - 1) + 2963.67*kJ] / 1,000",
             HexColor("#A78BDB"),
         ),
+        (
+            "GPT-5.6 Luna",
+            "[0.20*(S + 503.53) + 1.20*212] / 1,000",
+            HexColor("#F4A261"),
+        ),
+        (
+            "GPT-5.6 Sol",
+            "[4.00*(S + 503.53) + 20.00*212] / 1,000",
+            HexColor("#303846"),
+        ),
     ]
     y = PAGE_H - 205
     for label, formula, color in formulas:
         c.setStrokeColor(GRID)
         c.setFillColor(white)
-        c.roundRect(44, y - 30, 704, 34, 6, fill=1, stroke=1)
+        c.roundRect(44, y - 25, 704, 29, 6, fill=1, stroke=1)
         c.setFillColor(color)
-        c.setFont("Helvetica-Bold", 8.5)
-        c.drawString(60, y - 10, label)
+        c.setFont("Helvetica-Bold", 8.1)
+        c.drawString(60, y - 8, label)
         c.setFillColor(NAVY)
-        c.setFont("Courier", 7.7)
-        c.drawString(250, y - 10, formula)
-        y -= 40
+        c.setFont("Courier", 7.3)
+        c.drawString(250, y - 8, formula)
+        y -= 30
 
     c.setFillColor(PALE)
-    c.roundRect(44, 48, 704, 82, 7, fill=1, stroke=0)
+    c.roundRect(44, 44, 704, 94, 7, fill=1, stroke=0)
     wrapped(
         c,
-        "<b>Rates.</b> ModernBERT and GLiClass Modern use the 170.3k processed-token/s H100 proxy, or USD 0.008154 per million processed tokens. JEV uses USD 0.042 per million billed input tokens.",
+        "<b>Rates.</b> ModernBERT and GLiClass Modern use the 170.3k processed-token/s H100 proxy. JEV uses USD 0.042/M input. Luna uses USD 0.20/M input and USD 1.20/M output; Sol uses USD 4/M input and USD 20/M output.",
         60,
-        114,
+        124,
         672,
-        font_size=8.8,
-        leading=11,
+        font_size=8.3,
+        leading=10.3,
     )
     wrapped(
         c,
-        "<b>GLiClass simulation.</b> Large uses 109.6k tokens/s, scaling the ModernBERT H100 proxy by the official 32-label A6000 throughput ratio 28.79 / 44.73. Neither GLiClass checkpoint was measured on H100 here.",
+        "<b>Assumptions.</b> GLiClass Large uses a 109.6k token/s proxy. Sol/Luna use S + 503.53 input tokens and 212 output tokens; hidden reasoning tokens are excluded. Neither GLiClass checkpoint was measured on H100 here.",
         60,
-        78,
+        80,
         672,
-        font_size=8.8,
-        leading=11,
+        font_size=8.3,
+        leading=10.3,
     )
     footer(c, page_number)
     c.showPage()
@@ -358,7 +369,7 @@ def conclusions_page(c: canvas.Canvas, page_number: int) -> None:
     c.setFont("Helvetica-Bold", 13)
     c.drawString(45, PAGE_H - 95, "Practical interpretation")
     y = bullet_list(c, [
-        "For the highest measured quality, Sol led by one decision over calibrated JEV Noul.",
+        "For the highest measured quality, Sol led by one decision over calibrated JEV Noul, but its standardized benchmark-mean API estimate is $7.152 per 1,000 transcripts versus $0.400 for Luna and $0.117 for JEV Noul.",
         "GLiClass Modern combines arbitrary runtime labels with a simulated $0.0043 cost per 1,000 benchmark-mean transcripts, versus $0.0525 for zero-shot ModernBERT and $0.1169 for JEV Noul.",
         "Trained ModernBERT was by far the cheapest path, but only because its 27 questions were converted into fixed supervised heads.",
         "GLiClass Modern Large improved the calibrated zero-shot open-encoder result to 97.90% accuracy, but remained below trained ModernBERT.",
@@ -374,6 +385,7 @@ def conclusions_page(c: canvas.Canvas, page_number: int) -> None:
         "The H100 scenario uses throughput proxies and holds token throughput constant across state lengths; GLiClass Modern inherits the ModernBERT-large proxy and GLiClass Large scales it using an official A6000 relative-throughput ratio.",
         "JEV cost is extrapolated from billing; hosted capacity at the equivalent throughput was not tested.",
         "Sol/Luna standardized cost estimates exclude unavailable hidden reasoning-token usage.",
+        "Sol/Luna state scaling assumes one added LLM input token per ModernBERT state-axis token; tokenizer differences make this approximate.",
         "GLiClass Large used two label groups while GLiClass Modern Large used one; their local timings are not a one-pass checkpoint comparison.",
     ], 45, y - 30, 702, font_size=9.1)
 
@@ -386,12 +398,11 @@ def conclusions_page(c: canvas.Canvas, page_number: int) -> None:
         "ModernBERT documentation: https://huggingface.co/docs/transformers/en/model_doc/modernbert",
         "H100 ModernBERT-base observation: https://www.linkedin.com/posts/michael-feil_the-latest-release-of-infinity-httpslnkdin-activity-7280971190632943616-E07N",
         "OpenAI Sol pricing: https://developers.openai.com/api/docs/models/gpt-5.6-sol",
-        "OpenAI Luna pricing: https://openai.com/index/advancing-the-price-performance-frontier-with-gpt-5-6/",
-        "Model cards: https://huggingface.co/MoritzLaurer",
+        "OpenAI Luna pricing: https://developers.openai.com/api/docs/models",
         "GLiClass Modern Large v3: https://huggingface.co/knowledgator/gliclass-modern-large-v3.0",
         "GLiClass Large v3: https://huggingface.co/knowledgator/gliclass-large-v3.0",
     ]
-    y = bullet_list(c, sources, 45, y - 25, 702, font_size=8.2)
+    y = bullet_list(c, sources, 45, y - 25, 702, font_size=7.9)
     footer(c, page_number)
     c.showPage()
 
