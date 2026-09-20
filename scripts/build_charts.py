@@ -864,8 +864,16 @@ RUNTIME_DECISION_MODELS = [
     ("gpt_5_6_sol", "Sol", "GPT-5.6 Sol", "#303846", False),
 ]
 
+FIXED_DECISION_MODELS = [
+    ("modernbert_trained", "Trained MB", "ModernBERT-large + trained heads", "#0B678B", True),
+    *RUNTIME_DECISION_MODELS,
+]
 
-def executive_runtime_grid(utilization_pct: float) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+
+def executive_decision_grid(
+    utilization_pct: float,
+    models: list[tuple[str, str, str, str, bool]],
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Return winner ids, winner costs, and savings versus runner-up for the executive grid."""
     generic = NORMALIZED_COST["generic_transcript_sensitivity"]
     grid = generic["executive_decision_grid"]
@@ -879,7 +887,7 @@ def executive_runtime_grid(utilization_pct: float) -> tuple[np.ndarray, np.ndarr
         for col, state_tokens in enumerate(states):
             costs = generic_transcript_costs(state_tokens, question_count)
             candidates = []
-            for key, short, _, _, self_hosted in RUNTIME_DECISION_MODELS:
+            for key, short, _, _, self_hosted in models:
                 value = float(costs[key]) / utilization if self_hosted else float(costs[key])
                 candidates.append((value, key, short))
             candidates.sort()
@@ -889,6 +897,76 @@ def executive_runtime_grid(utilization_pct: float) -> tuple[np.ndarray, np.ndarr
             winner_costs[row, col] = best
             advantages[row, col] = 100 * (runner_up - best) / runner_up
     return winner_ids, winner_costs, advantages
+
+
+def executive_runtime_grid(utilization_pct: float) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    return executive_decision_grid(utilization_pct, RUNTIME_DECISION_MODELS)
+
+
+def executive_fixed_grid(utilization_pct: float) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    return executive_decision_grid(utilization_pct, FIXED_DECISION_MODELS)
+
+
+def executive_fixed_taxonomy_heatmap() -> None:
+    """Show the lowest-cost approach when trained fixed heads are eligible."""
+    generic = NORMALIZED_COST["generic_transcript_sensitivity"]
+    grid = generic["executive_decision_grid"]
+    states = grid["state_tokens"]
+    questions = grid["questions"]
+    utilizations = generic["executive_gpu_utilization_percent"]
+    by_key = {key: (short, full, color) for key, short, full, color, _ in FIXED_DECISION_MODELS}
+
+    fig, axes = plt.subplots(2, 2, figsize=(18, 10.5), sharex=True, sharey=True)
+    for ax, utilization_pct in zip(axes.flat, utilizations):
+        winners, costs, _ = executive_fixed_grid(utilization_pct)
+        for row in range(len(questions)):
+            for col in range(len(states)):
+                key = winners[row, col]
+                short, _, color = by_key[key]
+                ax.add_patch(plt.Rectangle((col - 0.5, row - 0.5), 1, 1, facecolor=color, edgecolor="white", linewidth=2))
+                cost = costs[row, col]
+                cost_label = f"${cost:.3f}" if cost < 10 else f"${cost:.1f}"
+                ax.text(col, row, f"{short}\n{cost_label}", ha="center", va="center", color="white", fontsize=9.2, fontweight="bold")
+        ax.set_xlim(-0.5, len(states) - 0.5)
+        ax.set_ylim(len(questions) - 0.5, -0.5)
+        ax.set_xticks(range(len(states)), [f"{value / 1000:g}k" for value in states])
+        ax.set_yticks(range(len(questions)), [str(value) for value in questions])
+        ax.set_title(f"{utilization_pct}% paid H100 utilization", fontsize=14, pad=12)
+        ax.tick_params(length=0, labelsize=10)
+        for spine in ax.spines.values():
+            spine.set_visible(False)
+    for ax in axes[1, :]:
+        ax.set_xlabel("State length (tokens)")
+    for ax in axes[:, 0]:
+        ax.set_ylabel("Questions in fixed taxonomy")
+
+    winner_keys = []
+    for utilization_pct in utilizations:
+        winners, _, _ = executive_fixed_grid(utilization_pct)
+        for key in winners.flat:
+            if key not in winner_keys:
+                winner_keys.append(key)
+    handles = [plt.Rectangle((0, 0), 1, 1, color=by_key[key][2]) for key in winner_keys]
+    labels = [by_key[key][1] for key in winner_keys]
+    fig.legend(handles, labels, ncol=len(labels), frameon=False, loc="upper center", bbox_to_anchor=(0.5, 0.905), fontsize=10)
+    fig.suptitle("Fixed taxonomy: which approach has the lowest modeled cost?", x=0.055, ha="left", fontsize=21, fontweight="bold")
+    fig.text(
+        0.055,
+        0.94,
+        "Trained ModernBERT heads are eligible · state length × taxonomy size × paid GPU utilization",
+        color=MUTED,
+        fontsize=11,
+    )
+    fig.text(
+        0.01,
+        0.012,
+        "Each cell shows the winner and USD per 1,000 states. ModernBERT-large + trained heads encodes the state once and has negligible incremental head cost, but new or changed questions require labeled data and retraining.",
+        color=MUTED,
+        fontsize=8.7,
+    )
+    fig.tight_layout(rect=(0.04, 0.06, 0.995, 0.87), w_pad=2.8, h_pad=2.2)
+    fig.savefig(CHARTS / "executive-fixed-taxonomy-winner-heatmap.png", dpi=180, bbox_inches="tight")
+    plt.close(fig)
 
 
 def executive_winner_heatmap() -> None:
@@ -933,18 +1011,18 @@ def executive_winner_heatmap() -> None:
     handles = [plt.Rectangle((0, 0), 1, 1, color=by_key[key][2]) for key in winner_keys]
     labels = [by_key[key][1] for key in winner_keys]
     fig.legend(handles, labels, ncol=len(labels), frameon=False, loc="upper center", bbox_to_anchor=(0.5, 0.905), fontsize=10)
-    fig.suptitle("Which runtime-question approach has the lowest modeled cost?", x=0.055, ha="left", fontsize=21, fontweight="bold")
+    fig.suptitle("Runtime questions: lowest-cost approach", x=0.055, ha="left", fontsize=21, fontweight="bold")
     fig.text(
         0.055,
         0.94,
-        "State length × question count × paid GPU utilization · each cell shows the winner and USD per 1,000 states",
+        "Trained ModernBERT heads are ineligible · state length × question count × paid GPU utilization",
         color=MUTED,
         fontsize=11,
     )
     fig.text(
         0.01,
         0.012,
-        "Fixed trained heads are intentionally excluded: if questions are stable and labeled training data exists, ModernBERT-large + trained heads is the default economic path. Runtime candidates evaluated: GLiClass Modern, TypeSafe.ai JEV Noul, ModernBERT NLI, Luna, and Sol.",
+        "Each cell shows the winner and USD per 1,000 states. Runtime candidates evaluated: GLiClass Modern, TypeSafe.ai JEV Noul, ModernBERT NLI, Luna, and Sol. Use the paired fixed-taxonomy map when trained heads are acceptable.",
         color=MUTED,
         fontsize=8.7,
     )
@@ -993,7 +1071,7 @@ def executive_winner_confidence_heatmap() -> None:
     fig.text(
         0.055,
         0.94,
-        "Higher percentages mean the recommendation is more economically robust; low percentages indicate a close decision",
+        "Runtime questions only; trained heads are ineligible · high percentages are robust, low percentages indicate a close decision",
         color=MUTED,
         fontsize=11,
     )
@@ -1122,6 +1200,7 @@ def main() -> None:
     generic_question_count_chart()
     executive_decision_matrix()
     executive_gpu_utilization_bars()
+    executive_fixed_taxonomy_heatmap()
     executive_winner_heatmap()
     executive_winner_confidence_heatmap()
     executive_operating_scorecard()

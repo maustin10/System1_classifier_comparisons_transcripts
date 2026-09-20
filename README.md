@@ -10,11 +10,15 @@ The benchmark contains 1,000 synthetic conversations, each labeled for 27 binary
 
 ## Executive decision pack
 
-The first decision is whether the taxonomy is fixed. If questions are stable and labeled training data exists, the default economic path is the fixed trained encoder. If questions change at runtime, use the winner and confidence maps below.
+The first decision is whether the taxonomy is fixed. The paired maps use identical state-length, question-count, and utilization grids so the only difference is whether trained ModernBERT heads are eligible.
+
+![Lowest-cost approach when the taxonomy is fixed and trained ModernBERT heads are eligible](charts/executive-fixed-taxonomy-winner-heatmap.png)
+
+When the taxonomy is fixed, trained ModernBERT wins every tested cell at 25% or greater paid H100 utilization. At 10%, JEV wins many longer-state cells because its usage pricing avoids idle GPU cost.
 
 ![Lowest-cost runtime-question approach across state length, question count, and GPU utilization](charts/executive-runtime-winner-heatmap.png)
 
-Each cell shows the lowest-cost runtime-question approach and estimated USD per 1,000 states. The four panels vary paid H100 utilization; columns vary state length; rows vary the number of questions. The evaluated runtime candidates are GLiClass Modern, TypeSafe.ai JEV Noul, ModernBERT pairwise NLI, GPT-5.6 Luna, and GPT-5.6 Sol.
+When questions must change at runtime, trained heads are ineligible. Each cell shows the lowest-cost eligible approach and estimated USD per 1,000 states. The evaluated runtime candidates are GLiClass Modern, TypeSafe.ai JEV Noul, ModernBERT pairwise NLI, GPT-5.6 Luna, and GPT-5.6 Sol.
 
 ![Cost advantage of the winning runtime-question approach](charts/executive-runtime-winner-confidence.png)
 

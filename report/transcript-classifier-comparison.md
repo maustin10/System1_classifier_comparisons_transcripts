@@ -17,9 +17,15 @@ The benchmark is deliberately a smoke test. Its deterministic synthetic template
 
 ## Executive decision pack
 
-If questions are stable and labeled training data exists, ModernBERT-large with trained heads is the default economic path. When questions change at runtime, the following map combines the three cost drivers: state length, question count, and paid H100 utilization.
+The paired maps use identical state-length, question-count, and utilization grids. The only difference is whether trained ModernBERT heads are eligible.
+
+![Lowest-cost approach with a fixed taxonomy](../charts/executive-fixed-taxonomy-winner-heatmap.png)
+
+With a fixed taxonomy, trained ModernBERT wins every tested cell at 25% or greater paid H100 utilization. At 10%, JEV wins many longer-state cells because usage pricing avoids idle GPU cost.
 
 ![Lowest-cost runtime-question approach](../charts/executive-runtime-winner-heatmap.png)
+
+When questions must change at runtime, trained heads are ineligible. GLiClass and JEV divide the winner map according to utilization, state length, and question count.
 
 ![Winner cost advantage over the runner-up](../charts/executive-runtime-winner-confidence.png)
 
