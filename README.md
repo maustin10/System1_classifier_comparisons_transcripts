@@ -4,7 +4,7 @@ This repository represents an independent comparison of open encoder classifiers
 
 **Author: Mark Austin**
 
-Publication drafts: [LinkedIn post](articles/linkedin-post.md) · [Long-form blog](articles/blog-post.md) · [Classifier-tokenomics outline](articles/blog-outline-classifier-tokenomics.md) ([PDF](output/pdf/inside-classifier-tokenomics-blog-outline.pdf))
+Publication drafts: [LinkedIn post](articles/linkedin-post.md) · [Long-form blog](articles/blog-post.md) · [Classifier-tokenomics outline](articles/blog-outline-classifier-tokenomics.md) ([PDF](articles/blog-outline-classifier-tokenomics.pdf))
 
 The benchmark contains 1,000 synthetic conversations, each labeled for 27 binary customer-care attributes. The fixed split is 700 training, 150 validation, and 150 locked test conversations. All quality numbers below are calculated only on the locked test set: 4,050 binary decisions.
 
