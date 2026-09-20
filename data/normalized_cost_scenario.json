@@ -35,6 +35,20 @@
       "formula": "tokenize(state) once, then 27 fixed logistic heads; question text is not an inference input",
       "question_flexibility": "Fixed learned taxonomy; a new question requires a new or retrained head"
     },
+    "gliclass_modern_large_v3": {
+      "mean_processed_tokens_per_transcript": 521.46,
+      "processed_to_raw_state_amplification": 2.32317562149158,
+      "formula": "one uni-encoder pass containing the state and all 27 label descriptions; 297 measured label, separator, and special tokens beyond the raw state",
+      "question_flexibility": "Arbitrary natural-language labels at inference",
+      "forward_passes_per_transcript": 1
+    },
+    "gliclass_large_v3": {
+      "mean_processed_tokens_per_transcript": 741.44,
+      "processed_to_raw_state_amplification": 3.3032166087498886,
+      "formula": "two uni-encoder passes containing the state and deterministic 13/14-label groups; 294 combined label, separator, and special tokens per state chunk",
+      "question_flexibility": "Arbitrary natural-language labels at inference",
+      "forward_passes_per_transcript": 2
+    },
     "jev_noul": {
       "mean_billed_input_tokens_per_transcript": 2784.2,
       "billed_to_raw_state_amplification": 12.403991802548337,
@@ -59,6 +73,16 @@
       "cost_usd_per_hour": 143.35338144881047,
       "cost_usd_per_million_raw_state_tokens": 0.23378210705262545
     },
+    "gliclass_modern_large_v3": {
+      "gpu_equivalents": 2.32317562149158,
+      "cost_usd_per_hour": 11.615878107457899,
+      "cost_usd_per_million_raw_state_tokens": 0.018943288479021117
+    },
+    "gliclass_large_v3": {
+      "gpu_equivalents": 5.1320902712533,
+      "cost_usd_per_hour": 25.6604513562665,
+      "cost_usd_per_million_raw_state_tokens": 0.04184731692660858
+    },
     "jev_noul": {
       "billed_input_tokens_per_second": 2112786.6441967105,
       "cost_usd_per_hour": 319.45334060254265,
@@ -71,13 +95,28 @@
     }
   },
   "state_length_sensitivity": {
-    "normalization": "USD per transcript",
+    "normalization": "USD per 1,000 transcripts",
     "state_token_range": [50, 32000],
     "assumptions": {
       "questions_per_transcript": 27,
       "modernbert_cost_usd_per_million_processed_tokens": 0.008154049269361177,
       "modernbert_zero_shot_non_state_tokens_per_transcript": 375.0,
       "modernbert_trained_special_tokens_per_transcript": 2.0,
+      "gliclass_modern_h100_processed_tokens_per_second_proxy": 170331.1867525299,
+      "gliclass_modern_cost_usd_per_million_processed_tokens": 0.008154049269361177,
+      "gliclass_modern_non_state_tokens_per_pass": 297.0,
+      "gliclass_modern_forward_passes_per_chunk": 1,
+      "gliclass_modern_max_sequence_tokens": 8192,
+      "gliclass_modern_nominal_state_payload_tokens_per_chunk": 7895.0,
+      "gliclass_modern_a6000_samples_per_second_at_32_labels": 44.73,
+      "gliclass_large_a6000_samples_per_second_at_32_labels": 28.79,
+      "gliclass_large_h100_processed_tokens_per_second_proxy": 109631.89954404955,
+      "gliclass_large_cost_usd_per_million_processed_tokens": 0.012668656610577474,
+      "gliclass_large_non_state_tokens_per_chunk_total": 294.0,
+      "gliclass_large_forward_passes_per_chunk": 2,
+      "gliclass_large_max_sequence_tokens": 512,
+      "gliclass_large_max_label_group_overhead_tokens": 155.0,
+      "gliclass_large_nominal_state_payload_tokens_per_chunk": 357.0,
       "jev_price_usd_per_million_billed_input_tokens": 0.042,
       "jev_noul_non_state_billed_tokens_per_transcript": 2559.74,
       "jev_choice_non_state_billed_tokens_per_transcript": 2963.6666666666665,
@@ -89,40 +128,52 @@
       "jev_nominal_state_payload_tokens_per_request": 31890,
       "aggregation_assumption": "Chunk probabilities are combined outside the model; aggregation compute cost is negligible but thresholds and quality require separate validation",
       "jev_state_scaling_assumption": "Each additional raw state token adds one billed JEV input token",
-      "throughput_assumption": "ModernBERT remains at the 170,331 processed-token/s H100 proxy across state lengths; actual long-context throughput may differ"
+      "throughput_assumption": "ModernBERT and GLiClass Modern use the 170,331 processed-token/s H100 proxy across state lengths; actual long-context throughput may differ",
+      "gliclass_large_throughput_derivation": "The 109,632 processed-token/s H100 proxy scales the 170,331 ModernBERT-large proxy by the GLiClass model card's 32-label A6000 sample-throughput ratio: 28.79 / 44.73",
+      "gliclass_throughput_status": "Simulation only; neither GLiClass checkpoint was benchmarked on an H100 in this study"
     },
     "formulas": {
       "modernbert_chunk_count": "kM = max(1, ceil((S - 256) / (8178.1111 - 256)))",
+      "gliclass_modern_chunk_count": "kGM = max(1, ceil((S - 256) / (7895 - 256)))",
+      "gliclass_large_chunk_count": "kGL = max(1, ceil((S - 256) / (357 - 256)))",
       "jev_request_count": "kJ = max(1, ceil((S - 256) / (31890 - 256)))",
-      "modernbert_trained": "0.0081540493 * (S + 256 * (kM - 1) + 2 * kM) / S",
-      "modernbert_zero_shot": "0.0081540493 * (27 * (S + 256 * (kM - 1)) + 375 * kM) / S",
-      "jev_noul": "0.042 * (S + 256 * (kJ - 1) + 2559.74 * kJ) / S",
-      "jev_choice": "0.042 * (S + 256 * (kJ - 1) + 2963.6667 * kJ) / S"
+      "modernbert_trained": "0.0081540493 * (S + 256 * (kM - 1) + 2 * kM) / 1000",
+      "gliclass_modern_large_v3": "0.0081540493 * (S + 256 * (kGM - 1) + 297 * kGM) / 1000",
+      "gliclass_large_v3": "0.0126686566 * (2 * (S + 256 * (kGL - 1)) + 294 * kGL) / 1000",
+      "modernbert_zero_shot": "0.0081540493 * (27 * (S + 256 * (kM - 1)) + 375 * kM) / 1000",
+      "jev_noul": "0.042 * (S + 256 * (kJ - 1) + 2559.74 * kJ) / 1000",
+      "jev_choice": "0.042 * (S + 256 * (kJ - 1) + 2963.6667 * kJ) / 1000"
     },
     "crossovers_with_modernbert_zero_shot": {
       "jev_noul_state_tokens": 586.2803332504706,
       "jev_choice_state_tokens": 681.5036368744104
     },
     "sample_costs": [
-      {"state_tokens": 100, "modernbert_chunks": 1, "jev_requests": 1, "modernbert_trained": 8.3171302547484e-7, "modernbert_zero_shot": 0.000025073701503285618, "jev_noul": 0.00011170908, "jev_choice": 0.000128674},
-      {"state_tokens": 224.46, "modernbert_chunks": 1, "jev_requests": 1, "modernbert_trained": 0.0000018465659975395323, "modernbert_zero_shot": 0.00005247473174903231, "jev_noul": 0.00011693640000000001, "jev_choice": 0.00013390132},
-      {"state_tokens": 600, "modernbert_chunks": 1, "jev_requests": 1, "modernbert_trained": 0.000004908737660155428, "modernbert_zero_shot": 0.00013515336663966153, "jev_noul": 0.00013270908, "jev_choice": 0.000149674},
-      {"state_tokens": 8000, "modernbert_chunks": 1, "jev_requests": 1, "modernbert_trained": 0.00006524870225342872, "modernbert_zero_shot": 0.001764332410658025, "jev_noul": 0.00044350908, "jev_choice": 0.000460474},
-      {"state_tokens": 8192, "modernbert_chunks": 2, "jev_requests": 1, "modernbert_trained": 0.00006891802442464068, "modernbert_zero_shot": 0.001866021559096228, "jev_noul": 0.00045157308, "jev_choice": 0.000468538},
-      {"state_tokens": 16000, "modernbert_chunks": 2, "jev_requests": 1, "modernbert_trained": 0.00013258484111981275, "modernbert_zero_shot": 0.003585025609865874, "jev_noul": 0.00077950908, "jev_choice": 0.000796474},
-      {"state_tokens": 32000, "modernbert_chunks": 5, "jev_requests": 2, "modernbert_trained": 0.0002693608635640771, "modernbert_zero_shot": 0.007285830565307408, "jev_noul": 0.00156977016, "jev_choice": 0.0016037}
+      {"state_tokens": 100, "modernbert_chunks": 1, "gliclass_modern_chunks": 1, "gliclass_large_chunks": 1, "jev_requests": 1, "modernbert_trained": 0.00083171302547484, "gliclass_modern_large_v3": 0.003237157559936387, "gliclass_large_v3": 0.006258316365625673, "modernbert_zero_shot": 0.02507370150328562, "jev_noul": 0.11170908, "jev_choice": 0.128674},
+      {"state_tokens": 224.46, "modernbert_chunks": 1, "gliclass_modern_chunks": 1, "gliclass_large_chunks": 1, "jev_requests": 1, "modernbert_trained": 0.0018465659975395323, "gliclass_modern_large_v3": 0.00425201053200108, "gliclass_large_v3": 0.009411798369130218, "modernbert_zero_shot": 0.05247473174903231, "jev_noul": 0.11693640000000001, "jev_choice": 0.13390132},
+      {"state_tokens": 600, "modernbert_chunks": 1, "gliclass_modern_chunks": 1, "gliclass_large_chunks": 4, "jev_requests": 1, "modernbert_trained": 0.004908737660155428, "gliclass_modern_large_v3": 0.007314182194616977, "gliclass_large_v3": 0.04955978466057907, "modernbert_zero_shot": 0.13515336663966152, "jev_noul": 0.13270908, "jev_choice": 0.149674},
+      {"state_tokens": 8000, "modernbert_chunks": 1, "gliclass_modern_chunks": 2, "gliclass_large_chunks": 77, "jev_requests": 1, "modernbert_trained": 0.06524870225342872, "gliclass_modern_large_v3": 0.07216333603384642, "gliclass_large_v3": 0.9824543201503681, "modernbert_zero_shot": 1.764332410658025, "jev_noul": 0.44350908, "jev_choice": 0.460474},
+      {"state_tokens": 8192, "modernbert_chunks": 2, "gliclass_modern_chunks": 2, "gliclass_large_chunks": 79, "jev_requests": 1, "modernbert_trained": 0.06891802442464068, "gliclass_modern_large_v3": 0.07372891349356377, "gliclass_large_v3": 1.0077409587449957, "modernbert_zero_shot": 1.866021559096228, "jev_noul": 0.45157308, "jev_choice": 0.468538},
+      {"state_tokens": 16000, "modernbert_chunks": 2, "gliclass_modern_chunks": 3, "gliclass_large_chunks": 156, "jev_requests": 1, "modernbert_trained": 0.13258484111981274, "gliclass_modern_large_v3": 0.14190491943469258, "gliclass_large_v3": 1.9918168669414753, "modernbert_zero_shot": 3.585025609865874, "jev_noul": 0.77950908, "jev_choice": 0.796474},
+      {"state_tokens": 32000, "modernbert_chunks": 5, "gliclass_modern_chunks": 5, "gliclass_large_chunks": 315, "jev_requests": 2, "modernbert_trained": 0.2693608635640771, "gliclass_modern_large_v3": 0.2813880862363849, "gliclass_large_v3": 4.02075289775161, "modernbert_zero_shot": 7.285830565307408, "jev_noul": 1.56977016, "jev_choice": 1.6037}
     ]
   },
   "quality_variants": [
     {"id": "modernbert_zero_shot", "cost_path": "modernbert_zero_shot"},
     {"id": "modernbert_zero_shot_opt_threshold", "cost_path": "modernbert_zero_shot"},
     {"id": "modernbert_trained", "cost_path": "modernbert_trained"},
+    {"id": "gliclass_modern_large_v3", "cost_path": "gliclass_modern_large_v3"},
+    {"id": "gliclass_modern_large_v3_opt_threshold", "cost_path": "gliclass_modern_large_v3"},
+    {"id": "gliclass_large_v3", "cost_path": "gliclass_large_v3"},
+    {"id": "gliclass_large_v3_opt_threshold", "cost_path": "gliclass_large_v3"},
     {"id": "jev_choice", "cost_path": "jev_choice"},
     {"id": "jev_noul_default", "cost_path": "jev_noul"},
     {"id": "jev_noul_calibrated", "cost_path": "jev_noul"}
   ],
   "interpretation": [
     "The trained ModernBERT result is extremely inexpensive because its 27 questions are fixed in learned heads; it is not an arbitrary-question system.",
+    "GLiClass Modern Large preserves arbitrary labels in one uni-encoder pass and is simulated near the trained-head ModernBERT cost curve because both use a ModernBERT-large backbone.",
+    "GLiClass Large preserves arbitrary labels but repeats the state across two label groups and has a 512-token context, so 256-token-overlap chunking raises its cost sharply for long states.",
     "Zero-shot ModernBERT preserves arbitrary hypotheses but repeats the state inside every NLI pair, creating a measured 28.67x token-compute amplification for 27 questions.",
     "JEV preserves arbitrary typed questions while billing as shared state plus incremental question tokens; under the stated assumptions, Noul becomes cheaper than zero-shot ModernBERT above approximately 586 state tokens.",
     "The JEV API capacity required to sustain this hypothetical load was not tested; its cost is linearly extrapolated from published per-token pricing."
@@ -133,6 +184,9 @@
     "typesafe_pricing_and_claims": "https://typesafe.ai/blog/introducing-system-one-models-and-jev",
     "typesafe_api": "https://docs.typesafe.ai/api",
     "typesafe_models_and_limits": "https://docs.typesafe.ai/models",
-    "modernbert_context_limit": "https://huggingface.co/docs/transformers/en/model_doc/modernbert"
+    "modernbert_context_limit": "https://huggingface.co/docs/transformers/en/model_doc/modernbert",
+    "gliclass_repository": "https://github.com/Knowledgator/GLiClass",
+    "gliclass_modern_large_model": "https://huggingface.co/knowledgator/gliclass-modern-large-v3.0",
+    "gliclass_large_model": "https://huggingface.co/knowledgator/gliclass-large-v3.0"
   }
 }

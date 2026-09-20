@@ -216,6 +216,10 @@ def normalized_cost_quality_chart() -> None:
         "modernbert_zero_shot": (8, -18),
         "modernbert_zero_shot_opt_threshold": (8, 8),
         "modernbert_trained": (8, -4),
+        "gliclass_modern_large_v3": (8, -20),
+        "gliclass_modern_large_v3_opt_threshold": (8, 10),
+        "gliclass_large_v3": (8, -18),
+        "gliclass_large_v3_opt_threshold": (8, 10),
         "jev_choice": (8, -18),
         "jev_noul_default": (8, -17),
         "jev_noul_calibrated": (8, 8),
@@ -267,11 +271,11 @@ def normalized_cost_quality_chart() -> None:
         plt.Line2D([0], [0], marker="o", linestyle="", markersize=9, color=color)
         for color in (COLORS["Open encoder"], COLORS["JEV"])
     ]
-    ax.legend(handles, ["ModernBERT", "TypeSafe.ai JEV"], frameon=False, ncol=2, loc="lower left")
+    ax.legend(handles, ["Open encoder", "TypeSafe.ai JEV"], frameon=False, ncol=2, loc="lower left")
     fig.text(
         0.01,
         0.01,
-        "ModernBERT: estimated 170.3k processed tokens/s per H100 at USD 5/hour (proxy, not an exact-checkpoint benchmark). "
+        "Open encoders: simulated H100 serving costs from the stated throughput proxies, not exact-checkpoint H100 benchmarks. "
         "JEV: USD 0.042/M billed input tokens. JEV capacity and rate limits were not validated.",
         color=MUTED,
         fontsize=9,
@@ -289,11 +293,18 @@ def normalized_cost_state_length_chart() -> None:
     questions = assumptions["questions_per_transcript"]
     zero_overhead = assumptions["modernbert_zero_shot_non_state_tokens_per_transcript"]
     trained_overhead = assumptions["modernbert_trained_special_tokens_per_transcript"]
+    gliclass_modern_rate = assumptions["gliclass_modern_cost_usd_per_million_processed_tokens"]
+    gliclass_modern_overhead = assumptions["gliclass_modern_non_state_tokens_per_pass"]
+    gliclass_large_rate = assumptions["gliclass_large_cost_usd_per_million_processed_tokens"]
+    gliclass_large_overhead = assumptions["gliclass_large_non_state_tokens_per_chunk_total"]
+    gliclass_large_passes = assumptions["gliclass_large_forward_passes_per_chunk"]
     jev_rate = assumptions["jev_price_usd_per_million_billed_input_tokens"]
     noul_overhead = assumptions["jev_noul_non_state_billed_tokens_per_transcript"]
     choice_overhead = assumptions["jev_choice_non_state_billed_tokens_per_transcript"]
     overlap = assumptions["chunk_overlap_tokens"]
     modernbert_payload = assumptions["modernbert_nominal_state_payload_tokens_per_chunk"]
+    gliclass_modern_payload = assumptions["gliclass_modern_nominal_state_payload_tokens_per_chunk"]
+    gliclass_large_payload = assumptions["gliclass_large_nominal_state_payload_tokens_per_chunk"]
     jev_payload = assumptions["jev_nominal_state_payload_tokens_per_request"]
 
     def chunk_breaks(payload: float) -> list[float]:
@@ -307,6 +318,8 @@ def normalized_cost_state_length_chart() -> None:
     state_tokens = np.array(sorted(set(
         np.geomspace(lower, upper, 900).tolist()
         + chunk_breaks(modernbert_payload)
+        + chunk_breaks(gliclass_modern_payload)
+        + chunk_breaks(gliclass_large_payload)
         + chunk_breaks(jev_payload)
     )))
 
@@ -314,54 +327,98 @@ def normalized_cost_state_length_chart() -> None:
         return np.maximum(1, np.ceil((values - overlap) / (payload - overlap))).astype(int)
 
     modernbert_chunks = chunk_count(state_tokens, modernbert_payload)
+    gliclass_modern_chunks = chunk_count(state_tokens, gliclass_modern_payload)
+    gliclass_large_chunks = chunk_count(state_tokens, gliclass_large_payload)
     jev_requests = chunk_count(state_tokens, jev_payload)
     modernbert_encoded_state = state_tokens + overlap * (modernbert_chunks - 1)
+    gliclass_modern_encoded_state = state_tokens + overlap * (gliclass_modern_chunks - 1)
+    gliclass_large_encoded_state = state_tokens + overlap * (gliclass_large_chunks - 1)
     jev_billed_state = state_tokens + overlap * (jev_requests - 1)
 
     curves = [
         (
             "ModernBERT trained heads",
-            encoder_rate * (modernbert_encoded_state + trained_overhead * modernbert_chunks) / 1_000_000,
+            encoder_rate * (modernbert_encoded_state + trained_overhead * modernbert_chunks) / 1_000,
             "#0B678B",
             "-",
+            None,
+        ),
+        (
+            "GLiClass Modern Large (sim.)",
+            gliclass_modern_rate
+            * (gliclass_modern_encoded_state + gliclass_modern_overhead * gliclass_modern_chunks)
+            / 1_000,
+            "#D47900",
+            "-.",
+            "o",
+        ),
+        (
+            "GLiClass Large, 2 groups (sim.)",
+            gliclass_large_rate
+            * (
+                gliclass_large_passes * gliclass_large_encoded_state
+                + gliclass_large_overhead * gliclass_large_chunks
+            )
+            / 1_000,
+            "#C44E52",
+            "-.",
+            "s",
         ),
         (
             "ModernBERT zero-shot",
-            encoder_rate * (questions * modernbert_encoded_state + zero_overhead * modernbert_chunks) / 1_000_000,
+            encoder_rate * (questions * modernbert_encoded_state + zero_overhead * modernbert_chunks) / 1_000,
             "#2A9D8F",
             "-",
+            None,
         ),
         (
             "JEV Noul",
-            jev_rate * (jev_billed_state + noul_overhead * jev_requests) / 1_000_000,
+            jev_rate * (jev_billed_state + noul_overhead * jev_requests) / 1_000,
             "#8059C3",
             "-",
+            None,
         ),
         (
             "JEV Choice",
-            jev_rate * (jev_billed_state + choice_overhead * jev_requests) / 1_000_000,
+            jev_rate * (jev_billed_state + choice_overhead * jev_requests) / 1_000,
             "#A78BDB",
             "--",
+            None,
         ),
     ]
 
     fig, ax = plt.subplots(figsize=(15.5, 8.2))
-    for label, values, color, linestyle in curves:
-        ax.plot(state_tokens, values, label=label, color=color, linewidth=3, linestyle=linestyle)
+    marker_positions = np.unique(np.linspace(0, len(state_tokens) - 1, 14, dtype=int))
+    for label, values, color, linestyle, marker in curves:
+        ax.plot(
+            state_tokens,
+            values,
+            label=label,
+            color=color,
+            linewidth=3.2 if marker else 2.8,
+            linestyle=linestyle,
+            marker=marker,
+            markevery=marker_positions if marker else None,
+            markersize=6.5,
+            markeredgecolor="white" if marker else None,
+            markeredgewidth=0.9 if marker else None,
+            zorder=4 if marker else 3,
+        )
 
     crossovers = sensitivity["crossovers_with_modernbert_zero_shot"]
     noul_cross = crossovers["jev_noul_state_tokens"]
     choice_cross = crossovers["jev_choice_state_tokens"]
-    zero_cost = lambda s: encoder_rate * (questions * s + zero_overhead) / 1_000_000
+    zero_cost = lambda s: encoder_rate * (questions * s + zero_overhead) / 1_000
     ax.axvspan(noul_cross, upper, color="#8059C3", alpha=0.045, zorder=0)
     ax.axvline(224.46, color=MUTED, linewidth=1.2, linestyle=":")
     ax.text(224.46, 0.89, "benchmark mean\n224 tokens", transform=ax.get_xaxis_transform(), color=MUTED, fontsize=9, ha="center")
-    for boundary, label, color in [
-        (modernbert_payload, "ModernBERT chunking\nstarts near 8.2k", "#2A9D8F"),
-        (jev_payload, "JEV request chunking\nstarts near 31.9k", "#8059C3"),
+    for boundary, label, color, y_position in [
+        (gliclass_large_payload, "GLiClass Large payload\n357 state tokens", "#C44E52", 0.47),
+        (modernbert_payload, "ModernBERT / GLiClass Modern\nchunking starts near 8k", "#2A9D8F", 0.72),
+        (jev_payload, "JEV request chunking\nstarts near 31.9k", "#8059C3", 0.72),
     ]:
         ax.axvline(boundary, color=color, linewidth=1.2, linestyle="--", alpha=0.8)
-        ax.text(boundary, 0.72, label, transform=ax.get_xaxis_transform(), color=color, fontsize=9, ha="center")
+        ax.text(boundary, y_position, label, transform=ax.get_xaxis_transform(), color=color, fontsize=9, ha="center")
     for crossover, label, offset in [
         (noul_cross, "Noul crossover\n586 tokens", (-35, 52)),
         (choice_cross, "Choice crossover\n682 tokens", (55, 30)),
@@ -378,11 +435,11 @@ def normalized_cost_state_length_chart() -> None:
             arrowprops={"arrowstyle": "-", "color": MUTED, "linewidth": 1},
         )
 
-    ax.set_title("Estimated cost per transcript by state length", loc="left", pad=20)
+    ax.set_title("Estimated cost per 1,000 transcripts by state length", loc="left", pad=20)
     ax.text(
         0,
         1.015,
-        "27 questions · 256-token chunk overlap · H100 at USD 5/hour · lower cost is better",
+        "27 questions / labels · 256-token chunk overlap · H100 at USD 5/hour · lower cost is better",
         transform=ax.transAxes,
         color=MUTED,
         fontsize=11,
@@ -390,27 +447,27 @@ def normalized_cost_state_length_chart() -> None:
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xlim(lower, upper)
-    ax.set_ylim(2e-7, 2e-2)
+    ax.set_ylim(2e-4, 2e1)
     ax.set_xlabel("State length (tokens, log scale)")
-    ax.set_ylabel("Estimated cost per transcript (USD, log scale)")
+    ax.set_ylabel("Estimated USD per 1,000 transcripts (log scale)")
     x_ticks = [50, 100, 250, 500, 1000, 2000, 4000, 8000, 16000, 32000]
     ax.xaxis.set_major_locator(FixedLocator([tick for tick in x_ticks if lower <= tick <= upper]))
     ax.xaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:,.0f}"))
-    ax.yaxis.set_major_locator(FixedLocator([1e-6, 1e-5, 1e-4, 1e-3, 1e-2]))
-    ax.yaxis.set_major_formatter(FuncFormatter(lambda value, _: f"${value:.6f}".rstrip("0")))
+    ax.yaxis.set_major_locator(FixedLocator([1e-3, 1e-2, 1e-1, 1, 10]))
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda value, _: f"${value:g}"))
     ax.grid(color=GRID, linewidth=0.8, which="major")
     ax.set_axisbelow(True)
     ax.spines[["top", "right"]].set_visible(False)
-    ax.legend(frameon=False, ncol=2, loc="upper right")
+    ax.legend(frameon=False, ncol=3, loc="upper right")
     fig.text(
         0.01,
         0.01,
-        "Each curve is the estimated cost of processing one transcript. Chunking repeats the 256-token overlap and question/request overhead; aggregation compute is excluded. "
-        "ModernBERT throughput is held at 170.3k processed tokens/s; tokenizer and long-context throughput differences are not modeled.",
+        "Each curve is the estimated cost of 1,000 transcripts. GLiClass Modern uses the 170.3k token/s H100 proxy; GLiClass Large uses 109.6k token/s, "
+        "scaled by the official 32-label A6000 throughput ratio. These are simulations, not measured H100 results. Long-context throughput changes are not modeled.",
         color=MUTED,
         fontsize=9,
     )
-    fig.tight_layout(rect=(0, 0.06, 1, 0.96))
+    fig.tight_layout(rect=(0, 0.08, 1, 0.96))
     fig.savefig(CHARTS / "normalized-cost-vs-state-tokens.png", dpi=180, bbox_inches="tight")
     plt.close(fig)
 

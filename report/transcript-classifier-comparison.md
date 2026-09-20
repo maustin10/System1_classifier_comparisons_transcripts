@@ -71,36 +71,39 @@ On the measured CPU path, GLiClass Modern Large produced the 4,050 test decision
 
 The original JEV Choice run used a raw transcript string and generic present/absent criteria. The Noul run used structured speaker turns, detailed true/false boundaries, and validation refinement for three overlapping labels. Although a binary Choice argmax is mathematically equivalent to a 0.50 cutoff when both primitives expose the same probability, the API documentation does not guarantee identical internal scoring. More importantly, this experiment changed several factors simultaneously. A primitive-only A/B test remains future work.
 
-## Estimated cost per transcript with chunking
+## Estimated cost per 1,000 transcripts with chunking
 
-![Estimated cost per transcript versus state length](../charts/normalized-cost-vs-state-tokens.png)
+![Estimated cost per 1,000 transcripts versus state length](../charts/normalized-cost-vs-state-tokens.png)
 
-Chunking splits an over-limit state into overlapping pieces, scores every piece, and aggregates the piece-level probabilities. This scenario covers states up to **32k tokens** and uses NVIDIA H100s at **$5/GPU-hour**, 27 questions, 256 overlapping tokens, and near-100% utilization. ModernBERT's nominal state payload is 8,178 tokens per chunk; JEV's is 31,890 tokens per request after reserving 110 tokens for the nominal longest question. At the 32k endpoint, the nominal allowance makes this five ModernBERT chunks or two JEV requests.
+Chunking splits an over-limit state into overlapping pieces, scores every piece, and aggregates the piece-level probabilities. This scenario covers states up to **32k tokens** and uses NVIDIA H100s at **$5/GPU-hour**, 27 questions or labels, 256 overlapping tokens, and near-100% utilization. GLiClass Modern uses the ModernBERT-large H100 throughput proxy and one pass per chunk. GLiClass Large uses two label-group passes and a 512-token context, leaving a 357-token state payload. At 32k this becomes five ModernBERT chunks, five GLiClass Modern chunks, 315 GLiClass Large chunks, or two JEV requests.
 
-| State tokens | MB chunks | JEV requests | MB trained | MB zero-shot | JEV Noul | JEV Choice |
+| State tokens | MB trained | GLiClass Modern | GLiClass Large | MB zero-shot | JEV Noul | JEV Choice |
 |---:|---:|---:|---:|---:|---:|---:|
-| 224 benchmark mean | 1 | 1 | $0.0000018 | $0.0000525 | $0.0001169 | $0.0001339 |
-| 8,000 | 1 | 1 | $0.0000652 | $0.0017643 | $0.0004435 | $0.0004605 |
-| 8,192 | 2 | 1 | $0.0000689 | $0.0018660 | $0.0004516 | $0.0004685 |
-| 16,000 | 2 | 1 | $0.0001326 | $0.0035850 | $0.0007795 | $0.0007965 |
-| 32,000 | 5 | 2 | $0.0002694 | $0.0072858 | $0.0015698 | $0.0016037 |
+| 224 benchmark mean | $0.0018 | $0.0043 | $0.0094 | $0.0525 | $0.1169 | $0.1339 |
+| 8,000 | $0.0652 | $0.0722 | $0.9825 | $1.7643 | $0.4435 | $0.4605 |
+| 8,192 | $0.0689 | $0.0737 | $1.0077 | $1.8660 | $0.4516 | $0.4685 |
+| 16,000 | $0.1326 | $0.1419 | $1.9918 | $3.5850 | $0.7795 | $0.7965 |
+| 32,000 | $0.2694 | $0.2814 | $4.0208 | $7.2858 | $1.5698 | $1.6037 |
 
-All values are estimated USD to process one transcript, so every curve rises with state length. JEV Noul crosses below arbitrary-question ModernBERT zero-shot at approximately **586 state tokens**, while Choice crosses below at approximately **682 tokens**. Fixed-head trained ModernBERT stays much cheaper because it does not process question text at inference.
+All values are estimated USD per **1,000 transcripts**. GLiClass Modern retains arbitrary runtime labels while staying close to the fixed-head ModernBERT cost curve in this simulation. At the 224-token benchmark mean it is approximately $0.0043 per 1,000 transcripts, versus $0.0018 for trained ModernBERT, $0.0525 for zero-shot ModernBERT NLI, and $0.1169 for JEV Noul. GLiClass Large remains inexpensive for short transcripts but becomes costly for long states because of its two label groups and 512-token context.
 
-With `S` as raw state tokens, `kM` as ModernBERT chunks, and `kJ` as JEV requests:
+With `S` as raw state tokens, `kM` as ModernBERT chunks, `kGM` and `kGL` as the two GLiClass chunk counts, and `kJ` as JEV requests:
 
 ```text
 kM = max(1, ceil((S - 256) / (8178.11 - 256)))
+kGM = max(1, ceil((S - 256) / (7895 - 256)))
+kGL = max(1, ceil((S - 256) / (357 - 256)))
 kJ = max(1, ceil((S - 256) / (31890 - 256)))
 
-ModernBERT trained:   0.008154 * [S + 256(kM-1) + 2kM] / 1,000,000
-ModernBERT zero-shot: 0.008154 * {27[S + 256(kM-1)] + 375kM} / 1,000,000
-JEV Noul:             0.042 * [S + 256(kJ-1) + 2559.74kJ] / 1,000,000
-JEV Choice:           0.042 * [S + 256(kJ-1) + 2963.67kJ] / 1,000,000
-GLiClass local:       measured H100 seconds/transcript * 5 / 3,600 (not estimated here)
+ModernBERT trained:   0.008154 * [S + 256(kM-1) + 2kM] / 1,000
+GLiClass Modern:      0.008154 * [S + 256(kGM-1) + 297kGM] / 1,000
+GLiClass Large:       0.012669 * {2[S + 256(kGL-1)] + 294kGL} / 1,000
+ModernBERT zero-shot: 0.008154 * {27[S + 256(kM-1)] + 375kM} / 1,000
+JEV Noul:             0.042 * [S + 256(kJ-1) + 2559.74kJ] / 1,000
+JEV Choice:           0.042 * [S + 256(kJ-1) + 2963.67kJ] / 1,000
 ```
 
-Parallel chunks reduce latency if sufficient hardware is available, but do not reduce billed or processed tokens. Zero-shot ModernBERT repeats all 27 questions for every chunk; trained ModernBERT encodes each chunk once; JEV repeats the question/request overhead for each request. Probability aggregation has negligible compute cost but requires validation because max or noisy-OR aggregation can change false-positive rates. The estimates hold ModernBERT token throughput constant and exclude orchestration, unused capacity, and untested JEV service-capacity constraints. GLiClass is not placed on the H100 state-length curve because these benchmark runs measured CPU inference rather than equivalent H100 throughput.
+GLiClass Modern uses the 170.3k processed-token/s ModernBERT-large proxy. GLiClass Large uses 109.6k processed tokens/s, obtained by scaling that proxy with the official 32-label A6000 sample-throughput ratio `28.79 / 44.73`. These are simulations, not measured H100 results. Parallel chunks reduce latency if sufficient hardware is available but do not reduce processed tokens. Probability aggregation has negligible compute cost but requires validation.
 
 ### What each ModernBERT path actually computes
 
@@ -191,7 +194,7 @@ Sol and Luna received truth-free transcript inputs and the 27-label output schem
 2. Only 150 conversations are in the locked test set; one error changes accuracy by approximately 0.025 percentage points across all label decisions.
 3. Attribute decisions within a transcript are correlated, so 4,050 labels are not equivalent to 4,050 independent samples.
 4. The JEV Noul and Choice prompts differ beyond the API primitive.
-5. The H100 serving-cost scenario uses a throughput proxy derived from a ModernBERT-base observation and the official RTX 4090 large/base ratio, not a benchmark of this exact NLI checkpoint and serving stack; it also holds processed-token throughput constant as state length changes.
+5. The H100 serving-cost scenario uses throughput proxies rather than direct measurements: ModernBERT and GLiClass Modern derive from a ModernBERT-base observation and the official RTX 4090 large/base ratio; GLiClass Large additionally uses the official A6000 32-label relative-throughput ratio. All curves hold processed-token throughput constant as state length changes.
 6. Continuous GPU-equivalents assume fleet-scale utilization; small deployments must round capacity up and will cost more per token.
 7. Thresholds and prompt boundaries may overfit the deterministic synthetic generator's ontology.
 8. JEV billing and latency are black-box observations and cannot reveal the proprietary internal compute graph.

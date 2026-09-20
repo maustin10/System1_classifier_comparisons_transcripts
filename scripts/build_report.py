@@ -141,7 +141,7 @@ def executive_page(c: canvas.Canvas, page_number: int) -> None:
         "Threshold calibration alone improved unchanged zero-shot ModernBERT from 92.96% to 96.42% accuracy and cut errors from 285 to 145.",
         "GLiClass Modern Large v3 was the strongest zero-shot open encoder: validation-only calibration reached 97.90% accuracy and 96.00% F1.",
         "DeBERTa-v3-large zero-shot (-c) did not beat ModernBERT zero-shot and was approximately 2.47x slower on the measured CPU path.",
-        "At the 224-token benchmark mean, zero-shot ModernBERT is cheaper than JEV; above about 586 state tokens, JEV Noul becomes cheaper per transcript under the stated H100 assumptions.",
+        "At the 224-token benchmark mean, simulated cost per 1,000 transcripts is $0.0018 for trained ModernBERT, $0.0043 for GLiClass Modern, $0.0525 for zero-shot ModernBERT, and $0.1169 for JEV Noul.",
     ]
     y = bullet_list(c, findings, 48, PAGE_H - 100, 690, font_size=11)
 
@@ -269,72 +269,84 @@ def operating_model_page(c: canvas.Canvas, page_number: int) -> None:
 
 
 def cost_formulas_page(c: canvas.Canvas, page_number: int) -> None:
-    page_title(c, "Cost formulas and assumptions", "Dollar cost per transcript - not normalized cost per token")
+    page_title(c, "Cost formulas and assumptions", "Estimated USD per 1,000 transcripts")
 
     c.setFillColor(PALE)
-    c.roundRect(44, PAGE_H - 174, 704, 82, 7, fill=1, stroke=0)
+    c.roundRect(44, PAGE_H - 178, 704, 88, 7, fill=1, stroke=0)
     c.setFillColor(NAVY)
     c.setFont("Helvetica-Bold", 10.5)
     c.drawString(60, PAGE_H - 116, "Definitions")
-    c.setFont("Courier", 8.8)
-    c.drawString(60, PAGE_H - 137, "S = state tokens        q = 27 questions        overlap = 256 tokens")
-    c.drawString(60, PAGE_H - 154, "kM = max(1, ceil((S - 256) / (8178.11 - 256)))")
-    c.drawString(400, PAGE_H - 154, "kJ = max(1, ceil((S - 256) / (31890 - 256)))")
+    c.setFont("Courier", 7.8)
+    c.drawString(60, PAGE_H - 135, "S = state tokens      q = 27 questions / labels      overlap = 256 tokens")
+    c.drawString(60, PAGE_H - 151, "kM  = max(1, ceil((S - 256)/(8178.11 - 256)))")
+    c.drawString(400, PAGE_H - 151, "kGM = max(1, ceil((S - 256)/(7895 - 256)))")
+    c.drawString(60, PAGE_H - 167, "kGL = max(1, ceil((S - 256)/(357 - 256)))")
+    c.drawString(400, PAGE_H - 167, "kJ  = max(1, ceil((S - 256)/(31890 - 256)))")
 
     formulas = [
         (
             "ModernBERT trained heads",
-            "0.008154 * [S + 256*(kM - 1) + 2*kM] / 1,000,000",
+            "0.008154 * [S + 256*(kM - 1) + 2*kM] / 1,000",
             BLUE,
         ),
         (
+            "GLiClass Modern Large",
+            "0.008154 * [S + 256*(kGM - 1) + 297*kGM] / 1,000",
+            ORANGE,
+        ),
+        (
+            "GLiClass Large (2 groups)",
+            "0.012669 * {2*[S + 256*(kGL - 1)] + 294*kGL} / 1,000",
+            HexColor("#C44E52"),
+        ),
+        (
             "ModernBERT zero-shot",
-            "0.008154 * {27*[S + 256*(kM - 1)] + 375*kM} / 1,000,000",
+            "0.008154 * {27*[S + 256*(kM - 1)] + 375*kM} / 1,000",
             HexColor("#2A9D8F"),
         ),
         (
             "JEV Noul",
-            "0.042 * [S + 256*(kJ - 1) + 2559.74*kJ] / 1,000,000",
+            "0.042 * [S + 256*(kJ - 1) + 2559.74*kJ] / 1,000",
             PURPLE,
         ),
         (
             "JEV Choice",
-            "0.042 * [S + 256*(kJ - 1) + 2963.67*kJ] / 1,000,000",
+            "0.042 * [S + 256*(kJ - 1) + 2963.67*kJ] / 1,000",
             HexColor("#A78BDB"),
         ),
     ]
-    y = PAGE_H - 212
+    y = PAGE_H - 205
     for label, formula, color in formulas:
         c.setStrokeColor(GRID)
         c.setFillColor(white)
-        c.roundRect(44, y - 39, 704, 43, 6, fill=1, stroke=1)
+        c.roundRect(44, y - 30, 704, 34, 6, fill=1, stroke=1)
         c.setFillColor(color)
-        c.setFont("Helvetica-Bold", 9.5)
-        c.drawString(60, y - 13, label)
+        c.setFont("Helvetica-Bold", 8.5)
+        c.drawString(60, y - 10, label)
         c.setFillColor(NAVY)
-        c.setFont("Courier", 8.6)
-        c.drawString(250, y - 13, formula)
-        y -= 53
+        c.setFont("Courier", 7.7)
+        c.drawString(250, y - 10, formula)
+        y -= 40
 
     c.setFillColor(PALE)
-    c.roundRect(44, 53, 704, 91, 7, fill=1, stroke=0)
+    c.roundRect(44, 48, 704, 82, 7, fill=1, stroke=0)
     wrapped(
         c,
-        "<b>Rates.</b> The H100 scenario converts USD 5/GPU-hour and 170.3k processed tokens/second into USD 0.008154 per million ModernBERT processed tokens. JEV uses USD 0.042 per million billed input tokens.",
+        "<b>Rates.</b> ModernBERT and GLiClass Modern use the 170.3k processed-token/s H100 proxy, or USD 0.008154 per million processed tokens. JEV uses USD 0.042 per million billed input tokens.",
         60,
-        124,
+        114,
         672,
-        font_size=9.2,
-        leading=12,
+        font_size=8.8,
+        leading=11,
     )
     wrapped(
         c,
-        "<b>GLiClass.</b> The new checkpoints appear in the API-cost chart as USD 0 API fee. An H100 cost curve is not estimated because these runs measured CPU inference; the general formula is measured H100 seconds per transcript * USD 5 / 3,600.",
+        "<b>GLiClass simulation.</b> Large uses 109.6k tokens/s, scaling the ModernBERT H100 proxy by the official 32-label A6000 throughput ratio 28.79 / 44.73. Neither GLiClass checkpoint was measured on H100 here.",
         60,
-        87,
+        78,
         672,
-        font_size=9.2,
-        leading=12,
+        font_size=8.8,
+        leading=11,
     )
     footer(c, page_number)
     c.showPage()
@@ -347,7 +359,7 @@ def conclusions_page(c: canvas.Canvas, page_number: int) -> None:
     c.drawString(45, PAGE_H - 95, "Practical interpretation")
     y = bullet_list(c, [
         "For the highest measured quality, Sol led by one decision over calibrated JEV Noul.",
-        "JEV Noul combined near-frontier quality with arbitrary runtime questions; its estimated per-transcript cost crosses below zero-shot ModernBERT at about 586 state tokens under the stated H100 assumptions.",
+        "GLiClass Modern combines arbitrary runtime labels with a simulated $0.0043 cost per 1,000 benchmark-mean transcripts, versus $0.0525 for zero-shot ModernBERT and $0.1169 for JEV Noul.",
         "Trained ModernBERT was by far the cheapest path, but only because its 27 questions were converted into fixed supervised heads.",
         "GLiClass Modern Large improved the calibrated zero-shot open-encoder result to 97.90% accuracy, but remained below trained ModernBERT.",
         "Threshold calibration is worthwhile, but it does not replace supervised heads when enough labeled examples exist.",
@@ -359,8 +371,8 @@ def conclusions_page(c: canvas.Canvas, page_number: int) -> None:
         "Synthetic templates are more explicit and regular than production conversations.",
         "Only 150 transcripts were held out; attribute decisions within a transcript are correlated.",
         "Choice versus Noul changed multiple factors and is not a clean primitive-only comparison.",
-        "The H100 scenario uses a throughput proxy and holds token throughput constant across state lengths, not a benchmark of this exact checkpoint and serving stack.",
-        "JEV cost is extrapolated from billing; hosted capacity at the normalized throughput was not tested.",
+        "The H100 scenario uses throughput proxies and holds token throughput constant across state lengths; GLiClass Modern inherits the ModernBERT-large proxy and GLiClass Large scales it using an official A6000 relative-throughput ratio.",
+        "JEV cost is extrapolated from billing; hosted capacity at the equivalent throughput was not tested.",
         "Sol/Luna standardized cost estimates exclude unavailable hidden reasoning-token usage.",
         "GLiClass Large used two label groups while GLiClass Modern Large used one; their local timings are not a one-pass checkpoint comparison.",
     ], 45, y - 30, 702, font_size=9.1)

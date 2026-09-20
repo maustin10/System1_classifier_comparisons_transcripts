@@ -25,42 +25,45 @@ The principal findings are:
 - GLiClass Large v3 reached 96.59% accuracy / 93.67% F1 after calibration. Its 512-token context required two label batches to retain every transcript token; GLiClass Modern Large fit all 27 labels in one pass with no truncation.
 - DeBERTa-v3-large-zeroshot-v2.0-c did not beat ModernBERT zero-shot on this dataset and was approximately 2.47 times slower on the same CPU path.
 
-## Estimated cost per transcript with chunking
+## Estimated cost per 1,000 transcripts with chunking
 
-![Estimated cost per transcript versus state length for ModernBERT and JEV](charts/normalized-cost-vs-state-tokens.png)
+![Estimated cost per 1,000 transcripts versus state length for ModernBERT, GLiClass, and JEV](charts/normalized-cost-vs-state-tokens.png)
 
 **Chunking** splits a state that exceeds a model's native context into overlapping pieces, runs the same classifier on every piece, and combines the chunk-level probabilities into one transcript-level result. For these presence-style attributes, a maximum or calibrated noisy-OR is a plausible aggregator, but it must be validation-tuned because additional chunks can increase false positives.
 
-This sensitivity analysis covers states up to **32k tokens** and uses NVIDIA H100s at **$5/GPU-hour**, 27 questions, near-100% utilization, and 256 overlapping tokens between adjacent chunks. ModernBERT uses approximately 8,178 state tokens per chunk after nominal question/special-token overhead. JEV uses approximately 31,890 state tokens per request, reserving a nominal 110 tokens for its longest question. At the 32k endpoint, the nominal allowance makes this five ModernBERT chunks or two JEV requests under these assumptions.
+This sensitivity analysis covers states up to **32k tokens** and uses NVIDIA H100s at **$5/GPU-hour**, 27 questions or labels, near-100% utilization, and 256 overlapping tokens between adjacent chunks. ModernBERT uses approximately 8,178 state tokens per chunk. GLiClass Modern Large uses the same ModernBERT-large H100 throughput proxy and fits approximately 7,895 state tokens plus all 27 labels in one pass. GLiClass Large has a 512-token context and used two label groups, leaving a 357-token state payload and repeating the state twice per chunk. JEV uses approximately 31,890 state tokens per request. At 32k this becomes five ModernBERT chunks, five GLiClass Modern chunks, 315 GLiClass Large chunks, or two JEV requests under the shared 256-token-overlap assumption.
 
-| State tokens | ModernBERT chunks | JEV requests | ModernBERT trained | ModernBERT zero-shot | JEV Noul | JEV Choice |
+| State tokens | ModernBERT trained | GLiClass Modern | GLiClass Large | ModernBERT zero-shot | JEV Noul | JEV Choice |
 |---:|---:|---:|---:|---:|---:|---:|
-| 100 | 1 | 1 | $0.0000008 | $0.0000251 | $0.0001117 | $0.0001287 |
-| 224 benchmark mean | 1 | 1 | $0.0000018 | $0.0000525 | $0.0001169 | $0.0001339 |
-| 600 | 1 | 1 | $0.0000049 | $0.0001352 | $0.0001327 | $0.0001497 |
-| 8,000 | 1 | 1 | $0.0000652 | $0.0017643 | $0.0004435 | $0.0004605 |
-| 8,192 | 2 | 1 | $0.0000689 | $0.0018660 | $0.0004516 | $0.0004685 |
-| 16,000 | 2 | 1 | $0.0001326 | $0.0035850 | $0.0007795 | $0.0007965 |
-| 32,000 | 5 | 2 | $0.0002694 | $0.0072858 | $0.0015698 | $0.0016037 |
+| 100 | $0.0008 | $0.0032 | $0.0063 | $0.0251 | $0.1117 | $0.1287 |
+| 224 benchmark mean | $0.0018 | $0.0043 | $0.0094 | $0.0525 | $0.1169 | $0.1339 |
+| 600 | $0.0049 | $0.0073 | $0.0496 | $0.1352 | $0.1327 | $0.1497 |
+| 8,000 | $0.0652 | $0.0722 | $0.9825 | $1.7643 | $0.4435 | $0.4605 |
+| 8,192 | $0.0689 | $0.0737 | $1.0077 | $1.8660 | $0.4516 | $0.4685 |
+| 16,000 | $0.1326 | $0.1419 | $1.9918 | $3.5850 | $0.7795 | $0.7965 |
+| 32,000 | $0.2694 | $0.2814 | $4.0208 | $7.2858 | $1.5698 | $1.6037 |
 
-All values are estimated USD to process one transcript. Absolute cost rises with state length. JEV Noul crosses below arbitrary-question ModernBERT zero-shot at approximately **586 state tokens**; JEV Choice crosses below it at approximately **682 tokens**. The fixed-head trained ModernBERT path remains substantially cheaper throughout because the questions have been compiled into learned weights.
+All values are estimated USD per **1,000 transcripts**. GLiClass Modern is the notable result: it retains arbitrary runtime labels while remaining close to the fixed-head ModernBERT cost curve in this simulation. At the 224-token benchmark mean it is approximately $0.0043 per 1,000 transcripts, versus $0.0018 for trained ModernBERT, $0.0525 for zero-shot ModernBERT NLI, and $0.1169 for JEV Noul. GLiClass Large is also inexpensive for short transcripts, but its 512-token context and two label groups make long-state chunking costly.
 
-The cost model counts repeated overlap and question/request overhead. With `S` as raw state tokens, `kM` as ModernBERT chunks, and `kJ` as JEV requests:
+The cost model counts repeated overlap and label/request overhead. With `S` as raw state tokens, `kM` as ModernBERT chunks, `kGM` and `kGL` as the two GLiClass chunk counts, and `kJ` as JEV requests:
 
 ```text
 kM = max(1, ceil((S - 256) / (8178.11 - 256)))
+kGM = max(1, ceil((S - 256) / (7895 - 256)))
+kGL = max(1, ceil((S - 256) / (357 - 256)))
 kJ = max(1, ceil((S - 256) / (31890 - 256)))
 
-ModernBERT trained:   0.008154 * [S + 256(kM-1) + 2kM] / 1,000,000
-ModernBERT zero-shot: 0.008154 * {27[S + 256(kM-1)] + 375kM} / 1,000,000
-JEV Noul:             0.042 * [S + 256(kJ-1) + 2559.74kJ] / 1,000,000
-JEV Choice:           0.042 * [S + 256(kJ-1) + 2963.67kJ] / 1,000,000
-GLiClass local:       measured H100 seconds/transcript * 5 / 3,600 (not estimated here)
+ModernBERT trained:   0.008154 * [S + 256(kM-1) + 2kM] / 1,000
+GLiClass Modern:      0.008154 * [S + 256(kGM-1) + 297kGM] / 1,000
+GLiClass Large:       0.012669 * {2[S + 256(kGL-1)] + 294kGL} / 1,000
+ModernBERT zero-shot: 0.008154 * {27[S + 256(kM-1)] + 375kM} / 1,000
+JEV Noul:             0.042 * [S + 256(kJ-1) + 2559.74kJ] / 1,000
+JEV Choice:           0.042 * [S + 256(kJ-1) + 2963.67kJ] / 1,000
 ```
 
-Chunks may execute in parallel, but parallelism changes latency rather than total token-compute cost. Zero-shot ModernBERT still evaluates all 27 questions against every chunk. Trained ModernBERT evaluates every chunk once and applies all 27 heads. JEV uses one request per state chunk with all 27 questions. Aggregation compute is negligible and excluded, but aggregation quality is not guaranteed. Constant ModernBERT processed-token throughput is assumed; real throughput and memory pressure can worsen at large batches. GLiClass is not placed on the H100 state-length curve because these benchmark runs measured CPU inference rather than equivalent H100 throughput.
+Chunks may execute in parallel, but parallelism changes latency rather than total token-compute cost. Zero-shot ModernBERT evaluates all 27 questions against every chunk; trained ModernBERT encodes each chunk once; GLiClass Modern encodes each chunk once with all labels; GLiClass Large encodes each chunk twice for its two label groups; JEV uses one request per state chunk. Aggregation compute is excluded and aggregation quality requires validation.
 
-Throughput sources: [official ModernBERT RTX 4090 efficiency comparison](https://huggingface.co/blog/modernbert) and [the third-party H100 ModernBERT-base deployment observation](https://www.linkedin.com/posts/michael-feil_the-latest-release-of-infinity-httpslnkdin-activity-7280971190632943616-E07N). The $5/H100-hour price is a scenario assumption, not a quoted provider price.
+GLiClass Modern is assigned the 170.3k processed-token/s ModernBERT-large H100 proxy because it uses that backbone. GLiClass Large is assigned 109.6k processed tokens/s by scaling that proxy with the official 32-label A6000 sample-throughput ratio, `28.79 / 44.73`. These are simulations rather than H100 measurements. Throughput sources: [official ModernBERT efficiency comparison](https://huggingface.co/blog/modernbert), [third-party H100 ModernBERT-base observation](https://www.linkedin.com/posts/michael-feil_the-latest-release-of-infinity-httpslnkdin-activity-7280971190632943616-E07N), and the [GLiClass model-card throughput table](https://huggingface.co/knowledgator/gliclass-large-v3.0). The $5/H100-hour price is a scenario assumption.
 
 Context-limit sources: [ModernBERT documentation](https://huggingface.co/docs/transformers/en/model_doc/modernbert) and [JEV models and limits](https://docs.typesafe.ai/models).
 
