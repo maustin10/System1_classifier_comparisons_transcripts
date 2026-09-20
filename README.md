@@ -4,6 +4,8 @@ This repository represents an independent comparison of open encoder classifiers
 
 **Author: Mark Austin**
 
+Publication drafts: [LinkedIn post](articles/linkedin-post.md) · [Long-form blog](articles/blog-post.md)
+
 The benchmark contains 1,000 synthetic conversations, each labeled for 27 binary customer-care attributes. The fixed split is 700 training, 150 validation, and 150 locked test conversations. All quality numbers below are calculated only on the locked test set: 4,050 binary decisions.
 
 > This is a controlled synthetic benchmark, not a claim of production accuracy. The conversations use explicit, template-driven evidence and do not represent the ambiguity, distribution shift, or annotation disagreement of live calls.
@@ -215,6 +217,7 @@ JEV Choice versus Noul is not a primitive-only A/B test. The Noul experiment als
 ## Repository layout
 
 ```text
+articles/                       LinkedIn and long-form publication drafts
 charts/                         Generated comparison charts
 data/
   synth_transcript.xlsx        1,000 synthetic labeled conversations
