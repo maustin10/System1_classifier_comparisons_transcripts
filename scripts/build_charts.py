@@ -285,7 +285,6 @@ def normalized_cost_state_length_chart() -> None:
     sensitivity = NORMALIZED_COST["state_length_sensitivity"]
     assumptions = sensitivity["assumptions"]
     lower, upper = sensitivity["state_token_range"]
-    state_tokens = np.geomspace(lower, upper, 500)
     encoder_rate = assumptions["modernbert_cost_usd_per_million_processed_tokens"]
     questions = assumptions["questions_per_transcript"]
     zero_overhead = assumptions["modernbert_zero_shot_non_state_tokens_per_transcript"]
@@ -293,29 +292,54 @@ def normalized_cost_state_length_chart() -> None:
     jev_rate = assumptions["jev_price_usd_per_million_billed_input_tokens"]
     noul_overhead = assumptions["jev_noul_non_state_billed_tokens_per_transcript"]
     choice_overhead = assumptions["jev_choice_non_state_billed_tokens_per_transcript"]
+    overlap = assumptions["chunk_overlap_tokens"]
+    modernbert_payload = assumptions["modernbert_nominal_state_payload_tokens_per_chunk"]
+    jev_payload = assumptions["jev_nominal_state_payload_tokens_per_request"]
+
+    def chunk_breaks(payload: float) -> list[float]:
+        boundaries = []
+        covered = payload
+        while covered < upper:
+            boundaries.extend([covered * (1 - 1e-6), covered * (1 + 1e-6)])
+            covered += payload - overlap
+        return boundaries
+
+    state_tokens = np.array(sorted(set(
+        np.geomspace(lower, upper, 900).tolist()
+        + chunk_breaks(modernbert_payload)
+        + chunk_breaks(jev_payload)
+    )))
+
+    def chunk_count(values: np.ndarray, payload: float) -> np.ndarray:
+        return np.maximum(1, np.ceil((values - overlap) / (payload - overlap))).astype(int)
+
+    modernbert_chunks = chunk_count(state_tokens, modernbert_payload)
+    jev_requests = chunk_count(state_tokens, jev_payload)
+    modernbert_encoded_state = state_tokens + overlap * (modernbert_chunks - 1)
+    jev_billed_state = state_tokens + overlap * (jev_requests - 1)
 
     curves = [
         (
             "ModernBERT trained heads",
-            encoder_rate * (state_tokens + trained_overhead) / state_tokens,
+            encoder_rate * (modernbert_encoded_state + trained_overhead * modernbert_chunks) / state_tokens,
             "#0B678B",
             "-",
         ),
         (
             "ModernBERT zero-shot",
-            encoder_rate * (questions * state_tokens + zero_overhead) / state_tokens,
+            encoder_rate * (questions * modernbert_encoded_state + zero_overhead * modernbert_chunks) / state_tokens,
             "#2A9D8F",
             "-",
         ),
         (
             "JEV Noul",
-            jev_rate * (state_tokens + noul_overhead) / state_tokens,
+            jev_rate * (jev_billed_state + noul_overhead * jev_requests) / state_tokens,
             "#8059C3",
             "-",
         ),
         (
             "JEV Choice",
-            jev_rate * (state_tokens + choice_overhead) / state_tokens,
+            jev_rate * (jev_billed_state + choice_overhead * jev_requests) / state_tokens,
             "#A78BDB",
             "--",
         ),
@@ -332,6 +356,12 @@ def normalized_cost_state_length_chart() -> None:
     ax.axvspan(noul_cross, upper, color="#8059C3", alpha=0.045, zorder=0)
     ax.axvline(224.46, color=MUTED, linewidth=1.2, linestyle=":")
     ax.text(224.46, 1.72, "benchmark mean\n224 tokens", color=MUTED, fontsize=9, ha="center")
+    for boundary, label, color in [
+        (modernbert_payload, "ModernBERT chunking\nstarts near 8.2k", "#2A9D8F"),
+        (jev_payload, "JEV request chunking\nstarts near 31.9k", "#8059C3"),
+    ]:
+        ax.axvline(boundary, color=color, linewidth=1.2, linestyle="--", alpha=0.8)
+        ax.text(boundary, 0.72, label, color=color, fontsize=9, ha="center")
     for crossover, label, xytext in [
         (noul_cross, "Noul crossover\n586 tokens", (430, 0.43)),
         (choice_cross, "Choice crossover\n682 tokens", (850, 0.34)),
@@ -347,11 +377,11 @@ def normalized_cost_state_length_chart() -> None:
             arrowprops={"arrowstyle": "-", "color": MUTED, "linewidth": 1},
         )
 
-    ax.set_title("Normalized serving cost versus state length", loc="left", pad=20)
+    ax.set_title("Normalized serving cost with native limits and chunking", loc="left", pad=20)
     ax.text(
         0,
         1.015,
-        "27 questions · nominal question/criteria overhead held fixed · H100 at USD 5/hour · lower cost is better",
+        "27 questions · 256-token chunk overlap · H100 at USD 5/hour · lower cost is better",
         transform=ax.transAxes,
         color=MUTED,
         fontsize=11,
@@ -362,7 +392,7 @@ def normalized_cost_state_length_chart() -> None:
     ax.set_ylim(0.006, 3.2)
     ax.set_xlabel("Raw input tokens in each state (log scale)")
     ax.set_ylabel("Estimated USD per million raw state tokens (log scale)")
-    ax.xaxis.set_major_locator(FixedLocator([50, 100, 250, 500, 1000, 2000, 4000, 8000]))
+    ax.xaxis.set_major_locator(FixedLocator([50, 100, 250, 500, 1000, 2000, 4000, 8000, 16000, 32000, 64000]))
     ax.xaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:,.0f}"))
     ax.yaxis.set_major_locator(FixedLocator([0.008, 0.01, 0.03, 0.1, 0.3, 1, 3]))
     ax.yaxis.set_major_formatter(FuncFormatter(lambda value, _: f"${value:g}"))
@@ -373,8 +403,8 @@ def normalized_cost_state_length_chart() -> None:
     fig.text(
         0.01,
         0.01,
-        "Normalization is per 1M raw state tokens. Assumes constant 170.3k processed tokens/s per H100 and 1:1 JEV state-token scaling. "
-        "Long-context throughput and tokenizer differences are not modeled.",
+        "Chunking repeats the 256-token overlap and question/request overhead for every chunk; aggregation compute is excluded. "
+        "ModernBERT throughput is held at 170.3k processed tokens/s; tokenizer and long-context throughput differences are not modeled.",
         color=MUTED,
         fontsize=9,
     )

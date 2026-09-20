@@ -235,6 +235,7 @@ def operating_model_page(c: canvas.Canvas, page_number: int) -> None:
         "It accepts arbitrary hypotheses, but repeats the state inside each premise/hypothesis sequence.",
         "Trained heads encode the state once, then apply 27 logistic functions.",
         "The trained path has no question tokens at inference; label meaning is stored in fixed head weights.",
+        "Above about 8.2k state tokens, both paths require overlapping chunks and probability aggregation.",
         "A novel question requires a new or retrained head.",
     ], left_x, y - 18, col_w, font_size=9.5)
 
@@ -243,6 +244,7 @@ def operating_model_page(c: canvas.Canvas, page_number: int) -> None:
     c.drawString(right_x, PAGE_H - 105, "JEV evidence")
     y2 = bullet_list(c, [
         "The API accepts arbitrary state and arbitrary typed questions together.",
+        "A state can approach 32k tokens minus its longest question; larger states require multiple requests.",
         "Billing behaves like state + N x question + fixed overhead.",
         "Latency was approximately flat from 1 to 16 questions.",
         "TypeSafe claims a new architecture, parallel sampler, and RLCD training.",
@@ -291,8 +293,9 @@ def conclusions_page(c: canvas.Canvas, page_number: int) -> None:
     c.drawString(45, y - 3, "Sources")
     sources = [
         "TypeSafe API: https://docs.typesafe.ai/api",
+        "TypeSafe model limits: https://docs.typesafe.ai/models",
         "TypeSafe JEV launch/pricing: https://typesafe.ai/blog/introducing-system-one-models-and-jev",
-        "ModernBERT efficiency comparison: https://huggingface.co/blog/modernbert",
+        "ModernBERT documentation: https://huggingface.co/docs/transformers/en/model_doc/modernbert",
         "H100 ModernBERT-base observation: https://www.linkedin.com/posts/michael-feil_the-latest-release-of-infinity-httpslnkdin-activity-7280971190632943616-E07N",
         "OpenAI Sol pricing: https://developers.openai.com/api/docs/models/gpt-5.6-sol",
         "OpenAI Luna pricing: https://openai.com/index/advancing-the-price-performance-frontier-with-gpt-5-6/",

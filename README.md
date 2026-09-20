@@ -23,37 +23,44 @@ The principal findings are:
 - Per-label threshold calibration improved unchanged zero-shot ModernBERT from 92.96% to 96.42% accuracy without training new weights.
 - DeBERTa-v3-large-zeroshot-v2.0-c did not beat ModernBERT zero-shot on this dataset and was approximately 2.47 times slower on the same CPU path.
 
-## Normalized serving cost versus state length
+## Normalized serving cost with chunking
 
 ![Normalized serving cost versus state length for ModernBERT and JEV](charts/normalized-cost-vs-state-tokens.png)
 
-This sensitivity analysis uses NVIDIA H100s at **$5/GPU-hour**, 27 questions, and near-100% utilization. ModernBERT capacity is held at the 170,331-processed-token/s proxy used above. Nominal question and request overhead are held fixed while state length varies.
+**Chunking** splits a state that exceeds a model's native context into overlapping pieces, runs the same classifier on every piece, and combines the chunk-level probabilities into one transcript-level result. For these presence-style attributes, a maximum or calibrated noisy-OR is a plausible aggregator, but it must be validation-tuned because additional chunks can increase false positives.
 
-| Raw state tokens | ModernBERT trained | ModernBERT zero-shot | JEV Noul | JEV Choice | Lowest arbitrary-question path |
-|---:|---:|---:|---:|---:|---|
-| 100 | $0.0083 | $0.2507 | $1.1171 | $1.2867 | ModernBERT zero-shot |
-| 224 benchmark mean | $0.0082 | $0.2338 | $0.5210 | $0.5965 | ModernBERT zero-shot |
-| 500 | $0.0082 | $0.2263 | $0.2570 | $0.2909 | ModernBERT zero-shot |
-| 600 | $0.0082 | $0.2253 | $0.2212 | $0.2495 | JEV Noul |
-| 700 | $0.0082 | $0.2245 | $0.1956 | $0.2198 | JEV Noul |
-| 1,000 | $0.0082 | $0.2232 | $0.1495 | $0.1665 | JEV Noul |
-| 2,000 | $0.0082 | $0.2217 | $0.0958 | $0.1042 | JEV Noul |
-| 8,000 | $0.0082 | $0.2205 | $0.0554 | $0.0576 | JEV Noul |
+This sensitivity analysis uses NVIDIA H100s at **$5/GPU-hour**, 27 questions, near-100% utilization, and 256 overlapping tokens between adjacent chunks. ModernBERT uses approximately 8,178 state tokens per chunk after nominal question/special-token overhead. JEV uses approximately 31,890 state tokens per request, reserving a nominal 110 tokens for its longest question. A 64k state therefore requires nine ModernBERT chunks or three JEV requests under these assumptions. Two JEV chunks cover only 63,524 unique state tokens after overlap, so the final 476 tokens trigger a third request.
+
+| Raw state tokens | ModernBERT chunks | JEV requests | ModernBERT trained | ModernBERT zero-shot | JEV Noul | JEV Choice |
+|---:|---:|---:|---:|---:|---:|---:|
+| 100 | 1 | 1 | $0.0083 | $0.2507 | $1.1171 | $1.2867 |
+| 224 benchmark mean | 1 | 1 | $0.0082 | $0.2338 | $0.5210 | $0.5965 |
+| 600 | 1 | 1 | $0.0082 | $0.2253 | $0.2212 | $0.2495 |
+| 8,000 | 1 | 1 | $0.0082 | $0.2205 | $0.0554 | $0.0576 |
+| 8,192 | 2 | 1 | $0.0084 | $0.2278 | $0.0551 | $0.0572 |
+| 16,000 | 2 | 1 | $0.0083 | $0.2241 | $0.0487 | $0.0498 |
+| 32,000 | 5 | 2 | $0.0084 | $0.2277 | $0.0491 | $0.0501 |
+| 64,000 | 9 | 3 | $0.0084 | $0.2276 | $0.0474 | $0.0482 |
 
 All values are USD per one million raw state tokens. JEV Noul crosses below arbitrary-question ModernBERT zero-shot at approximately **586 state tokens**; JEV Choice crosses below it at approximately **682 tokens**. The fixed-head trained ModernBERT path remains substantially cheaper throughout because the questions have been compiled into learned weights.
 
-The curves use these measured workload shapes, where `S` is raw state tokens:
+The cost model counts repeated overlap and question/request overhead. With `S` as raw state tokens, `kM` as ModernBERT chunks, and `kJ` as JEV requests:
 
 ```text
-ModernBERT trained:   0.008154 * (S + 2) / S
-ModernBERT zero-shot: 0.008154 * (27S + 375) / S
-JEV Noul:             0.042 * (S + 2559.74) / S
-JEV Choice:           0.042 * (S + 2963.67) / S
+kM = max(1, ceil((S - 256) / (8178.11 - 256)))
+kJ = max(1, ceil((S - 256) / (31890 - 256)))
+
+ModernBERT trained:   0.008154 * [S + 256(kM-1) + 2kM] / S
+ModernBERT zero-shot: 0.008154 * {27[S + 256(kM-1)] + 375kM} / S
+JEV Noul:             0.042 * [S + 256(kJ-1) + 2559.74kJ] / S
+JEV Choice:           0.042 * [S + 256(kJ-1) + 2963.67kJ] / S
 ```
 
-The JEV formulas assume each additional raw state token adds one billed JEV input token. Constant ModernBERT processed-token throughput is also assumed; actual long-context throughput may differ, generally making this an optimistic local-encoder estimate at long state lengths. The calculation excludes redundancy, orchestration, storage, engineering, and unused capacity.
+Chunks may execute in parallel, but parallelism changes latency rather than total token-compute cost. Zero-shot ModernBERT still evaluates all 27 questions against every chunk. Trained ModernBERT evaluates every chunk once and applies all 27 heads. JEV uses one request per state chunk with all 27 questions. Aggregation compute is negligible and excluded, but aggregation quality is not guaranteed. Constant ModernBERT processed-token throughput is assumed; real throughput and memory pressure can worsen at large batches.
 
 Throughput sources: [official ModernBERT RTX 4090 efficiency comparison](https://huggingface.co/blog/modernbert) and [the third-party H100 ModernBERT-base deployment observation](https://www.linkedin.com/posts/michael-feil_the-latest-release-of-infinity-httpslnkdin-activity-7280971190632943616-E07N). The $5/H100-hour price is a scenario assumption, not a quoted provider price.
+
+Context-limit sources: [ModernBERT documentation](https://huggingface.co/docs/transformers/en/model_doc/modernbert) and [JEV models and limits](https://docs.typesafe.ai/models).
 
 ## What ModernBERT actually processes
 

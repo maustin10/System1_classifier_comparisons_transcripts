@@ -72,7 +72,7 @@
   },
   "state_length_sensitivity": {
     "normalization": "USD per million raw state tokens",
-    "state_token_range": [50, 8192],
+    "state_token_range": [50, 64000],
     "assumptions": {
       "questions_per_transcript": 27,
       "modernbert_cost_usd_per_million_processed_tokens": 0.008154049269361177,
@@ -81,28 +81,37 @@
       "jev_price_usd_per_million_billed_input_tokens": 0.042,
       "jev_noul_non_state_billed_tokens_per_transcript": 2559.74,
       "jev_choice_non_state_billed_tokens_per_transcript": 2963.6666666666665,
+      "chunk_overlap_tokens": 256,
+      "modernbert_max_sequence_tokens": 8192,
+      "modernbert_nominal_state_payload_tokens_per_chunk": 8178.111111111111,
+      "jev_total_request_limit_tokens": 64000,
+      "jev_state_plus_longest_question_limit_tokens": 32000,
+      "jev_nominal_state_payload_tokens_per_request": 31890,
+      "aggregation_assumption": "Chunk probabilities are combined outside the model; aggregation compute cost is negligible but thresholds and quality require separate validation",
       "jev_state_scaling_assumption": "Each additional raw state token adds one billed JEV input token",
       "throughput_assumption": "ModernBERT remains at the 170,331 processed-token/s H100 proxy across state lengths; actual long-context throughput may differ"
     },
     "formulas": {
-      "modernbert_trained": "0.0081540493 * (S + 2) / S",
-      "modernbert_zero_shot": "0.0081540493 * (27 * S + 375) / S",
-      "jev_noul": "0.042 * (S + 2559.74) / S",
-      "jev_choice": "0.042 * (S + 2963.6667) / S"
+      "modernbert_chunk_count": "kM = max(1, ceil((S - 256) / (8178.1111 - 256)))",
+      "jev_request_count": "kJ = max(1, ceil((S - 256) / (31890 - 256)))",
+      "modernbert_trained": "0.0081540493 * (S + 256 * (kM - 1) + 2 * kM) / S",
+      "modernbert_zero_shot": "0.0081540493 * (27 * (S + 256 * (kM - 1)) + 375 * kM) / S",
+      "jev_noul": "0.042 * (S + 256 * (kJ - 1) + 2559.74 * kJ) / S",
+      "jev_choice": "0.042 * (S + 256 * (kJ - 1) + 2963.6667 * kJ) / S"
     },
     "crossovers_with_modernbert_zero_shot": {
       "jev_noul_state_tokens": 586.2803332504706,
       "jev_choice_state_tokens": 681.5036368744104
     },
     "sample_costs": [
-      {"state_tokens": 100, "modernbert_trained": 0.0083171302547484, "modernbert_zero_shot": 0.25073701503285617, "jev_noul": 1.1170908, "jev_choice": 1.28674},
-      {"state_tokens": 224.46, "modernbert_trained": 0.008226704078853836, "modernbert_zero_shot": 0.23378210705262545, "jev_noul": 0.5209676557070302, "jev_choice": 0.5965486946449255},
-      {"state_tokens": 500, "modernbert_trained": 0.008186665466438623, "modernbert_zero_shot": 0.22627486722477266, "jev_noul": 0.25701816, "jev_choice": 0.290948},
-      {"state_tokens": 600, "modernbert_trained": 0.00818122943359238, "modernbert_zero_shot": 0.22525561106610253, "jev_noul": 0.2211818, "jev_choice": 0.2494566666666667},
-      {"state_tokens": 700, "modernbert_trained": 0.008177346552987923, "modernbert_zero_shot": 0.2245275709527667, "jev_noul": 0.1955844, "jev_choice": 0.21982},
-      {"state_tokens": 1000, "modernbert_trained": 0.0081703573678999, "modernbert_zero_shot": 0.22321709874876222, "jev_noul": 0.14950908000000002, "jev_choice": 0.166474},
-      {"state_tokens": 2000, "modernbert_trained": 0.008162203318630538, "modernbert_zero_shot": 0.22168821451075701, "jev_noul": 0.09575454, "jev_choice": 0.104237},
-      {"state_tokens": 8000, "modernbert_trained": 0.008156087781678516, "modernbert_zero_shot": 0.22054155133225312, "jev_noul": 0.05543863500000001, "jev_choice": 0.05755925}
+      {"state_tokens": 100, "modernbert_chunks": 1, "jev_requests": 1, "modernbert_trained": 0.0083171302547484, "modernbert_zero_shot": 0.25073701503285617, "jev_noul": 1.1170908, "jev_choice": 1.28674},
+      {"state_tokens": 224.46, "modernbert_chunks": 1, "jev_requests": 1, "modernbert_trained": 0.008226704078853836, "modernbert_zero_shot": 0.23378210705262545, "jev_noul": 0.5209676557070302, "jev_choice": 0.5965486946449255},
+      {"state_tokens": 600, "modernbert_chunks": 1, "jev_requests": 1, "modernbert_trained": 0.00818122943359238, "modernbert_zero_shot": 0.22525561106610253, "jev_noul": 0.2211818, "jev_choice": 0.2494566666666667},
+      {"state_tokens": 8000, "modernbert_chunks": 1, "jev_requests": 1, "modernbert_trained": 0.008156087781678516, "modernbert_zero_shot": 0.22054155133225312, "jev_noul": 0.05543863500000001, "jev_choice": 0.05755925},
+      {"state_tokens": 8192, "modernbert_chunks": 2, "jev_requests": 1, "modernbert_trained": 0.00841284477839852, "modernbert_zero_shot": 0.22778583485061377, "jev_noul": 0.0551236669921875, "jev_choice": 0.057194580078125},
+      {"state_tokens": 16000, "modernbert_chunks": 2, "jev_requests": 1, "modernbert_trained": 0.008286552569988297, "modernbert_zero_shot": 0.22406410061661713, "jev_noul": 0.0487193175, "jev_choice": 0.049779625},
+      {"state_tokens": 32000, "modernbert_chunks": 5, "jev_requests": 2, "modernbert_trained": 0.00841752698637741, "modernbert_zero_shot": 0.2276822051658565, "jev_noul": 0.0490553175, "jev_choice": 0.05011562500000001},
+      {"state_tokens": 64000, "modernbert_chunks": 9, "jev_requests": 3, "modernbert_trained": 0.008417272172337743, "modernbert_zero_shot": 0.22763442753341884, "jev_noul": 0.047375488125000004, "jev_choice": 0.04817071875000001}
     ]
   },
   "quality_variants": [
@@ -123,6 +132,8 @@
     "modernbert_efficiency": "https://huggingface.co/blog/modernbert",
     "h100_modernbert_base_observation": "https://www.linkedin.com/posts/michael-feil_the-latest-release-of-infinity-httpslnkdin-activity-7280971190632943616-E07N",
     "typesafe_pricing_and_claims": "https://typesafe.ai/blog/introducing-system-one-models-and-jev",
-    "typesafe_api": "https://docs.typesafe.ai/api"
+    "typesafe_api": "https://docs.typesafe.ai/api",
+    "typesafe_models_and_limits": "https://docs.typesafe.ai/models",
+    "modernbert_context_limit": "https://huggingface.co/docs/transformers/en/model_doc/modernbert"
   }
 }
