@@ -24,6 +24,14 @@ When questions must change at runtime, trained heads are ineligible. Each cell s
 
 The confidence map shows the winner's percentage cost advantage over the runner-up. Low percentages identify close decisions where deployment simplicity, support, latency, or data-residency requirements may outweigh the modeled savings.
 
+![Executive 2x2 matrix of economics and runtime-question flexibility](charts/executive-decision-matrix.png)
+
+The 2x2 compresses the decision into two executive dimensions: deployment economics and whether questions can change at runtime. It keeps trained ModernBERT visible as the fixed-taxonomy cost leader while separating runtime-flexible GLiClass, JEV, and LLM options.
+
+![Cost per 1,000 transcripts by GPU utilization](charts/executive-cost-vs-gpu-utilization.png)
+
+The bar charts hold the reference workload at **6,000 state tokens × 25 questions** and show how self-hosted encoder cost changes at 10%, 25%, 50%, and 100% paid H100 utilization. JEV remains usage-priced and therefore unchanged across the four panels.
+
 ![Operating-model scorecard](charts/executive-operating-scorecard.png)
 
 The named examples are:

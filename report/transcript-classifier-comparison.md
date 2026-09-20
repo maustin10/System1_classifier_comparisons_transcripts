@@ -31,6 +31,14 @@ When questions must change at runtime, trained heads are ineligible. GLiClass an
 
 Low confidence percentages identify cells where qualitative requirements may outweigh cost. The operating-model scorecard makes those differences explicit.
 
+![Executive 2x2 matrix of economics and runtime-question flexibility](../charts/executive-decision-matrix.png)
+
+The 2x2 compresses the decision into two executive dimensions: deployment economics and whether questions can change at runtime. Trained ModernBERT remains visible as the fixed-taxonomy cost leader, while GLiClass, JEV, and LLMs occupy the runtime-flexible side.
+
+![Cost per 1,000 transcripts by GPU utilization](../charts/executive-cost-vs-gpu-utilization.png)
+
+These bars hold the workload at 6,000 state tokens and 25 questions, then vary paid H100 utilization from 10% to 100%. Self-hosted encoder cost falls as utilization rises; JEV is usage-priced and is unchanged across panels.
+
 ![Operating-model scorecard](../charts/executive-operating-scorecard.png)
 
 ![Utilization decision bands](../charts/executive-utilization-decision-bands.png)
