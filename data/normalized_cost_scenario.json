@@ -70,6 +70,41 @@
       "cost_usd_per_million_raw_state_tokens": 0.5965486946449257
     }
   },
+  "state_length_sensitivity": {
+    "normalization": "USD per million raw state tokens",
+    "state_token_range": [50, 8192],
+    "assumptions": {
+      "questions_per_transcript": 27,
+      "modernbert_cost_usd_per_million_processed_tokens": 0.008154049269361177,
+      "modernbert_zero_shot_non_state_tokens_per_transcript": 375.0,
+      "modernbert_trained_special_tokens_per_transcript": 2.0,
+      "jev_price_usd_per_million_billed_input_tokens": 0.042,
+      "jev_noul_non_state_billed_tokens_per_transcript": 2559.74,
+      "jev_choice_non_state_billed_tokens_per_transcript": 2963.6666666666665,
+      "jev_state_scaling_assumption": "Each additional raw state token adds one billed JEV input token",
+      "throughput_assumption": "ModernBERT remains at the 170,331 processed-token/s H100 proxy across state lengths; actual long-context throughput may differ"
+    },
+    "formulas": {
+      "modernbert_trained": "0.0081540493 * (S + 2) / S",
+      "modernbert_zero_shot": "0.0081540493 * (27 * S + 375) / S",
+      "jev_noul": "0.042 * (S + 2559.74) / S",
+      "jev_choice": "0.042 * (S + 2963.6667) / S"
+    },
+    "crossovers_with_modernbert_zero_shot": {
+      "jev_noul_state_tokens": 586.2803332504706,
+      "jev_choice_state_tokens": 681.5036368744104
+    },
+    "sample_costs": [
+      {"state_tokens": 100, "modernbert_trained": 0.0083171302547484, "modernbert_zero_shot": 0.25073701503285617, "jev_noul": 1.1170908, "jev_choice": 1.28674},
+      {"state_tokens": 224.46, "modernbert_trained": 0.008226704078853836, "modernbert_zero_shot": 0.23378210705262545, "jev_noul": 0.5209676557070302, "jev_choice": 0.5965486946449255},
+      {"state_tokens": 500, "modernbert_trained": 0.008186665466438623, "modernbert_zero_shot": 0.22627486722477266, "jev_noul": 0.25701816, "jev_choice": 0.290948},
+      {"state_tokens": 600, "modernbert_trained": 0.00818122943359238, "modernbert_zero_shot": 0.22525561106610253, "jev_noul": 0.2211818, "jev_choice": 0.2494566666666667},
+      {"state_tokens": 700, "modernbert_trained": 0.008177346552987923, "modernbert_zero_shot": 0.2245275709527667, "jev_noul": 0.1955844, "jev_choice": 0.21982},
+      {"state_tokens": 1000, "modernbert_trained": 0.0081703573678999, "modernbert_zero_shot": 0.22321709874876222, "jev_noul": 0.14950908000000002, "jev_choice": 0.166474},
+      {"state_tokens": 2000, "modernbert_trained": 0.008162203318630538, "modernbert_zero_shot": 0.22168821451075701, "jev_noul": 0.09575454, "jev_choice": 0.104237},
+      {"state_tokens": 8000, "modernbert_trained": 0.008156087781678516, "modernbert_zero_shot": 0.22054155133225312, "jev_noul": 0.05543863500000001, "jev_choice": 0.05755925}
+    ]
+  },
   "quality_variants": [
     {"id": "modernbert_zero_shot", "cost_path": "modernbert_zero_shot"},
     {"id": "modernbert_zero_shot_opt_threshold", "cost_path": "modernbert_zero_shot"},
@@ -81,7 +116,7 @@
   "interpretation": [
     "The trained ModernBERT result is extremely inexpensive because its 27 questions are fixed in learned heads; it is not an arbitrary-question system.",
     "Zero-shot ModernBERT preserves arbitrary hypotheses but repeats the state inside every NLI pair, creating a measured 28.67x token-compute amplification for 27 questions.",
-    "JEV preserves arbitrary typed questions while billing as shared state plus incremental question tokens, but billing behavior does not prove the internal compute graph.",
+    "JEV preserves arbitrary typed questions while billing as shared state plus incremental question tokens; under the stated assumptions, Noul becomes cheaper than zero-shot ModernBERT above approximately 586 state tokens.",
     "The JEV API capacity required to sustain this hypothetical load was not tested; its cost is linearly extrapolated from published per-token pricing."
   ],
   "sources": {

@@ -9,6 +9,7 @@ from pathlib import Path
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/system1-transcript-matplotlib")
 
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.ticker import FuncFormatter, FixedLocator
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -280,6 +281,108 @@ def normalized_cost_quality_chart() -> None:
     plt.close(fig)
 
 
+def normalized_cost_state_length_chart() -> None:
+    sensitivity = NORMALIZED_COST["state_length_sensitivity"]
+    assumptions = sensitivity["assumptions"]
+    lower, upper = sensitivity["state_token_range"]
+    state_tokens = np.geomspace(lower, upper, 500)
+    encoder_rate = assumptions["modernbert_cost_usd_per_million_processed_tokens"]
+    questions = assumptions["questions_per_transcript"]
+    zero_overhead = assumptions["modernbert_zero_shot_non_state_tokens_per_transcript"]
+    trained_overhead = assumptions["modernbert_trained_special_tokens_per_transcript"]
+    jev_rate = assumptions["jev_price_usd_per_million_billed_input_tokens"]
+    noul_overhead = assumptions["jev_noul_non_state_billed_tokens_per_transcript"]
+    choice_overhead = assumptions["jev_choice_non_state_billed_tokens_per_transcript"]
+
+    curves = [
+        (
+            "ModernBERT trained heads",
+            encoder_rate * (state_tokens + trained_overhead) / state_tokens,
+            "#0B678B",
+            "-",
+        ),
+        (
+            "ModernBERT zero-shot",
+            encoder_rate * (questions * state_tokens + zero_overhead) / state_tokens,
+            "#2A9D8F",
+            "-",
+        ),
+        (
+            "JEV Noul",
+            jev_rate * (state_tokens + noul_overhead) / state_tokens,
+            "#8059C3",
+            "-",
+        ),
+        (
+            "JEV Choice",
+            jev_rate * (state_tokens + choice_overhead) / state_tokens,
+            "#A78BDB",
+            "--",
+        ),
+    ]
+
+    fig, ax = plt.subplots(figsize=(15.5, 8.2))
+    for label, values, color, linestyle in curves:
+        ax.plot(state_tokens, values, label=label, color=color, linewidth=3, linestyle=linestyle)
+
+    crossovers = sensitivity["crossovers_with_modernbert_zero_shot"]
+    noul_cross = crossovers["jev_noul_state_tokens"]
+    choice_cross = crossovers["jev_choice_state_tokens"]
+    zero_cost = lambda s: encoder_rate * (questions * s + zero_overhead) / s
+    ax.axvspan(noul_cross, upper, color="#8059C3", alpha=0.045, zorder=0)
+    ax.axvline(224.46, color=MUTED, linewidth=1.2, linestyle=":")
+    ax.text(224.46, 1.72, "benchmark mean\n224 tokens", color=MUTED, fontsize=9, ha="center")
+    for crossover, label, xytext in [
+        (noul_cross, "Noul crossover\n586 tokens", (430, 0.43)),
+        (choice_cross, "Choice crossover\n682 tokens", (850, 0.34)),
+    ]:
+        ax.scatter(crossover, zero_cost(crossover), s=70, color="#8059C3", edgecolor="white", zorder=5)
+        ax.annotate(
+            label,
+            xy=(crossover, zero_cost(crossover)),
+            xytext=xytext,
+            textcoords="data",
+            fontsize=9.5,
+            fontweight="bold",
+            arrowprops={"arrowstyle": "-", "color": MUTED, "linewidth": 1},
+        )
+
+    ax.set_title("Normalized serving cost versus state length", loc="left", pad=20)
+    ax.text(
+        0,
+        1.015,
+        "27 questions · nominal question/criteria overhead held fixed · H100 at USD 5/hour · lower cost is better",
+        transform=ax.transAxes,
+        color=MUTED,
+        fontsize=11,
+    )
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_xlim(lower, upper)
+    ax.set_ylim(0.006, 3.2)
+    ax.set_xlabel("Raw input tokens in each state (log scale)")
+    ax.set_ylabel("Estimated USD per million raw state tokens (log scale)")
+    ax.xaxis.set_major_locator(FixedLocator([50, 100, 250, 500, 1000, 2000, 4000, 8000]))
+    ax.xaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:,.0f}"))
+    ax.yaxis.set_major_locator(FixedLocator([0.008, 0.01, 0.03, 0.1, 0.3, 1, 3]))
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda value, _: f"${value:g}"))
+    ax.grid(color=GRID, linewidth=0.8, which="major")
+    ax.set_axisbelow(True)
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.legend(frameon=False, ncol=2, loc="upper right")
+    fig.text(
+        0.01,
+        0.01,
+        "Normalization is per 1M raw state tokens. Assumes constant 170.3k processed tokens/s per H100 and 1:1 JEV state-token scaling. "
+        "Long-context throughput and tokenizer differences are not modeled.",
+        color=MUTED,
+        fontsize=9,
+    )
+    fig.tight_layout(rect=(0, 0.06, 1, 0.96))
+    fig.savefig(CHARTS / "normalized-cost-vs-state-tokens.png", dpi=180, bbox_inches="tight")
+    plt.close(fig)
+
+
 def main() -> None:
     setup()
     metric_chart("f1", "F1 comparison across transcript classifiers", "f1-comparison.png")
@@ -287,6 +390,7 @@ def main() -> None:
     metrics_table()
     cost_chart()
     normalized_cost_quality_chart()
+    normalized_cost_state_length_chart()
     print(f"Wrote charts to {CHARTS}")
 
 

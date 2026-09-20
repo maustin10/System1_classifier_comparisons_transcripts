@@ -59,22 +59,35 @@ The commercially friendly DeBERTa-v3-large checkpoint was effectively tied with 
 
 The original JEV Choice run used a raw transcript string and generic present/absent criteria. The Noul run used structured speaker turns, detailed true/false boundaries, and validation refinement for three overlapping labels. Although a binary Choice argmax is mathematically equivalent to a 0.50 cutoff when both primitives expose the same probability, the API documentation does not guarantee identical internal scoring. More importantly, this experiment changed several factors simultaneously. A primitive-only A/B test remains future work.
 
-## Accuracy versus normalized serving cost
+## Normalized serving cost versus state length
 
-![Accuracy versus normalized serving cost](../charts/accuracy-vs-normalized-cost.png)
+![Normalized serving cost versus state length](../charts/normalized-cost-vs-state-tokens.png)
 
-The scenario fixes incoming volume at **170,331 raw transcript tokens per second**, or about 759 average benchmark transcripts per second. It uses NVIDIA H100s at the requested **$5/GPU-hour** with near-100% utilization. The ModernBERT-large capacity is a proxy rather than an exact-checkpoint benchmark: a public 350,000-token/s H100 observation for ModernBERT-base, scaled by the official RTX 4090 short-variable large/base throughput ratio (`52.9 / 108.7`).
+This sensitivity analysis uses NVIDIA H100s at **$5/GPU-hour**, 27 questions, and near-100% utilization. It holds nominal question/request overhead constant while varying raw state length. ModernBERT capacity is held at the 170,331-processed-token/s H100 proxy.
 
-| Inference path | Input/computation shape | Normalized cost / hour | Cost / 1M raw state tokens |
-|---|---|---:|---:|
-| ModernBERT trained heads | State encoded once; 27 fixed heads | $5.04 | $0.0082 |
-| ModernBERT zero-shot | 27 state/hypothesis NLI pairs | $143.35 | $0.2338 |
-| JEV Noul | Shared-state API billing; 27 arbitrary questions | $319.45 | $0.5210 |
-| JEV Choice | Shared-state API billing; question/option criteria | $365.80 | $0.5965 |
+| Raw state tokens | ModernBERT trained | ModernBERT zero-shot | JEV Noul | JEV Choice |
+|---:|---:|---:|---:|---:|
+| 100 | $0.0083 | $0.2507 | $1.1171 | $1.2867 |
+| 224 benchmark mean | $0.0082 | $0.2338 | $0.5210 | $0.5965 |
+| 500 | $0.0082 | $0.2263 | $0.2570 | $0.2909 |
+| 600 | $0.0082 | $0.2253 | $0.2212 | $0.2495 |
+| 700 | $0.0082 | $0.2245 | $0.1956 | $0.2198 |
+| 1,000 | $0.0082 | $0.2232 | $0.1495 | $0.1665 |
+| 2,000 | $0.0082 | $0.2217 | $0.0958 | $0.1042 |
+| 8,000 | $0.0082 | $0.2205 | $0.0554 | $0.0576 |
 
-Under these assumptions, JEV Noul costs about **2.23x** the arbitrary-question ModernBERT zero-shot path and **63.3x** the fixed-taxonomy trained-head path per raw transcript token. The latter is not a like-for-like flexibility comparison: the trained model's 27 label meanings are compiled into learned weights.
+All values are USD per one million raw state tokens. JEV Noul crosses below arbitrary-question ModernBERT zero-shot at approximately **586 state tokens**, while Choice crosses below at approximately **682 tokens**. Fixed-head trained ModernBERT stays much cheaper because it does not process question text at inference.
 
-GPU-equivalents are continuous rather than rounded to whole devices, representing a sufficiently large fleet or time-sharing system with near-full utilization. The estimate excludes redundancy, storage, orchestration, and engineering. JEV cost is linearly extrapolated from measured billed input tokens and its published $0.042-per-million-input-token price. The service's capacity and rate limits at this hypothetical throughput were not tested.
+The equations, with `S` as raw state tokens, are:
+
+```text
+ModernBERT trained:   0.008154 * (S + 2) / S
+ModernBERT zero-shot: 0.008154 * (27S + 375) / S
+JEV Noul:             0.042 * (S + 2559.74) / S
+JEV Choice:           0.042 * (S + 2963.67) / S
+```
+
+The JEV curves assume one additional raw state token adds one billed input token. ModernBERT throughput is held constant across state lengths; actual long-context throughput may differ. The estimate excludes redundancy, storage, orchestration, engineering, unused capacity, and untested JEV service-capacity constraints.
 
 ### What each ModernBERT path actually computes
 
@@ -163,7 +176,7 @@ Sol and Luna received truth-free transcript inputs and the 27-label output schem
 2. Only 150 conversations are in the locked test set; one error changes accuracy by approximately 0.025 percentage points across all label decisions.
 3. Attribute decisions within a transcript are correlated, so 4,050 labels are not equivalent to 4,050 independent samples.
 4. The JEV Noul and Choice prompts differ beyond the API primitive.
-5. The normalized cost scenario uses an H100 throughput proxy derived from a ModernBERT-base observation and the official RTX 4090 large/base ratio, not a benchmark of this exact NLI checkpoint and serving stack.
+5. The normalized cost scenario uses an H100 throughput proxy derived from a ModernBERT-base observation and the official RTX 4090 large/base ratio, not a benchmark of this exact NLI checkpoint and serving stack; it also holds processed-token throughput constant as state length changes.
 6. Continuous GPU-equivalents assume fleet-scale utilization; small deployments must round capacity up and will cost more per token.
 7. Thresholds and prompt boundaries may overfit the deterministic synthetic generator's ontology.
 8. JEV billing and latency are black-box observations and cannot reveal the proprietary internal compute graph.

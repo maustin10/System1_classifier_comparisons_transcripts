@@ -23,22 +23,35 @@ The principal findings are:
 - Per-label threshold calibration improved unchanged zero-shot ModernBERT from 92.96% to 96.42% accuracy without training new weights.
 - DeBERTa-v3-large-zeroshot-v2.0-c did not beat ModernBERT zero-shot on this dataset and was approximately 2.47 times slower on the same CPU path.
 
-## Accuracy versus normalized serving cost
+## Normalized serving cost versus state length
 
-![Accuracy versus normalized serving cost for ModernBERT and JEV](charts/accuracy-vs-normalized-cost.png)
+![Normalized serving cost versus state length for ModernBERT and JEV](charts/normalized-cost-vs-state-tokens.png)
 
-This scenario fixes the incoming workload at **170,331 raw transcript tokens per second**, or about 759 average benchmark transcripts per second. The deployment uses NVIDIA H100s at the requested **$5/GPU-hour** and assumes near-100% utilization. Because no exact-checkpoint H100 benchmark was available, the 170,331-token/s ModernBERT-large capacity is a proxy: a public 350,000-token/s H100 observation for ModernBERT-base, scaled by the official RTX 4090 short-variable large/base throughput ratio (`52.9 / 108.7`). Rebenchmarking the actual checkpoint and serving stack is required before using these figures for procurement.
+This sensitivity analysis uses NVIDIA H100s at **$5/GPU-hour**, 27 questions, and near-100% utilization. ModernBERT capacity is held at the 170,331-processed-token/s proxy used above. Nominal question and request overhead are held fixed while state length varies.
 
-| Inference path | Input/computation shape | Normalized cost / hour | Cost / 1M raw state tokens |
-|---|---|---:|---:|
-| ModernBERT trained heads | State encoded once; 27 fixed heads | $5.04 | $0.0082 |
-| ModernBERT zero-shot | 27 state/hypothesis pairs | $143.35 | $0.2338 |
-| JEV Noul | Shared-state API billing; 27 arbitrary questions | $319.45 | $0.5210 |
-| JEV Choice | Shared-state API billing; question/option criteria | $365.80 | $0.5965 |
+| Raw state tokens | ModernBERT trained | ModernBERT zero-shot | JEV Noul | JEV Choice | Lowest arbitrary-question path |
+|---:|---:|---:|---:|---:|---|
+| 100 | $0.0083 | $0.2507 | $1.1171 | $1.2867 | ModernBERT zero-shot |
+| 224 benchmark mean | $0.0082 | $0.2338 | $0.5210 | $0.5965 | ModernBERT zero-shot |
+| 500 | $0.0082 | $0.2263 | $0.2570 | $0.2909 | ModernBERT zero-shot |
+| 600 | $0.0082 | $0.2253 | $0.2212 | $0.2495 | JEV Noul |
+| 700 | $0.0082 | $0.2245 | $0.1956 | $0.2198 | JEV Noul |
+| 1,000 | $0.0082 | $0.2232 | $0.1495 | $0.1665 | JEV Noul |
+| 2,000 | $0.0082 | $0.2217 | $0.0958 | $0.1042 | JEV Noul |
+| 8,000 | $0.0082 | $0.2205 | $0.0554 | $0.0576 | JEV Noul |
 
-Under these assumptions, JEV Noul costs about **2.23x** the arbitrary-question ModernBERT zero-shot path and **63.3x** the fixed-taxonomy trained-head path per raw transcript token. The trained-head comparison is not like-for-like on question flexibility: its cost advantage comes from compiling the 27 known labels into learned weights.
+All values are USD per one million raw state tokens. JEV Noul crosses below arbitrary-question ModernBERT zero-shot at approximately **586 state tokens**; JEV Choice crosses below it at approximately **682 tokens**. The fixed-head trained ModernBERT path remains substantially cheaper throughout because the questions have been compiled into learned weights.
 
-The GPU quantities are continuous GPU-equivalents: this assumes a large enough fleet or time-sharing system to keep capacity nearly full. It excludes redundancy, orchestration, storage, and engineering. JEV cost is extrapolated from measured billed input tokens and its published $0.042-per-million-token rate; this benchmark did not validate that the hosted service can sustain the hypothetical request rate.
+The curves use these measured workload shapes, where `S` is raw state tokens:
+
+```text
+ModernBERT trained:   0.008154 * (S + 2) / S
+ModernBERT zero-shot: 0.008154 * (27S + 375) / S
+JEV Noul:             0.042 * (S + 2559.74) / S
+JEV Choice:           0.042 * (S + 2963.67) / S
+```
+
+The JEV formulas assume each additional raw state token adds one billed JEV input token. Constant ModernBERT processed-token throughput is also assumed; actual long-context throughput may differ, generally making this an optimistic local-encoder estimate at long state lengths. The calculation excludes redundancy, orchestration, storage, engineering, and unused capacity.
 
 Throughput sources: [official ModernBERT RTX 4090 efficiency comparison](https://huggingface.co/blog/modernbert) and [the third-party H100 ModernBERT-base deployment observation](https://www.linkedin.com/posts/michael-feil_the-latest-release-of-infinity-httpslnkdin-activity-7280971190632943616-E07N). The $5/H100-hour price is a scenario assumption, not a quoted provider price.
 

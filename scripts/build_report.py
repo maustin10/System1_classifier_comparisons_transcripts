@@ -140,7 +140,7 @@ def executive_page(c: canvas.Canvas, page_number: int) -> None:
         "The strongest fully local result was frozen ModernBERT plus 27 supervised logistic heads: 99.16% accuracy and 98.41% F1.",
         "Threshold calibration alone improved unchanged zero-shot ModernBERT from 92.96% to 96.42% accuracy and cut errors from 285 to 145.",
         "DeBERTa-v3-large zero-shot (-c) did not beat ModernBERT zero-shot and was approximately 2.47x slower on the measured CPU path.",
-        "At 170.3k raw state tokens/s with H100s at $5/hour, normalized cost is $5.04/hour for trained ModernBERT, $143.35 for zero-shot ModernBERT, and $319.45 for JEV Noul under the stated assumptions.",
+        "At the 224-token benchmark mean, zero-shot ModernBERT is cheaper than JEV; above about 586 state tokens, JEV Noul becomes cheaper per raw state token under the stated H100 assumptions.",
     ]
     y = bullet_list(c, findings, 48, PAGE_H - 100, 690, font_size=11)
 
@@ -271,7 +271,7 @@ def conclusions_page(c: canvas.Canvas, page_number: int) -> None:
     c.drawString(45, PAGE_H - 95, "Practical interpretation")
     y = bullet_list(c, [
         "For the highest measured quality, Sol led by one decision over calibrated JEV Noul.",
-        "JEV Noul combined near-frontier quality with arbitrary runtime questions, but was costlier than both ModernBERT paths in the normalized H100 scenario.",
+        "JEV Noul combined near-frontier quality with arbitrary runtime questions; its normalized cost crosses below zero-shot ModernBERT at about 586 state tokens under the stated H100 assumptions.",
         "Trained ModernBERT was by far the cheapest path, but only because its 27 questions were converted into fixed supervised heads.",
         "Threshold calibration is worthwhile, but it does not replace supervised heads when enough labeled examples exist.",
     ], 45, PAGE_H - 118, 702, font_size=9.5)
@@ -282,7 +282,7 @@ def conclusions_page(c: canvas.Canvas, page_number: int) -> None:
         "Synthetic templates are more explicit and regular than production conversations.",
         "Only 150 transcripts were held out; attribute decisions within a transcript are correlated.",
         "Choice versus Noul changed multiple factors and is not a clean primitive-only comparison.",
-        "The H100 scenario uses a throughput proxy, not a benchmark of this exact checkpoint and serving stack.",
+        "The H100 scenario uses a throughput proxy and holds token throughput constant across state lengths, not a benchmark of this exact checkpoint and serving stack.",
         "JEV cost is extrapolated from billing; hosted capacity at the normalized throughput was not tested.",
         "Sol/Luna standardized cost estimates exclude unavailable hidden reasoning-token usage.",
     ], 45, y - 30, 702, font_size=9.1)
@@ -315,7 +315,7 @@ def main() -> None:
     chart_page(c, 4, "accuracy-comparison.png")
     chart_page(c, 5, "all-metrics-table.png")
     chart_page(c, 6, "estimated-cost-1000-transcripts.png")
-    chart_page(c, 7, "accuracy-vs-normalized-cost.png")
+    chart_page(c, 7, "normalized-cost-vs-state-tokens.png")
     operating_model_page(c, 8)
     methodology_page(c, 9)
     conclusions_page(c, 10)
