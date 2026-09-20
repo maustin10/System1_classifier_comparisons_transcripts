@@ -38,7 +38,7 @@ def cover(c: canvas.Canvas) -> None:
     c.drawString(46, PAGE_H - 112, "Executive classifier decision guide")
     c.setFont("Helvetica-Oblique", 15)
     c.setFillColor(HexColor("#C8D3E3"))
-    c.drawString(47, PAGE_H - 148, "State length × question count × quality × cost")
+    c.drawString(47, PAGE_H - 148, "State length × question count × GPU utilization × quality")
 
     cards = [
         ("Fixed labels", "ModernBERT-large + heads", "economics depend on utilization", BLUE),
@@ -114,9 +114,11 @@ def main() -> None:
     c.setAuthor("Mark Austin")
     c.setSubject("Executive comparison of fixed encoders, runtime-label classifiers, JEV, and LLM classifiers")
     cover(c)
-    chart_page(c, 2, "executive-decision-matrix.png")
-    chart_page(c, 3, "executive-cost-vs-gpu-utilization.png")
-    recommendation_page(c, 4)
+    chart_page(c, 2, "executive-runtime-winner-heatmap.png")
+    chart_page(c, 3, "executive-runtime-winner-confidence.png")
+    chart_page(c, 4, "executive-operating-scorecard.png")
+    chart_page(c, 5, "executive-utilization-decision-bands.png")
+    recommendation_page(c, 6)
     c.save()
     print(OUTPUT)
 

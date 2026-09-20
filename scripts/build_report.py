@@ -181,6 +181,7 @@ def methodology_page(c: canvas.Canvas, page_number: int) -> None:
         ("Generic cost projections", [
             "Duration scenarios assume 200 state tokens per minute.",
             "Duration panels use 10, 25, and 50 questions; taxonomy panels span 1 to 100.",
+            "Executive winner maps use 1k to 32k state tokens, 10 to 100 questions, and 10% to 100% paid H100 utilization.",
             "Question overhead scales proportionally from the measured 27-question workload.",
         ]),
     ]
@@ -420,19 +421,21 @@ def main() -> None:
     c.setSubject("Independent comparison of ModernBERT, DeBERTa, GLiClass, TypeSafe.ai JEV, GPT-5.6 Sol, and GPT-5.6 Luna")
     cover(c)
     executive_page(c, 2)
-    chart_page(c, 3, "executive-decision-matrix.png")
-    chart_page(c, 4, "executive-cost-vs-gpu-utilization.png")
-    chart_page(c, 5, "f1-comparison.png")
-    chart_page(c, 6, "accuracy-comparison.png")
-    chart_page(c, 7, "all-metrics-table.png")
-    chart_page(c, 8, "estimated-cost-1000-transcripts.png")
-    chart_page(c, 9, "normalized-cost-vs-state-tokens.png")
-    chart_page(c, 10, "generic-cost-vs-transcript-duration.png")
-    chart_page(c, 11, "generic-cost-vs-question-count.png")
-    cost_formulas_page(c, 12)
-    operating_model_page(c, 13)
-    methodology_page(c, 14)
-    conclusions_page(c, 15)
+    chart_page(c, 3, "executive-runtime-winner-heatmap.png")
+    chart_page(c, 4, "executive-runtime-winner-confidence.png")
+    chart_page(c, 5, "executive-operating-scorecard.png")
+    chart_page(c, 6, "executive-utilization-decision-bands.png")
+    chart_page(c, 7, "f1-comparison.png")
+    chart_page(c, 8, "accuracy-comparison.png")
+    chart_page(c, 9, "all-metrics-table.png")
+    chart_page(c, 10, "estimated-cost-1000-transcripts.png")
+    chart_page(c, 11, "normalized-cost-vs-state-tokens.png")
+    chart_page(c, 12, "generic-cost-vs-transcript-duration.png")
+    chart_page(c, 13, "generic-cost-vs-question-count.png")
+    cost_formulas_page(c, 14)
+    operating_model_page(c, 15)
+    methodology_page(c, 16)
+    conclusions_page(c, 17)
     c.save()
     print(OUTPUT)
 

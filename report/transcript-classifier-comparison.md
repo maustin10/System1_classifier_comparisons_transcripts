@@ -15,15 +15,21 @@ Among the additional uni-encoder checkpoints, GLiClass Modern Large v3 was stron
 
 The benchmark is deliberately a smoke test. Its deterministic synthetic templates and explicit evidence make it useful for controlled comparisons, but unsuitable as a production-accuracy claim.
 
-## Executive decision view
+## Executive decision pack
 
-![Executive decision matrix](../charts/executive-decision-matrix.png)
+If questions are stable and labeled training data exists, ModernBERT-large with trained heads is the default economic path. When questions change at runtime, the following map combines the three cost drivers: state length, question count, and paid H100 utilization.
 
-At a generic reference workload of **6,000 state tokens and 25 questions**, and at 100% paid H100 utilization, trained ModernBERT is the economic choice when the taxonomy is fixed. GLiClass Modern is the leading self-hosted option when labels must change at runtime. Calibrated TypeSafe.ai JEV Noul is the strongest managed-API cost/quality compromise in this benchmark. Luna and Sol deliver near-ceiling measured quality at materially higher modeled cost. Pairwise ModernBERT NLI remains a useful baseline, but its repeated-state design scales poorly when both state length and question count grow.
+![Lowest-cost runtime-question approach](../charts/executive-runtime-winner-heatmap.png)
 
-![Executive cost comparison across paid H100 utilization levels](../charts/executive-cost-vs-gpu-utilization.png)
+![Winner cost advantage over the runner-up](../charts/executive-runtime-winner-confidence.png)
 
-The utilization view holds state length and question count fixed at 6,000 × 25. Self-hosted encoder costs are divided by paid GPU utilization, while hosted JEV/Luna/Sol prices remain usage-based. In this scenario, JEV crosses trained ModernBERT near 13.9% utilization and GLiClass Modern near 14.6%. Example implementations are: trained and pairwise `MoritzLaurer/ModernBERT-large-zeroshot-v2.0`, shared-state zero-shot `knowledgator/gliclass-modern-large-v3.0`, hosted shared-state TypeSafe.ai JEV Noul, and single-call GPT-5.6 Luna/Sol.
+Low confidence percentages identify cells where qualitative requirements may outweigh cost. The operating-model scorecard makes those differences explicit.
+
+![Operating-model scorecard](../charts/executive-operating-scorecard.png)
+
+![Utilization decision bands](../charts/executive-utilization-decision-bands.png)
+
+The utilization bands use the 6,000-state-token × 25-question reference workload. JEV crosses trained ModernBERT near 13.9% utilization and GLiClass Modern near 14.6%. Example implementations are: trained and pairwise `MoritzLaurer/ModernBERT-large-zeroshot-v2.0`, shared-state zero-shot `knowledgator/gliclass-modern-large-v3.0`, hosted shared-state TypeSafe.ai JEV Noul, and single-call GPT-5.6 Luna/Sol.
 
 ## Results
 

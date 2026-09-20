@@ -186,6 +186,11 @@
       "economical_cost_boundary_usd_per_1000": 1.0
     },
     "executive_gpu_utilization_percent": [10, 25, 50, 100],
+    "executive_decision_grid": {
+      "state_tokens": [1000, 4000, 8000, 16000, 32000],
+      "questions": [10, 25, 50, 100],
+      "scope": "Runtime-question approaches only; fixed trained heads are handled as a separate taxonomy decision"
+    },
     "approaches": [
       "modernbert_trained",
       "gliclass_modern_large_v3",

@@ -8,11 +8,21 @@ The benchmark contains 1,000 synthetic conversations, each labeled for 27 binary
 
 > This is a controlled synthetic benchmark, not a claim of production accuracy. The conversations use explicit, template-driven evidence and do not represent the ambiguity, distribution shift, or annotation disagreement of live calls.
 
-## Executive decision view
+## Executive decision pack
 
-![Executive decision matrix showing cost and runtime-question flexibility](charts/executive-decision-matrix.png)
+The first decision is whether the taxonomy is fixed. If questions are stable and labeled training data exists, the default economic path is the fixed trained encoder. If questions change at runtime, use the winner and confidence maps below.
 
-For a generic reference workload of **6,000 state tokens and 25 questions**, with self-hosted costs shown at 100% paid H100 utilization, the executive interpretation is:
+![Lowest-cost runtime-question approach across state length, question count, and GPU utilization](charts/executive-runtime-winner-heatmap.png)
+
+Each cell shows the lowest-cost runtime-question approach and estimated USD per 1,000 states. The four panels vary paid H100 utilization; columns vary state length; rows vary the number of questions. The evaluated runtime candidates are GLiClass Modern, TypeSafe.ai JEV Noul, ModernBERT pairwise NLI, GPT-5.6 Luna, and GPT-5.6 Sol.
+
+![Cost advantage of the winning runtime-question approach](charts/executive-runtime-winner-confidence.png)
+
+The confidence map shows the winner's percentage cost advantage over the runner-up. Low percentages identify close decisions where deployment simplicity, support, latency, or data-residency requirements may outweigh the modeled savings.
+
+![Operating-model scorecard](charts/executive-operating-scorecard.png)
+
+The named examples are:
 
 - **Fixed trained encoder:** `MoritzLaurer/ModernBERT-large-zeroshot-v2.0` embeddings plus 27 trained logistic heads. It is the lowest-cost high-quality option when the taxonomy is stable, but new questions require training.
 - **Shared-state zero-shot encoder:** `knowledgator/gliclass-modern-large-v3.0`. It is the leading self-hosted runtime-label option in this test.
@@ -20,9 +30,9 @@ For a generic reference workload of **6,000 state tokens and 25 questions**, wit
 - **Pairwise zero-shot encoder:** `MoritzLaurer/ModernBERT-large-zeroshot-v2.0`. It is a transparent baseline, but repeats the state for every question.
 - **Single-call LLMs:** GPT-5.6 Luna and Sol. They score extremely well, but their estimated serving costs are materially higher.
 
-![Executive cost comparison across paid H100 utilization levels](charts/executive-cost-vs-gpu-utilization.png)
+![Utilization decision bands for fixed and runtime taxonomies](charts/executive-utilization-decision-bands.png)
 
-This view holds the workload at **6,000 state tokens × 25 questions** and varies paid H100 utilization from 10% to 100%. Self-hosted encoder costs scale as `full-utilization cost / utilization`; hosted JEV, Luna, and Sol remain usage-priced. In this scenario, **JEV becomes cheaper than trained ModernBERT below approximately 13.9% utilization and cheaper than GLiClass Modern below approximately 14.6%**. These are modeled crossovers, not measured H100 benchmarks or invoices.
+The crossover view holds the workload at **6,000 state tokens × 25 questions**. Self-hosted encoder costs scale as `full-utilization cost / utilization`; JEV remains usage-priced. In this scenario, **JEV becomes cheaper than trained ModernBERT below approximately 13.9% utilization and cheaper than GLiClass Modern below approximately 14.6%**. These are modeled crossovers, not measured H100 benchmarks or invoices.
 
 ## Key results
 

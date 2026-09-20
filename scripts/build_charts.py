@@ -856,6 +856,260 @@ def executive_gpu_utilization_bars() -> None:
     plt.close(fig)
 
 
+RUNTIME_DECISION_MODELS = [
+    ("gliclass_modern_large_v3", "GLiClass", "GLiClass Modern Large v3", "#D47900", True),
+    ("jev_noul", "JEV", "TypeSafe.ai JEV Noul", "#8059C3", False),
+    ("modernbert_zero_shot", "MB NLI", "ModernBERT-large pairwise NLI", "#2A9D8F", True),
+    ("gpt_5_6_luna", "Luna", "GPT-5.6 Luna", "#F4A261", False),
+    ("gpt_5_6_sol", "Sol", "GPT-5.6 Sol", "#303846", False),
+]
+
+
+def executive_runtime_grid(utilization_pct: float) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Return winner ids, winner costs, and savings versus runner-up for the executive grid."""
+    generic = NORMALIZED_COST["generic_transcript_sensitivity"]
+    grid = generic["executive_decision_grid"]
+    states = np.asarray(grid["state_tokens"], dtype=float)
+    questions = np.asarray(grid["questions"], dtype=float)
+    winner_ids = np.empty((len(questions), len(states)), dtype=object)
+    winner_costs = np.zeros((len(questions), len(states)), dtype=float)
+    advantages = np.zeros((len(questions), len(states)), dtype=float)
+    utilization = utilization_pct / 100
+    for row, question_count in enumerate(questions):
+        for col, state_tokens in enumerate(states):
+            costs = generic_transcript_costs(state_tokens, question_count)
+            candidates = []
+            for key, short, _, _, self_hosted in RUNTIME_DECISION_MODELS:
+                value = float(costs[key]) / utilization if self_hosted else float(costs[key])
+                candidates.append((value, key, short))
+            candidates.sort()
+            best, best_key, _ = candidates[0]
+            runner_up = candidates[1][0]
+            winner_ids[row, col] = best_key
+            winner_costs[row, col] = best
+            advantages[row, col] = 100 * (runner_up - best) / runner_up
+    return winner_ids, winner_costs, advantages
+
+
+def executive_winner_heatmap() -> None:
+    """Show the lowest-cost runtime-question approach over state, question, and utilization grids."""
+    generic = NORMALIZED_COST["generic_transcript_sensitivity"]
+    grid = generic["executive_decision_grid"]
+    states = grid["state_tokens"]
+    questions = grid["questions"]
+    utilizations = generic["executive_gpu_utilization_percent"]
+    by_key = {key: (short, full, color) for key, short, full, color, _ in RUNTIME_DECISION_MODELS}
+
+    fig, axes = plt.subplots(2, 2, figsize=(18, 10.5), sharex=True, sharey=True)
+    for ax, utilization_pct in zip(axes.flat, utilizations):
+        winners, costs, _ = executive_runtime_grid(utilization_pct)
+        for row in range(len(questions)):
+            for col in range(len(states)):
+                key = winners[row, col]
+                short, _, color = by_key[key]
+                ax.add_patch(plt.Rectangle((col - 0.5, row - 0.5), 1, 1, facecolor=color, edgecolor="white", linewidth=2))
+                cost = costs[row, col]
+                cost_label = f"${cost:.3f}" if cost < 10 else f"${cost:.1f}"
+                ax.text(col, row, f"{short}\n{cost_label}", ha="center", va="center", color="white", fontsize=9.2, fontweight="bold")
+        ax.set_xlim(-0.5, len(states) - 0.5)
+        ax.set_ylim(len(questions) - 0.5, -0.5)
+        ax.set_xticks(range(len(states)), [f"{value / 1000:g}k" for value in states])
+        ax.set_yticks(range(len(questions)), [str(value) for value in questions])
+        ax.set_title(f"{utilization_pct}% paid H100 utilization", fontsize=14, pad=12)
+        ax.tick_params(length=0, labelsize=10)
+        for spine in ax.spines.values():
+            spine.set_visible(False)
+    for ax in axes[1, :]:
+        ax.set_xlabel("State length (tokens)")
+    for ax in axes[:, 0]:
+        ax.set_ylabel("Runtime questions")
+
+    winner_keys = []
+    for utilization_pct in utilizations:
+        winners, _, _ = executive_runtime_grid(utilization_pct)
+        for key in winners.flat:
+            if key not in winner_keys:
+                winner_keys.append(key)
+    handles = [plt.Rectangle((0, 0), 1, 1, color=by_key[key][2]) for key in winner_keys]
+    labels = [by_key[key][1] for key in winner_keys]
+    fig.legend(handles, labels, ncol=len(labels), frameon=False, loc="upper center", bbox_to_anchor=(0.5, 0.905), fontsize=10)
+    fig.suptitle("Which runtime-question approach has the lowest modeled cost?", x=0.055, ha="left", fontsize=21, fontweight="bold")
+    fig.text(
+        0.055,
+        0.94,
+        "State length × question count × paid GPU utilization · each cell shows the winner and USD per 1,000 states",
+        color=MUTED,
+        fontsize=11,
+    )
+    fig.text(
+        0.01,
+        0.012,
+        "Fixed trained heads are intentionally excluded: if questions are stable and labeled training data exists, ModernBERT-large + trained heads is the default economic path. Runtime candidates evaluated: GLiClass Modern, TypeSafe.ai JEV Noul, ModernBERT NLI, Luna, and Sol.",
+        color=MUTED,
+        fontsize=8.7,
+    )
+    fig.tight_layout(rect=(0.04, 0.06, 0.995, 0.87), w_pad=2.8, h_pad=2.2)
+    fig.savefig(CHARTS / "executive-runtime-winner-heatmap.png", dpi=180, bbox_inches="tight")
+    plt.close(fig)
+
+
+def executive_winner_confidence_heatmap() -> None:
+    """Show the winner's modeled cost advantage over the runner-up."""
+    generic = NORMALIZED_COST["generic_transcript_sensitivity"]
+    grid = generic["executive_decision_grid"]
+    states = grid["state_tokens"]
+    questions = grid["questions"]
+    utilizations = generic["executive_gpu_utilization_percent"]
+    by_key = {key: (short, full, color) for key, short, full, color, _ in RUNTIME_DECISION_MODELS}
+    all_advantages = [executive_runtime_grid(value)[2] for value in utilizations]
+    color_max = max(50, float(max(np.max(value) for value in all_advantages)))
+
+    fig, axes = plt.subplots(2, 2, figsize=(18, 10.5), sharex=True, sharey=True)
+    image_handle = None
+    for ax, utilization_pct, advantages in zip(axes.flat, utilizations, all_advantages):
+        winners, _, _ = executive_runtime_grid(utilization_pct)
+        image_handle = ax.imshow(advantages, cmap="Blues", vmin=0, vmax=color_max, aspect="auto")
+        for row in range(len(questions)):
+            for col in range(len(states)):
+                key = winners[row, col]
+                short = by_key[key][0]
+                value = advantages[row, col]
+                text_color = "white" if value > color_max * 0.48 else INK
+                ax.text(col, row, f"{short}\n{value:.0f}%", ha="center", va="center", color=text_color, fontsize=9.2, fontweight="bold")
+        ax.set_xticks(range(len(states)), [f"{value / 1000:g}k" for value in states])
+        ax.set_yticks(range(len(questions)), [str(value) for value in questions])
+        ax.set_title(f"{utilization_pct}% paid H100 utilization", fontsize=14, pad=12)
+        ax.tick_params(length=0, labelsize=10)
+        for spine in ax.spines.values():
+            spine.set_visible(False)
+    for ax in axes[1, :]:
+        ax.set_xlabel("State length (tokens)")
+    for ax in axes[:, 0]:
+        ax.set_ylabel("Runtime questions")
+    colorbar_axis = fig.add_axes([0.915, 0.20, 0.015, 0.58])
+    colorbar = fig.colorbar(image_handle, cax=colorbar_axis)
+    colorbar.set_label("Winner cost advantage over runner-up (%)")
+    fig.suptitle("How decisive is the modeled cost winner?", x=0.055, ha="left", fontsize=21, fontweight="bold")
+    fig.text(
+        0.055,
+        0.94,
+        "Higher percentages mean the recommendation is more economically robust; low percentages indicate a close decision",
+        color=MUTED,
+        fontsize=11,
+    )
+    fig.text(
+        0.01,
+        0.012,
+        "Advantage = (runner-up cost - winner cost) / runner-up cost. Operational simplicity, data residency, latency, support, and quality may outweigh a small modeled cost advantage.",
+        color=MUTED,
+        fontsize=8.8,
+    )
+    fig.subplots_adjust(left=0.07, right=0.88, bottom=0.09, top=0.86, wspace=0.20, hspace=0.28)
+    fig.savefig(CHARTS / "executive-runtime-winner-confidence.png", dpi=180, bbox_inches="tight")
+    plt.close(fig)
+
+
+def executive_operating_scorecard() -> None:
+    """Summarize the operating model, example implementation, quality, and economics."""
+    rows = [
+        ["Fixed trained encoder", "ModernBERT-large + trained logistic heads", "99.16%", "No", "Self-hosted", "Default economic path when taxonomy is stable"],
+        ["Shared-state zero-shot", "GLiClass Modern Large v3", "97.90%", "Yes", "Self-hosted", "Flexible winner above ~14.6% utilization at 6k × 25"],
+        ["Hosted shared-state API", "TypeSafe.ai JEV Noul", "99.90%", "Yes", "Managed API", "Usage-priced; no customer-owned idle GPU"],
+        ["Pairwise zero-shot", "ModernBERT-large zero-shot NLI", "96.42%", "Yes", "Self-hosted", "Repeats state for every question"],
+        ["Single-call LLM", "GPT-5.6 Luna / GPT-5.6 Sol", "99.75% / 99.93%", "Yes", "Managed API", "Premium option for broader semantic reasoning"],
+    ]
+    headers = ["Operating pattern", "Example implementation", "Accuracy", "Runtime\nquestions", "Deployment", "Executive takeaway"]
+    fig, ax = plt.subplots(figsize=(16, 9.2))
+    ax.axis("off")
+    ax.set_title("Operating-model scorecard", loc="left", pad=20)
+    ax.text(0, 1.015, "Named examples from this benchmark · choose the operating model before choosing the model", transform=ax.transAxes, color=MUTED, fontsize=11)
+    table = ax.table(
+        cellText=rows,
+        colLabels=headers,
+        colWidths=[0.15, 0.25, 0.09, 0.09, 0.11, 0.31],
+        cellLoc="left",
+        colLoc="left",
+        loc="center",
+        bbox=[0, 0.08, 1, 0.80],
+    )
+    table.auto_set_font_size(False)
+    table.set_fontsize(10.5)
+    row_colors = ["#0B678B", "#D47900", "#8059C3", "#2A9D8F", "#303846"]
+    for (row, col), cell in table.get_celld().items():
+        cell.set_edgecolor(GRID)
+        cell.set_linewidth(0.7)
+        if row == 0:
+            cell.set_facecolor("#E9EFF5")
+            cell.set_text_props(weight="bold", color=INK)
+        else:
+            cell.set_facecolor("#F7F9FB" if row % 2 == 0 else "white")
+            if col == 0:
+                cell.set_text_props(weight="bold", color=row_colors[row - 1])
+            elif col in (2, 3):
+                cell.set_text_props(weight="bold", ha="center")
+    fig.text(
+        0.01,
+        0.012,
+        "Accuracy is measured on the locked 150-transcript synthetic test. The 14.6% utilization crossover is specific to the 6k-state-token × 25-question, USD 5/H100-hour scenario.",
+        color=MUTED,
+        fontsize=8.8,
+    )
+    fig.tight_layout(rect=(0.02, 0.06, 0.99, 0.95))
+    fig.savefig(CHARTS / "executive-operating-scorecard.png", dpi=180, bbox_inches="tight")
+    plt.close(fig)
+
+
+def executive_utilization_decision_bands() -> None:
+    """Show no-line-chart crossover bands for fixed and runtime taxonomies."""
+    generic = NORMALIZED_COST["generic_transcript_sensitivity"]
+    reference = generic["executive_matrix_reference"]
+    costs = generic_transcript_costs(reference["state_tokens"], reference["questions"])
+    trained_cross = 100 * float(costs["modernbert_trained"]) / float(costs["jev_noul"])
+    gliclass_cross = 100 * float(costs["gliclass_modern_large_v3"]) / float(costs["jev_noul"])
+
+    fig, ax = plt.subplots(figsize=(15.5, 7.6))
+    bands = [
+        (1, "Fixed taxonomy\ntraining data available", trained_cross, "ModernBERT-large + trained heads", "#0B678B"),
+        (0, "Questions change\nat runtime", gliclass_cross, "GLiClass Modern Large v3", "#D47900"),
+    ]
+    for y, label, boundary, right_label, right_color in bands:
+        ax.barh(y, boundary, left=0, height=0.52, color="#8059C3")
+        ax.barh(y, 100 - boundary, left=boundary, height=0.52, color=right_color)
+        ax.text(boundary / 2, y, "TypeSafe.ai JEV Noul", ha="center", va="center", color="white", fontsize=11, fontweight="bold")
+        ax.text(boundary + (100 - boundary) / 2, y, right_label, ha="center", va="center", color="white", fontsize=11, fontweight="bold")
+        ax.axvline(boundary, color=INK, linewidth=1.2, linestyle="--")
+        ax.text(boundary, y + 0.36, f"{boundary:.1f}% crossover", ha="center", va="bottom", fontsize=10, fontweight="bold", color=INK)
+
+    ax.set_xlim(0, 100)
+    ax.set_ylim(-0.7, 1.75)
+    ax.set_yticks([1, 0], [bands[0][1], bands[1][1]])
+    ax.set_xticks([0, 10, 25, 50, 75, 100], ["0%", "10%", "25%", "50%", "75%", "100%"])
+    ax.set_xlabel("Paid H100 utilization")
+    ax.grid(axis="x", color=GRID, linewidth=0.8)
+    ax.set_axisbelow(True)
+    ax.spines[["top", "right", "left"]].set_visible(False)
+    ax.tick_params(axis="y", length=0, labelsize=11, pad=10)
+    ax.set_title("Which operating model wins as GPU utilization changes?", loc="left", pad=22)
+    ax.text(
+        0,
+        1.015,
+        f"Reference workload: {reference['state_tokens'] / 1000:g}k state tokens × {reference['questions']} questions · H100 at USD 5/hour · modeled cost only",
+        transform=ax.transAxes,
+        color=MUTED,
+        fontsize=11,
+    )
+    fig.text(
+        0.01,
+        0.012,
+        "Below the crossover, usage-priced JEV is cheaper than carrying idle H100 capacity. Above it, self-hosted encoders win on modeled marginal cost. Operational requirements and measured quality remain separate gates.",
+        color=MUTED,
+        fontsize=8.8,
+    )
+    fig.tight_layout(rect=(0.04, 0.08, 0.99, 0.94))
+    fig.savefig(CHARTS / "executive-utilization-decision-bands.png", dpi=180, bbox_inches="tight")
+    plt.close(fig)
+
+
 def main() -> None:
     setup()
     metric_chart("f1", "F1 comparison across transcript classifiers", "f1-comparison.png")
@@ -868,6 +1122,10 @@ def main() -> None:
     generic_question_count_chart()
     executive_decision_matrix()
     executive_gpu_utilization_bars()
+    executive_winner_heatmap()
+    executive_winner_confidence_heatmap()
+    executive_operating_scorecard()
+    executive_utilization_decision_bands()
     print(f"Wrote charts to {CHARTS}")
 
 
