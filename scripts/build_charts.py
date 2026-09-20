@@ -392,7 +392,8 @@ def normalized_cost_state_length_chart() -> None:
     ax.set_ylim(0.006, 3.2)
     ax.set_xlabel("Raw input tokens in each state (log scale)")
     ax.set_ylabel("Estimated USD per million raw state tokens (log scale)")
-    ax.xaxis.set_major_locator(FixedLocator([50, 100, 250, 500, 1000, 2000, 4000, 8000, 16000, 32000, 64000]))
+    x_ticks = [50, 100, 250, 500, 1000, 2000, 4000, 8000, 16000, 32000]
+    ax.xaxis.set_major_locator(FixedLocator([tick for tick in x_ticks if lower <= tick <= upper]))
     ax.xaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:,.0f}"))
     ax.yaxis.set_major_locator(FixedLocator([0.008, 0.01, 0.03, 0.1, 0.3, 1, 3]))
     ax.yaxis.set_major_formatter(FuncFormatter(lambda value, _: f"${value:g}"))

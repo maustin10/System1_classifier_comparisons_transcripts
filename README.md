@@ -29,7 +29,7 @@ The principal findings are:
 
 **Chunking** splits a state that exceeds a model's native context into overlapping pieces, runs the same classifier on every piece, and combines the chunk-level probabilities into one transcript-level result. For these presence-style attributes, a maximum or calibrated noisy-OR is a plausible aggregator, but it must be validation-tuned because additional chunks can increase false positives.
 
-This sensitivity analysis uses NVIDIA H100s at **$5/GPU-hour**, 27 questions, near-100% utilization, and 256 overlapping tokens between adjacent chunks. ModernBERT uses approximately 8,178 state tokens per chunk after nominal question/special-token overhead. JEV uses approximately 31,890 state tokens per request, reserving a nominal 110 tokens for its longest question. A 64k state therefore requires nine ModernBERT chunks or three JEV requests under these assumptions. Two JEV chunks cover only 63,524 unique state tokens after overlap, so the final 476 tokens trigger a third request.
+This sensitivity analysis covers states up to **32k tokens** and uses NVIDIA H100s at **$5/GPU-hour**, 27 questions, near-100% utilization, and 256 overlapping tokens between adjacent chunks. ModernBERT uses approximately 8,178 state tokens per chunk after nominal question/special-token overhead. JEV uses approximately 31,890 state tokens per request, reserving a nominal 110 tokens for its longest question. At the 32k endpoint, the nominal allowance makes this five ModernBERT chunks or two JEV requests under these assumptions.
 
 | Raw state tokens | ModernBERT chunks | JEV requests | ModernBERT trained | ModernBERT zero-shot | JEV Noul | JEV Choice |
 |---:|---:|---:|---:|---:|---:|---:|
@@ -40,7 +40,6 @@ This sensitivity analysis uses NVIDIA H100s at **$5/GPU-hour**, 27 questions, ne
 | 8,192 | 2 | 1 | $0.0084 | $0.2278 | $0.0551 | $0.0572 |
 | 16,000 | 2 | 1 | $0.0083 | $0.2241 | $0.0487 | $0.0498 |
 | 32,000 | 5 | 2 | $0.0084 | $0.2277 | $0.0491 | $0.0501 |
-| 64,000 | 9 | 3 | $0.0084 | $0.2276 | $0.0474 | $0.0482 |
 
 All values are USD per one million raw state tokens. JEV Noul crosses below arbitrary-question ModernBERT zero-shot at approximately **586 state tokens**; JEV Choice crosses below it at approximately **682 tokens**. The fixed-head trained ModernBERT path remains substantially cheaper throughout because the questions have been compiled into learned weights.
 

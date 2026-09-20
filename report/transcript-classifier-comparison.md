@@ -63,7 +63,7 @@ The original JEV Choice run used a raw transcript string and generic present/abs
 
 ![Normalized serving cost versus state length](../charts/normalized-cost-vs-state-tokens.png)
 
-Chunking splits an over-limit state into overlapping pieces, scores every piece, and aggregates the piece-level probabilities. This scenario uses NVIDIA H100s at **$5/GPU-hour**, 27 questions, 256 overlapping tokens, and near-100% utilization. ModernBERT's nominal state payload is 8,178 tokens per chunk; JEV's is 31,890 tokens per request after reserving 110 tokens for the nominal longest question. At 64k, overlap means nine ModernBERT chunks or three JEV requests are required.
+Chunking splits an over-limit state into overlapping pieces, scores every piece, and aggregates the piece-level probabilities. This scenario covers states up to **32k tokens** and uses NVIDIA H100s at **$5/GPU-hour**, 27 questions, 256 overlapping tokens, and near-100% utilization. ModernBERT's nominal state payload is 8,178 tokens per chunk; JEV's is 31,890 tokens per request after reserving 110 tokens for the nominal longest question. At the 32k endpoint, the nominal allowance makes this five ModernBERT chunks or two JEV requests.
 
 | Raw state tokens | MB chunks | JEV requests | MB trained | MB zero-shot | JEV Noul | JEV Choice |
 |---:|---:|---:|---:|---:|---:|---:|
@@ -72,7 +72,6 @@ Chunking splits an over-limit state into overlapping pieces, scores every piece,
 | 8,192 | 2 | 1 | $0.0084 | $0.2278 | $0.0551 | $0.0572 |
 | 16,000 | 2 | 1 | $0.0083 | $0.2241 | $0.0487 | $0.0498 |
 | 32,000 | 5 | 2 | $0.0084 | $0.2277 | $0.0491 | $0.0501 |
-| 64,000 | 9 | 3 | $0.0084 | $0.2276 | $0.0474 | $0.0482 |
 
 All values are USD per one million raw state tokens. JEV Noul crosses below arbitrary-question ModernBERT zero-shot at approximately **586 state tokens**, while Choice crosses below at approximately **682 tokens**. Fixed-head trained ModernBERT stays much cheaper because it does not process question text at inference.
 
