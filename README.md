@@ -4,11 +4,19 @@ This repository represents an independent comparison of open encoder classifiers
 
 **Author: Mark Austin**
 
-Publication drafts: [LinkedIn post](articles/linkedin-post.md) · [Long-form blog](articles/blog-post.md)
+Publication drafts: [LinkedIn post](articles/linkedin-post.md) · [Long-form blog](articles/blog-post.md) · [Classifier-tokenomics outline](articles/blog-outline-classifier-tokenomics.md)
 
 The benchmark contains 1,000 synthetic conversations, each labeled for 27 binary customer-care attributes. The fixed split is 700 training, 150 validation, and 150 locked test conversations. All quality numbers below are calculated only on the locked test set: 4,050 binary decisions.
 
 > This is a controlled synthetic benchmark, not a claim of production accuracy. The conversations use explicit, template-driven evidence and do not represent the ambiguity, distribution shift, or annotation disagreement of live calls.
+
+## AskATT System1-compatible API
+
+The repository now includes `Askatt_system1_api`, a local GLiClass Modern Large service with the TypeSafe System One `POST /v1/systemone` envelope for **Noul** and **Choice**. It is intended as a portable comparison seam: an application can submit the same shared `state` and named questions to JEV or to the local service while keeping model-specific calibration and policy outside the application.
+
+This is API compatibility, not a reproduction of JEV. GLiClass supplies the probabilities; general Choice distributions and confidence are adapter-defined; Score is not implemented.
+
+On the locked 150-transcript / 4,050-decision test, both the Noul and conventional binary Choice adapters produced **94.10% accuracy, 83.89% precision, 96.07% recall, and 89.57% F1**, with all 27 labels in one shared GLiClass pass per transcript. See the [API guide](askatt_system1_api/README.md) and the [separate implementation appendix](report/appendix-askatt-system1-api.md).
 
 ## Executive decision pack
 
@@ -188,7 +196,7 @@ flowchart LR
     R -. external cost shape .-> C["Cost: state once + question overhead<br/>Reference: GLiClass USD 0.051; JEV USD 0.352 / 1k"]
 ```
 
-GLiClass explicitly serializes the state and label descriptions into a shared uni-encoder input. JEV exposes this pattern at its API and billing boundary; the diagram does not claim that JEV's undisclosed internal compute graph encodes the state exactly once.
+GLiClass explicitly serializes the state and label descriptions into a shared uni-encoder input. The current TypeSafe model documentation states that JEV ingests the state once and evaluates every question in parallel. That is a vendor architecture statement; this independent benchmark verifies the external request, billing, and latency behavior but cannot inspect JEV's proprietary compute graph.
 
 ### Fixed taxonomy: encode state once, then apply learned heads
 
@@ -207,11 +215,11 @@ Trained ModernBERT uses this pattern. It is efficient because question text is a
 
 ## Does this prove JEV has a new architecture?
 
-No—not from public evidence currently available. TypeSafe publicly claims a “new model architecture,” a “parallel sampler,” and RLCD training. Its API unquestionably supports arbitrary state and arbitrary typed questions, something the fixed-head ModernBERT configuration cannot do. But the public API documentation does not disclose the internal compute graph, parameter count, attention arrangement, or state-reuse mechanism.
+Not by itself. TypeSafe now explicitly documents that JEV ingests the state once and evaluates questions in parallel, and it publicly describes a “new model architecture,” a “parallel sampler,” and RLCD training. Its API unquestionably supports arbitrary state and arbitrary typed questions, something the fixed-head ModernBERT configuration cannot do. But the public documentation still does not expose enough of the compute graph, parameterization, or attention arrangement for this independent test to determine how novel the architecture is.
 
-The observed billing equation and near-flat 1-to-16-question latency establish useful external behavior, not architectural novelty. A conventional batched cross-encoder can also show nearly flat latency until the GPU batch saturates while still repeating the state internally. A dual encoder, cached state encoder, late-interaction model, or shared-state cross-attention design could also provide arbitrary questions without being a fundamentally new model family.
+The observed billing equation and near-flat 1-to-16-question latency are consistent with TypeSafe's documented state-once behavior, but black-box measurements cannot independently prove the mechanism. A conventional batched cross-encoder can also show nearly flat latency until the GPU batch saturates while repeating the state internally. A dual encoder, cached state encoder, late-interaction model, or shared-state cross-attention design could also provide arbitrary questions without being a fundamentally new model family.
 
-The defensible conclusion is: **JEV exposes a valuable arbitrary-question/shared-state product abstraction and prices it as shared state; whether its internal architecture is genuinely novel remains unverified.**
+The defensible conclusion is: **JEV exposes, documents, and prices a valuable arbitrary-question/shared-state abstraction; this benchmark supports its external behavior but does not independently verify how novel the proprietary implementation is.**
 
 ## Complete quality table
 
@@ -276,6 +284,7 @@ JEV Choice versus Noul is not a primitive-only A/B test. The Noul experiment als
 
 ```text
 articles/                       LinkedIn and long-form publication drafts
+askatt_system1_api/             JEV-shaped Noul/Choice service over GLiClass
 charts/                         Generated comparison charts
 data/
   synth_transcript.xlsx        1,000 synthetic labeled conversations
@@ -284,11 +293,14 @@ data/
   normalized_cost_scenario.json H100 throughput proxy, token amplification, and serving-cost assumptions
   benchmark_1000/              Fixed split and raw benchmark outputs
 report/
+  appendix-askatt-system1-api.md
+  appendix-askatt-system1-api.pdf
   transcript-classifier-comparison.md
   transcript-classifier-comparison.pdf
   transcript-classifier-executive-summary.pdf
 results/                        Consolidated JSON, model outputs, and workbook
 scripts/                        Benchmark, calibration, chart, and report code
+tests/                          API contract and real-checkpoint integration tests
 models/                         Local model downloads; ignored by Git
 ```
 
