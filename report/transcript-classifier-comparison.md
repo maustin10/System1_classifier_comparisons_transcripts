@@ -59,28 +59,59 @@ The commercially friendly DeBERTa-v3-large checkpoint was effectively tied with 
 
 The original JEV Choice run used a raw transcript string and generic present/absent criteria. The Noul run used structured speaker turns, detailed true/false boundaries, and validation refinement for three overlapping labels. Although a binary Choice argmax is mathematically equivalent to a 0.50 cutoff when both primitives expose the same probability, the API documentation does not guarantee identical internal scoring. More importantly, this experiment changed several factors simultaneously. A primitive-only A/B test remains future work.
 
-## Equivalent-latency comparison
+## Accuracy versus normalized serving cost
 
-![Accuracy versus effective latency](../charts/accuracy-vs-equivalent-latency.png)
+![Accuracy versus normalized serving cost](../charts/accuracy-vs-normalized-cost.png)
 
-Latency is normalized to the same business work unit: **one transcript producing all 27 attribute decisions**.
+The scenario fixes incoming volume at **170,331 raw transcript tokens per second**, or about 759 average benchmark transcripts per second. It uses NVIDIA H100s at the requested **$5/GPU-hour** with near-100% utilization. The ModernBERT-large capacity is a proxy rather than an exact-checkpoint benchmark: a public 350,000-token/s H100 observation for ModernBERT-base, scaled by the official RTX 4090 short-variable large/base throughput ratio (`52.9 / 108.7`).
 
-| Inference path | Observed elapsed time, 150 transcripts | Effective time / transcript | Execution shape |
-|---|---:|---:|---|
-| JEV Noul | 44.01 s | 293 ms | One sequential hosted request per transcript with 27 shared-state questions |
-| JEV Choice | 46.91 s | 313 ms | One sequential hosted request per transcript with 27 shared-state questions |
-| ModernBERT trained heads | 171.92 s | 1,146 ms | Local CPU; encode each transcript once and apply 27 logistic heads; batch size 4 |
-| ModernBERT zero-shot | 782.56 s | 5,217 ms | Local CPU; score 4,050 premise/hypothesis pairs; pair batch size 64 |
+| Inference path | Input/computation shape | Normalized cost / hour | Cost / 1M raw state tokens |
+|---|---|---:|---:|
+| ModernBERT trained heads | State encoded once; 27 fixed heads | $5.04 | $0.0082 |
+| ModernBERT zero-shot | 27 state/hypothesis NLI pairs | $143.35 | $0.2338 |
+| JEV Noul | Shared-state API billing; 27 arbitrary questions | $319.45 | $0.5210 |
+| JEV Choice | Shared-state API billing; question/option criteria | $365.80 | $0.5965 |
 
-The optimized-threshold ModernBERT variant has the same inference path as ordinary zero-shot ModernBERT. Likewise, validation calibration changes the JEV Noul decision cutoffs, not the hosted scoring call. Those variants therefore share latency coordinates in the chart.
+Under these assumptions, JEV Noul costs about **2.23x** the arbitrary-question ModernBERT zero-shot path and **63.3x** the fixed-taxonomy trained-head path per raw transcript token. The latter is not a like-for-like flexibility comparison: the trained model's 27 label meanings are compiled into learned weights.
 
-This normalization prevents a misleading comparison between JEV's multi-question request and a single ModernBERT Boolean score. It is still a deployment-path comparison rather than an architecture-only benchmark: the local models ran on CPU, whereas JEV used remote TypeSafe infrastructure and included network time. Dividing total elapsed time by 150 gives an effective throughput-derived time, not a batch-1 latency distribution. The next rigorous step is warm batch-1 p50/p95 testing on the intended local hardware, plus throughput at matched concurrency.
+GPU-equivalents are continuous rather than rounded to whole devices, representing a sufficiently large fleet or time-sharing system with near-full utilization. The estimate excludes redundancy, storage, orchestration, and engineering. JEV cost is linearly extrapolated from measured billed input tokens and its published $0.042-per-million-input-token price. The service's capacity and rate limits at this hypothetical throughput were not tested.
 
-## Estimated marginal cost
+### What each ModernBERT path actually computes
+
+The zero-shot path creates one premise/hypothesis sequence for every attribute. On the locked set, the mean raw transcript was 224.46 ModernBERT tokens, while the 27 NLI pairs contained 6,435.42 total tokens per transcript. That is a measured **28.67x compute-token amplification** and is approximately:
+
+```text
+sum_i tokenize(state, question_i) ~= N * state + sum(question_i) + pair overhead
+```
+
+The trained-head path is not `state + N * question_size`. It encodes only the state, mean-pools one 1,024-dimensional vector, and evaluates 27 fixed logistic functions:
+
+```text
+h = ModernBERT(state)
+p = sigmoid(W h + b)
+```
+
+Question text is absent at inference because the 27 label meanings are captured in the learned rows of `W`. This is why the trained system is cheap, but it cannot accept a novel question without training a new head.
+
+### What the public evidence establishes about JEV
+
+JEV occupies a functionally different point: its API accepts an arbitrary state and arbitrary typed questions in the same request. TypeSafe publicly claims a new architecture, a parallel sampler, and RLCD training. However, the public documentation does not disclose a parameter count, compute graph, attention layout, or state-reuse mechanism.
+
+The measured billing relationship is consistent with:
+
+```text
+billable input ~= state tokens + N * question tokens + fixed request overhead
+```
+
+Latency also remained approximately flat from 1 to 16 questions. Those observations verify attractive external behavior, but do not prove internal state reuse or architectural novelty. A conventional cross-encoder can batch `N` repeated-state pairs and appear latency-flat until hardware saturation. Dual encoders, cached state encoders, late-interaction models, and shared-memory cross-attention can also implement arbitrary questions with a single state representation.
+
+The defensible finding is therefore narrower: **JEV exposes arbitrary-question classification with shared-state-like pricing and parallel output behavior. Whether the implementation is a fundamentally new architecture remains unverified from public information.**
+
+## API-only marginal cost per 1,000 transcripts
 
 ![Estimated recurring API cost](../charts/estimated-cost-1000-transcripts.png)
 
-The cost chart estimates recurring marginal inference charges for 1,000 transcripts:
+This chart estimates recurring API charges for 1,000 transcripts. It is not the fair JEV-versus-ModernBERT serving comparison because the local-model bars exclude GPU cost; use the normalized scenario above for that comparison.
 
 | Approach | Estimated API cost / 1,000 | Basis |
 |---|---:|---|
@@ -132,9 +163,10 @@ Sol and Luna received truth-free transcript inputs and the 27-label output schem
 2. Only 150 conversations are in the locked test set; one error changes accuracy by approximately 0.025 percentage points across all label decisions.
 3. Attribute decisions within a transcript are correlated, so 4,050 labels are not equivalent to 4,050 independent samples.
 4. The JEV Noul and Choice prompts differ beyond the API primitive.
-5. Encoder timing was local CPU and JEV included hosted network time. The normalized values are throughput-derived effective times, not matched-hardware batch-1 p50/p95 latency.
-6. Cost values use different evidence levels and are clearly labeled as measured or standardized estimates.
+5. The normalized cost scenario uses an H100 throughput proxy derived from a ModernBERT-base observation and the official RTX 4090 large/base ratio, not a benchmark of this exact NLI checkpoint and serving stack.
+6. Continuous GPU-equivalents assume fleet-scale utilization; small deployments must round capacity up and will cost more per token.
 7. Thresholds and prompt boundaries may overfit the deterministic synthetic generator's ontology.
+8. JEV billing and latency are black-box observations and cannot reveal the proprietary internal compute graph.
 
 ## Recommended next steps
 
@@ -148,6 +180,8 @@ Sol and Luna received truth-free transcript inputs and the 27-label output schem
 
 - TypeSafe.ai, [API reference](https://docs.typesafe.ai/api).
 - TypeSafe.ai, [Introducing System One Models and JEV](https://typesafe.ai/blog/introducing-system-one-models-and-jev).
+- Hugging Face, [ModernBERT efficiency benchmark](https://huggingface.co/blog/modernbert).
+- Michael Feil, [ModernBERT-base H100 deployment observation](https://www.linkedin.com/posts/michael-feil_the-latest-release-of-infinity-httpslnkdin-activity-7280971190632943616-E07N).
 - OpenAI, [GPT-5.6 Sol model and pricing](https://developers.openai.com/api/docs/models/gpt-5.6-sol).
 - OpenAI, [GPT-5.6 Luna pricing update](https://openai.com/index/advancing-the-price-performance-frontier-with-gpt-5-6/).
 - Hugging Face, [ModernBERT-large-zeroshot-v2.0](https://huggingface.co/MoritzLaurer/ModernBERT-large-zeroshot-v2.0).

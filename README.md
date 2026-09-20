@@ -23,22 +23,44 @@ The principal findings are:
 - Per-label threshold calibration improved unchanged zero-shot ModernBERT from 92.96% to 96.42% accuracy without training new weights.
 - DeBERTa-v3-large-zeroshot-v2.0-c did not beat ModernBERT zero-shot on this dataset and was approximately 2.47 times slower on the same CPU path.
 
-## Accuracy at an equivalent output unit
+## Accuracy versus normalized serving cost
 
-![Accuracy versus effective latency for ModernBERT and JEV](charts/accuracy-vs-equivalent-latency.png)
+![Accuracy versus normalized serving cost for ModernBERT and JEV](charts/accuracy-vs-normalized-cost.png)
 
-The comparable work unit is **one transcript in, all 27 decisions out**. Dividing each measured 150-transcript run by 150 gives the following effective wall-clock times:
+This scenario fixes the incoming workload at **170,331 raw transcript tokens per second**, or about 759 average benchmark transcripts per second. The deployment uses NVIDIA H100s at the requested **$5/GPU-hour** and assumes near-100% utilization. Because no exact-checkpoint H100 benchmark was available, the 170,331-token/s ModernBERT-large capacity is a proxy: a public 350,000-token/s H100 observation for ModernBERT-base, scaled by the official RTX 4090 short-variable large/base throughput ratio (`52.9 / 108.7`). Rebenchmarking the actual checkpoint and serving stack is required before using these figures for procurement.
 
-| Inference path | Effective time / transcript | What is produced |
-|---|---:|---|
-| JEV Noul | 293 ms | One hosted request containing 27 shared-state questions |
-| JEV Choice | 313 ms | One hosted request containing 27 shared-state questions |
-| ModernBERT trained heads | 1,146 ms | One local CPU encoder pass plus 27 logistic heads |
-| ModernBERT zero-shot | 5,217 ms | 27 local CPU premise/hypothesis NLI scores |
+| Inference path | Input/computation shape | Normalized cost / hour | Cost / 1M raw state tokens |
+|---|---|---:|---:|
+| ModernBERT trained heads | State encoded once; 27 fixed heads | $5.04 | $0.0082 |
+| ModernBERT zero-shot | 27 state/hypothesis pairs | $143.35 | $0.2338 |
+| JEV Noul | Shared-state API billing; 27 arbitrary questions | $319.45 | $0.5210 |
+| JEV Choice | Shared-state API billing; question/option criteria | $365.80 | $0.5965 |
 
-This is more comparable than milliseconds per individual Boolean decision because JEV evaluates a set of questions together and trained ModernBERT emits all 27 labels after one transcript encoding. Threshold calibration does not materially change inference latency, so calibrated and uncalibrated variants share the same latency coordinate.
+Under these assumptions, JEV Noul costs about **2.23x** the arbitrary-question ModernBERT zero-shot path and **63.3x** the fixed-taxonomy trained-head path per raw transcript token. The trained-head comparison is not like-for-like on question flexibility: its cost advantage comes from compiling the 27 known labels into learned weights.
 
-The numbers are still not a hardware-normalized architectural benchmark. ModernBERT ran locally on CPU with recorded batching, while JEV ran on hosted infrastructure and includes network time. These are effective throughput-derived times, not warm batch-1 p50/p95 measurements. A strict production comparison should run the local models on the intended CPU/GPU target and report batch-1 p50/p95 as well as throughput at matched concurrency.
+The GPU quantities are continuous GPU-equivalents: this assumes a large enough fleet or time-sharing system to keep capacity nearly full. It excludes redundancy, orchestration, storage, and engineering. JEV cost is extrapolated from measured billed input tokens and its published $0.042-per-million-token rate; this benchmark did not validate that the hosted service can sustain the hypothetical request rate.
+
+Throughput sources: [official ModernBERT RTX 4090 efficiency comparison](https://huggingface.co/blog/modernbert) and [the third-party H100 ModernBERT-base deployment observation](https://www.linkedin.com/posts/michael-feil_the-latest-release-of-infinity-httpslnkdin-activity-7280971190632943616-E07N). The $5/H100-hour price is a scenario assumption, not a quoted provider price.
+
+## What ModernBERT actually processes
+
+Your distinction is correct for zero-shot ModernBERT, but the trained model is even more specialized than `state + N * question_size`:
+
+| System | Approximate inference input | Arbitrary new questions? |
+|---|---|---|
+| ModernBERT zero-shot NLI | `sum(tokenize(state, question_i))`, approximately `N * state + sum(question_i)` | Yes |
+| Trained ModernBERT heads | `tokenize(state)` once, followed by `sigmoid(W h + b)` for 27 learned heads | No |
+| JEV | One state plus arbitrary typed questions in one request | Yes |
+
+Across the locked test set, the ModernBERT tokenizer measured a 224.46-token average state. Zero-shot NLI processed 6,435.42 tokens per transcript across the 27 pairs, a **28.67x amplification**. The trained model processed about 226.46 tokens once. It does not tokenize the 27 question descriptions at inference: their meaning has been absorbed into the trained head weights. A new attribute therefore requires a new or retrained head.
+
+## Does this prove JEV has a new architecture?
+
+No—not from public evidence currently available. TypeSafe publicly claims a “new model architecture,” a “parallel sampler,” and RLCD training. Its API unquestionably supports arbitrary state and arbitrary typed questions, something the fixed-head ModernBERT configuration cannot do. But the public API documentation does not disclose the internal compute graph, parameter count, attention arrangement, or state-reuse mechanism.
+
+The observed billing equation and near-flat 1-to-16-question latency establish useful external behavior, not architectural novelty. A conventional batched cross-encoder can also show nearly flat latency until the GPU batch saturates while still repeating the state internally. A dual encoder, cached state encoder, late-interaction model, or shared-state cross-attention design could also provide arbitrary questions without being a fundamentally new model family.
+
+The defensible conclusion is: **JEV exposes a valuable arbitrary-question/shared-state product abstraction and prices it as shared state; whether its internal architecture is genuinely novel remains unverified.**
 
 ## Complete quality table
 
@@ -58,11 +80,11 @@ The numbers are still not a hardware-normalized architectural benchmark. ModernB
 
 Accuracy, precision, recall, and F1 are micro-aggregated across all 4,050 held-out decisions. Exact match requires all 27 attributes for a transcript to be correct.
 
-## Estimated recurring cost
+## API-only cost per 1,000 transcripts
 
 ![Estimated API cost for processing 1,000 transcripts](charts/estimated-cost-1000-transcripts.png)
 
-The chart estimates marginal inference charges for 1,000 transcripts, not total cost of ownership:
+This older chart reports marginal API charges for 1,000 transcripts. It should not be used to compare JEV against local ModernBERT because the local entries omit GPU cost; the normalized scenario above is the appropriate serving-cost comparison.
 
 - JEV Choice uses the actual mean input usage from all 150 test calls: approximately $0.134 per 1,000 transcripts at $0.042 per million input tokens.
 - JEV Noul uses actual input usage from a 10-transcript length-spanning sample: approximately $0.117 per 1,000 transcripts. Output is free under the published pricing.
@@ -101,6 +123,7 @@ data/
   synth_transcript.xlsx        1,000 synthetic labeled conversations
   summary_metrics.json         Chart-ready test metrics
   cost_assumptions.json        Pricing, token measurements, and caveats
+  normalized_cost_scenario.json H100 throughput proxy, token amplification, and normalized costs
   benchmark_1000/              Fixed split and raw benchmark outputs
 report/
   transcript-classifier-comparison.md
@@ -165,7 +188,7 @@ python scripts/optimize_modernbert_zeroshot_thresholds.py
 python scripts/evaluate_synthetic_1000.py
 ```
 
-The local CPU timings in the report are observed measurements, not hardware-normalized benchmarks.
+The local CPU timings in the raw outputs are observed measurements, not hardware-normalized benchmarks. The normalized serving-cost scenario instead uses the documented H100 proxy and $5/GPU-hour assumption in `data/normalized_cost_scenario.json`.
 
 ## Full report
 

@@ -1,0 +1,93 @@
+{
+  "scenario_name": "Sustained classification at one estimated H100 ModernBERT-large equivalent",
+  "workload": {
+    "raw_state_tokens_per_second": 170331.1867525299,
+    "mean_raw_state_tokens_per_transcript": 224.46,
+    "equivalent_transcripts_per_second": 758.8487336386434,
+    "questions_per_transcript": 27,
+    "tokenizer_for_normalization": "MoritzLaurer/ModernBERT-large-zeroshot-v2.0",
+    "test_transcripts_measured": 150
+  },
+  "gpu_assumption": {
+    "gpu": "NVIDIA H100",
+    "hourly_price_usd": 5.0,
+    "price_basis": "User-specified deployment assumption",
+    "estimated_modernbert_large_processed_tokens_per_second": 170331.1867525299,
+    "throughput_derivation": "350,000 H100 tokens/s observed for ModernBERT-base multiplied by the official RTX 4090 short-variable large/base throughput ratio, 52.9/108.7",
+    "throughput_status": "Proxy estimate, not a benchmark of MoritzLaurer/ModernBERT-large-zeroshot-v2.0 on the target serving stack",
+    "utilization_assumption": "Near 100%; continuous fractional GPU-equivalents represent a sufficiently large, fully utilized fleet",
+    "excluded": [
+      "CPU and RAM charges beyond the assumed H100 hourly price",
+      "storage, network egress, orchestration, redundancy, and engineering",
+      "cold starts and unused reserved capacity"
+    ]
+  },
+  "measured_token_shapes": {
+    "modernbert_zero_shot": {
+      "mean_processed_tokens_per_transcript": 6435.42,
+      "processed_to_raw_state_amplification": 28.670676289762095,
+      "formula": "sum_i tokenize(state, question_i), approximately N * state + sum(question_i) + pair special tokens",
+      "question_flexibility": "Arbitrary hypotheses at inference"
+    },
+    "modernbert_trained_heads": {
+      "mean_processed_tokens_per_transcript": 226.46,
+      "processed_to_raw_state_amplification": 1.0089102735453979,
+      "formula": "tokenize(state) once, then 27 fixed logistic heads; question text is not an inference input",
+      "question_flexibility": "Fixed learned taxonomy; a new question requires a new or retrained head"
+    },
+    "jev_noul": {
+      "mean_billed_input_tokens_per_transcript": 2784.2,
+      "billed_to_raw_state_amplification": 12.403991802548337,
+      "formula": "Observed billing is consistent with state + N * question + fixed overhead",
+      "question_flexibility": "Arbitrary typed questions at inference"
+    },
+    "jev_choice": {
+      "mean_billed_input_tokens_per_transcript": 3188.1266666666666,
+      "billed_to_raw_state_amplification": 14.203540348688703,
+      "formula": "Observed billing is consistent with state + question and criteria tokens + fixed overhead",
+      "question_flexibility": "Arbitrary typed questions and options at inference"
+    }
+  },
+  "normalized_results": {
+    "modernbert_trained": {
+      "gpu_equivalents": 1.0089102735453979,
+      "cost_usd_per_hour": 5.0445513677269895,
+      "cost_usd_per_million_raw_state_tokens": 0.008226704078853838
+    },
+    "modernbert_zero_shot": {
+      "gpu_equivalents": 28.670676289762095,
+      "cost_usd_per_hour": 143.35338144881047,
+      "cost_usd_per_million_raw_state_tokens": 0.23378210705262545
+    },
+    "jev_noul": {
+      "billed_input_tokens_per_second": 2112786.6441967105,
+      "cost_usd_per_hour": 319.45334060254265,
+      "cost_usd_per_million_raw_state_tokens": 0.5209676557070301
+    },
+    "jev_choice": {
+      "billed_input_tokens_per_second": 2419305.8836795893,
+      "cost_usd_per_hour": 365.79904961235394,
+      "cost_usd_per_million_raw_state_tokens": 0.5965486946449257
+    }
+  },
+  "quality_variants": [
+    {"id": "modernbert_zero_shot", "cost_path": "modernbert_zero_shot"},
+    {"id": "modernbert_zero_shot_opt_threshold", "cost_path": "modernbert_zero_shot"},
+    {"id": "modernbert_trained", "cost_path": "modernbert_trained"},
+    {"id": "jev_choice", "cost_path": "jev_choice"},
+    {"id": "jev_noul_default", "cost_path": "jev_noul"},
+    {"id": "jev_noul_calibrated", "cost_path": "jev_noul"}
+  ],
+  "interpretation": [
+    "The trained ModernBERT result is extremely inexpensive because its 27 questions are fixed in learned heads; it is not an arbitrary-question system.",
+    "Zero-shot ModernBERT preserves arbitrary hypotheses but repeats the state inside every NLI pair, creating a measured 28.67x token-compute amplification for 27 questions.",
+    "JEV preserves arbitrary typed questions while billing as shared state plus incremental question tokens, but billing behavior does not prove the internal compute graph.",
+    "The JEV API capacity required to sustain this hypothetical load was not tested; its cost is linearly extrapolated from published per-token pricing."
+  ],
+  "sources": {
+    "modernbert_efficiency": "https://huggingface.co/blog/modernbert",
+    "h100_modernbert_base_observation": "https://www.linkedin.com/posts/michael-feil_the-latest-release-of-infinity-httpslnkdin-activity-7280971190632943616-E07N",
+    "typesafe_pricing_and_claims": "https://typesafe.ai/blog/introducing-system-one-models-and-jev",
+    "typesafe_api": "https://docs.typesafe.ai/api"
+  }
+}

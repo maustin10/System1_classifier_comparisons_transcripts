@@ -140,7 +140,7 @@ def executive_page(c: canvas.Canvas, page_number: int) -> None:
         "The strongest fully local result was frozen ModernBERT plus 27 supervised logistic heads: 99.16% accuracy and 98.41% F1.",
         "Threshold calibration alone improved unchanged zero-shot ModernBERT from 92.96% to 96.42% accuracy and cut errors from 285 to 145.",
         "DeBERTa-v3-large zero-shot (-c) did not beat ModernBERT zero-shot and was approximately 2.47x slower on the measured CPU path.",
-        "For one transcript producing all 27 decisions, effective time was 293 ms for JEV Noul, 1,146 ms for trained ModernBERT, and 5,217 ms for zero-shot ModernBERT on the recorded paths.",
+        "At 170.3k raw state tokens/s with H100s at $5/hour, normalized cost is $5.04/hour for trained ModernBERT, $143.35 for zero-shot ModernBERT, and $319.45 for JEV Noul under the stated assumptions.",
     ]
     y = bullet_list(c, findings, 48, PAGE_H - 100, 690, font_size=11)
 
@@ -216,15 +216,15 @@ def methodology_page(c: canvas.Canvas, page_number: int) -> None:
 
 
 def operating_model_page(c: canvas.Canvas, page_number: int) -> None:
-    page_title(c, "Comparable cost and latency units", "Shared-state JEV accounting and one-transcript-to-27-decisions timing")
+    page_title(c, "What is shared - and what is fixed", "The low-cost trained encoder and arbitrary-question JEV solve different serving problems")
     left_x, right_x, col_w = 45, 410, 337
 
-    c.setFillColor(PURPLE)
+    c.setFillColor(BLUE)
     c.setFont("Helvetica-Bold", 13)
-    c.drawString(left_x, PAGE_H - 105, "JEV token accounting")
+    c.drawString(left_x, PAGE_H - 105, "ModernBERT paths")
     y = wrapped(
         c,
-        "<b>Observed model:</b> billable input ~= state tokens + N x question tokens + fixed request overhead.",
+        "<b>Zero-shot NLI:</b> N state/question pairs. Measured token amplification: 28.67x for 27 questions.",
         left_x,
         PAGE_H - 132,
         col_w,
@@ -232,27 +232,28 @@ def operating_model_page(c: canvas.Canvas, page_number: int) -> None:
         leading=15,
     )
     y = bullet_list(c, [
-        "The cost estimate does not multiply the full transcript state by all 27 questions.",
-        "Observed latency stayed approximately flat from 1 to 16 questions, supporting parallel evaluation.",
-        "The external behavior does not prove that the hidden neural architecture encodes state exactly once.",
+        "It accepts arbitrary hypotheses, but repeats the state inside each premise/hypothesis sequence.",
+        "Trained heads encode the state once, then apply 27 logistic functions.",
+        "The trained path has no question tokens at inference; label meaning is stored in fixed head weights.",
+        "A novel question requires a new or retrained head.",
     ], left_x, y - 18, col_w, font_size=9.5)
 
-    c.setFillColor(BLUE)
+    c.setFillColor(PURPLE)
     c.setFont("Helvetica-Bold", 13)
-    c.drawString(right_x, PAGE_H - 105, "Equivalent latency work unit")
+    c.drawString(right_x, PAGE_H - 105, "JEV evidence")
     y2 = bullet_list(c, [
-        "One transcript enters; all 27 binary decisions are available.",
-        "JEV Noul: 293 ms effective time per transcript.",
-        "JEV Choice: 313 ms effective time per transcript.",
-        "Trained ModernBERT: 1,146 ms on the measured local CPU path.",
-        "Zero-shot ModernBERT: 5,217 ms on the measured local CPU path.",
+        "The API accepts arbitrary state and arbitrary typed questions together.",
+        "Billing behaves like state + N x question + fixed overhead.",
+        "Latency was approximately flat from 1 to 16 questions.",
+        "TypeSafe claims a new architecture, parallel sampler, and RLCD training.",
+        "Public materials do not disclose the compute graph or prove state is encoded once.",
     ], right_x, PAGE_H - 132, col_w, font_size=9.5)
 
     c.setFillColor(PALE)
     c.roundRect(45, 59, 702, 106, 7, fill=1, stroke=0)
     wrapped(
         c,
-        "<b>Interpretation:</b> the common work unit fixes the output obligation, not the hardware. JEV includes hosted network time; ModernBERT uses local CPU timing and recorded batching. Elapsed time divided by 150 is an effective throughput-derived time. A production SLA comparison still needs warm batch-1 p50/p95 on target hardware and matched concurrency.",
+        "<b>Conclusion:</b> JEV's arbitrary-question, shared-state-like product behavior is real and useful. It is not enough to verify architectural novelty. Ordinary GPU batching can hide repeated state compute at small N, and known dual-encoder, cached-state, late-interaction, or shared-memory designs could expose similar behavior.",
         62,
         140,
         668,
@@ -270,8 +271,8 @@ def conclusions_page(c: canvas.Canvas, page_number: int) -> None:
     c.drawString(45, PAGE_H - 95, "Practical interpretation")
     y = bullet_list(c, [
         "For the highest measured quality, Sol led by one decision over calibrated JEV Noul.",
-        "For low estimated API cost with near-frontier quality, calibrated JEV Noul was the standout in this synthetic task.",
-        "For a fully local and controllable system, trained ModernBERT was strong, but it required labeled training data.",
+        "JEV Noul combined near-frontier quality with arbitrary runtime questions, but was costlier than both ModernBERT paths in the normalized H100 scenario.",
+        "Trained ModernBERT was by far the cheapest path, but only because its 27 questions were converted into fixed supervised heads.",
         "Threshold calibration is worthwhile, but it does not replace supervised heads when enough labeled examples exist.",
     ], 45, PAGE_H - 118, 702, font_size=9.5)
 
@@ -281,7 +282,8 @@ def conclusions_page(c: canvas.Canvas, page_number: int) -> None:
         "Synthetic templates are more explicit and regular than production conversations.",
         "Only 150 transcripts were held out; attribute decisions within a transcript are correlated.",
         "Choice versus Noul changed multiple factors and is not a clean primitive-only comparison.",
-        "Latency paths and hardware differed; normalized times are throughput-derived, not matched-hardware batch-1 p50/p95 measurements.",
+        "The H100 scenario uses a throughput proxy, not a benchmark of this exact checkpoint and serving stack.",
+        "JEV cost is extrapolated from billing; hosted capacity at the normalized throughput was not tested.",
         "Sol/Luna standardized cost estimates exclude unavailable hidden reasoning-token usage.",
     ], 45, y - 30, 702, font_size=9.1)
 
@@ -290,6 +292,8 @@ def conclusions_page(c: canvas.Canvas, page_number: int) -> None:
     sources = [
         "TypeSafe API: https://docs.typesafe.ai/api",
         "TypeSafe JEV launch/pricing: https://typesafe.ai/blog/introducing-system-one-models-and-jev",
+        "ModernBERT efficiency comparison: https://huggingface.co/blog/modernbert",
+        "H100 ModernBERT-base observation: https://www.linkedin.com/posts/michael-feil_the-latest-release-of-infinity-httpslnkdin-activity-7280971190632943616-E07N",
         "OpenAI Sol pricing: https://developers.openai.com/api/docs/models/gpt-5.6-sol",
         "OpenAI Luna pricing: https://openai.com/index/advancing-the-price-performance-frontier-with-gpt-5-6/",
         "Model cards: https://huggingface.co/MoritzLaurer",
@@ -311,7 +315,7 @@ def main() -> None:
     chart_page(c, 4, "accuracy-comparison.png")
     chart_page(c, 5, "all-metrics-table.png")
     chart_page(c, 6, "estimated-cost-1000-transcripts.png")
-    chart_page(c, 7, "accuracy-vs-equivalent-latency.png")
+    chart_page(c, 7, "accuracy-vs-normalized-cost.png")
     operating_model_page(c, 8)
     methodology_page(c, 9)
     conclusions_page(c, 10)

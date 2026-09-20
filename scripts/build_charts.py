@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CHARTS = ROOT / "charts"
 SUMMARY = json.loads((ROOT / "data" / "summary_metrics.json").read_text())
 COSTS = json.loads((ROOT / "data" / "cost_assumptions.json").read_text())
-LATENCY = json.loads((ROOT / "data" / "latency_comparison.json").read_text())
+NORMALIZED_COST = json.loads((ROOT / "data" / "normalized_cost_scenario.json").read_text())
 
 COLORS = {
     "Open encoder": "#0B678B",
@@ -205,14 +205,14 @@ def cost_chart() -> None:
     plt.close(fig)
 
 
-def latency_quality_chart() -> None:
+def normalized_cost_quality_chart() -> None:
     by_id = {item["id"]: item for item in SUMMARY["models"]}
-    paths = LATENCY["paths"]
-    variants = LATENCY["quality_variants"]
+    costs = NORMALIZED_COST["normalized_results"]
+    variants = NORMALIZED_COST["quality_variants"]
 
     fig, ax = plt.subplots(figsize=(15.5, 8.2))
     offsets = {
-        "modernbert_zero_shot": (8, -20),
+        "modernbert_zero_shot": (8, -18),
         "modernbert_zero_shot_opt_threshold": (8, 8),
         "modernbert_trained": (8, -4),
         "jev_choice": (8, -18),
@@ -221,10 +221,10 @@ def latency_quality_chart() -> None:
     }
     for variant in variants:
         item = by_id[variant["id"]]
-        latency = paths[variant["path"]]["effective_ms_per_transcript"]
+        cost = costs[variant["cost_path"]]["cost_usd_per_million_raw_state_tokens"]
         accuracy = 100 * item["accuracy"]
         ax.scatter(
-            latency,
+            cost,
             accuracy,
             s=180,
             color=COLORS[item["family"]],
@@ -234,8 +234,8 @@ def latency_quality_chart() -> None:
         )
         dx, dy = offsets[variant["id"]]
         ax.annotate(
-            f"{item['label'].replace(chr(10), ' ')}\n{accuracy:.2f}% · {latency:,.0f} ms",
-            (latency, accuracy),
+            f"{item['label'].replace(chr(10), ' ')}\n{accuracy:.2f}% · ${cost:.4f}/M raw",
+            (cost, accuracy),
             xytext=(dx, dy),
             textcoords="offset points",
             fontsize=9.2,
@@ -243,22 +243,22 @@ def latency_quality_chart() -> None:
             va="center",
         )
 
-    ax.set_title("Accuracy at a common 27-decision transcript work unit", loc="left", pad=20)
+    ax.set_title("Accuracy versus normalized serving cost", loc="left", pad=20)
     ax.text(
         0,
         1.015,
-        "Effective wall-clock time per transcript · model load excluded · lower latency and higher accuracy are better",
+        "170,331 raw state tokens/s · 27 questions · H100 at $5/hour and near-100% utilization · lower cost is better",
         transform=ax.transAxes,
         color=MUTED,
         fontsize=11,
     )
     ax.set_xscale("log")
-    ax.set_xlim(240, 7200)
+    ax.set_xlim(0.005, 1.0)
     ax.set_ylim(92, 100.7)
-    ax.set_xlabel("Effective milliseconds per transcript for all 27 decisions (log scale)")
+    ax.set_xlabel("Estimated USD per million raw transcript tokens (log scale)")
     ax.set_ylabel("Accuracy (%)")
-    ax.xaxis.set_major_locator(FixedLocator([250, 500, 1000, 2000, 5000]))
-    ax.xaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:,.0f}"))
+    ax.xaxis.set_major_locator(FixedLocator([0.005, 0.01, 0.03, 0.1, 0.3, 1]))
+    ax.xaxis.set_major_formatter(FuncFormatter(lambda value, _: f"${value:g}"))
     ax.grid(color=GRID, linewidth=0.8)
     ax.set_axisbelow(True)
     ax.spines[["top", "right"]].set_visible(False)
@@ -270,13 +270,13 @@ def latency_quality_chart() -> None:
     fig.text(
         0.01,
         0.01,
-        "Same output unit, different deployment paths: ModernBERT is local CPU; JEV is hosted and includes network time. "
-        "Values are elapsed/150 effective times, not batch-1 p50/p95 latency.",
+        "ModernBERT: estimated 170.3k processed tokens/s per H100 at USD 5/hour (proxy, not an exact-checkpoint benchmark). "
+        "JEV: USD 0.042/M billed input tokens. JEV capacity and rate limits were not validated.",
         color=MUTED,
         fontsize=9,
     )
     fig.tight_layout(rect=(0, 0.06, 1, 0.96))
-    fig.savefig(CHARTS / "accuracy-vs-equivalent-latency.png", dpi=180, bbox_inches="tight")
+    fig.savefig(CHARTS / "accuracy-vs-normalized-cost.png", dpi=180, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -286,7 +286,7 @@ def main() -> None:
     metric_chart("accuracy", "Accuracy comparison across transcript classifiers", "accuracy-comparison.png")
     metrics_table()
     cost_chart()
-    latency_quality_chart()
+    normalized_cost_quality_chart()
     print(f"Wrote charts to {CHARTS}")
 
 
