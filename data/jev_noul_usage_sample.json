@@ -1,0 +1,82 @@
+[
+  {
+    "id": 6,
+    "conversation_chars": 868,
+    "usage": {
+      "input_tokens": 2761,
+      "output_tokens": 563
+    }
+  },
+  {
+    "id": 97,
+    "conversation_chars": 970,
+    "usage": {
+      "input_tokens": 2775,
+      "output_tokens": 563
+    }
+  },
+  {
+    "id": 204,
+    "conversation_chars": 1013,
+    "usage": {
+      "input_tokens": 2789,
+      "output_tokens": 563
+    }
+  },
+  {
+    "id": 310,
+    "conversation_chars": 882,
+    "usage": {
+      "input_tokens": 2762,
+      "output_tokens": 563
+    }
+  },
+  {
+    "id": 433,
+    "conversation_chars": 892,
+    "usage": {
+      "input_tokens": 2758,
+      "output_tokens": 563
+    }
+  },
+  {
+    "id": 577,
+    "conversation_chars": 944,
+    "usage": {
+      "input_tokens": 2771,
+      "output_tokens": 563
+    }
+  },
+  {
+    "id": 680,
+    "conversation_chars": 1168,
+    "usage": {
+      "input_tokens": 2820,
+      "output_tokens": 563
+    }
+  },
+  {
+    "id": 800,
+    "conversation_chars": 918,
+    "usage": {
+      "input_tokens": 2774,
+      "output_tokens": 563
+    }
+  },
+  {
+    "id": 900,
+    "conversation_chars": 1087,
+    "usage": {
+      "input_tokens": 2811,
+      "output_tokens": 563
+    }
+  },
+  {
+    "id": 996,
+    "conversation_chars": 1138,
+    "usage": {
+      "input_tokens": 2821,
+      "output_tokens": 563
+    }
+  }
+]

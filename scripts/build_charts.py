@@ -1,0 +1,217 @@
+#!/usr/bin/env python3
+"""Build the benchmark charts committed to the repository."""
+from __future__ import annotations
+
+import json
+import os
+from pathlib import Path
+
+os.environ.setdefault("MPLCONFIGDIR", "/tmp/system1-transcript-matplotlib")
+
+import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter, FixedLocator
+
+ROOT = Path(__file__).resolve().parents[1]
+CHARTS = ROOT / "charts"
+SUMMARY = json.loads((ROOT / "data" / "summary_metrics.json").read_text())
+COSTS = json.loads((ROOT / "data" / "cost_assumptions.json").read_text())
+
+COLORS = {
+    "Open encoder": "#0B678B",
+    "JEV": "#8059C3",
+    "LLM": "#D47900",
+}
+INK = "#172033"
+MUTED = "#66758A"
+GRID = "#D8E0E8"
+
+
+def setup() -> None:
+    CHARTS.mkdir(parents=True, exist_ok=True)
+    plt.rcParams.update({
+        "font.family": "DejaVu Sans",
+        "font.size": 11,
+        "axes.titleweight": "bold",
+        "axes.titlesize": 19,
+        "axes.labelcolor": INK,
+        "text.color": INK,
+        "xtick.color": INK,
+        "ytick.color": MUTED,
+        "axes.edgecolor": GRID,
+        "figure.facecolor": "white",
+        "axes.facecolor": "white",
+    })
+
+
+def metric_chart(metric: str, title: str, filename: str) -> None:
+    models = sorted(SUMMARY["models"], key=lambda item: item["accuracy"])
+    labels = [item["label"] for item in models]
+    values = [100 * item[metric] for item in models]
+    colors = [COLORS[item["family"]] for item in models]
+
+    fig, ax = plt.subplots(figsize=(15.5, 8.2))
+    bars = ax.bar(range(len(models)), values, color=colors, width=0.72)
+    ax.set_title(title, loc="left", pad=20)
+    ax.text(
+        0,
+        1.015,
+        "150 locked test transcripts · 27 binary attributes · models ordered by accuracy",
+        transform=ax.transAxes,
+        color=MUTED,
+        fontsize=11,
+    )
+    ax.set_ylabel(f"{metric.upper()} (%)" if metric == "f1" else "Accuracy (%)")
+    ax.set_ylim(80, 101.8)
+    ax.set_xticks(range(len(models)), labels)
+    ax.tick_params(axis="x", labelrotation=0, pad=10)
+    ax.grid(axis="y", color=GRID, linewidth=0.8)
+    ax.set_axisbelow(True)
+    ax.spines[["top", "right"]].set_visible(False)
+    for bar, value in zip(bars, values):
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            value + 0.35,
+            f"{value:.2f}%",
+            ha="center",
+            va="bottom",
+            fontsize=10,
+            fontweight="bold",
+        )
+    handles = [plt.Rectangle((0, 0), 1, 1, color=color) for color in COLORS.values()]
+    ax.legend(handles, COLORS.keys(), frameon=False, ncol=3, loc="upper left")
+    fig.text(
+        0.01,
+        0.01,
+        f"{metric.upper() if metric == 'f1' else 'Accuracy'} axis begins at 80% to make differences legible.",
+        color=MUTED,
+        fontsize=9,
+    )
+    fig.tight_layout(rect=(0, 0.05, 1, 0.96))
+    fig.savefig(CHARTS / filename, dpi=180, bbox_inches="tight")
+    plt.close(fig)
+
+
+def metrics_table() -> None:
+    models = sorted(SUMMARY["models"], key=lambda item: item["accuracy"])
+    columns = ["Approach", "Family", "Accuracy", "Precision", "Recall", "F1", "Exact match"]
+    rows = [
+        [
+            item["label"].replace("\n", " "),
+            item["family"],
+            f"{100 * item['accuracy']:.2f}%",
+            f"{100 * item['precision']:.2f}%",
+            f"{100 * item['recall']:.2f}%",
+            f"{100 * item['f1']:.2f}%",
+            f"{100 * item['exact_match']:.2f}%",
+        ]
+        for item in models
+    ]
+
+    fig, ax = plt.subplots(figsize=(15.5, 7.4))
+    ax.axis("off")
+    ax.set_title("All transcript-classification quality metrics", loc="left", pad=24)
+    ax.text(
+        0,
+        0.965,
+        "Held-out test set · micro metrics across 4,050 decisions; exact match requires all 27 labels correct",
+        transform=ax.transAxes,
+        color=MUTED,
+        fontsize=11,
+    )
+    table = ax.table(
+        cellText=rows,
+        colLabels=columns,
+        cellLoc="right",
+        colLoc="right",
+        bbox=[0, 0.02, 1, 0.88],
+        colWidths=[0.31, 0.13, 0.112, 0.112, 0.10, 0.10, 0.136],
+    )
+    table.auto_set_font_size(False)
+    table.set_fontsize(10.5)
+    for (row, col), cell in table.get_celld().items():
+        cell.set_edgecolor(GRID)
+        cell.set_linewidth(0.6)
+        if row == 0:
+            cell.set_facecolor("#E9EFF5")
+            cell.set_text_props(weight="bold", color=INK)
+        else:
+            cell.set_facecolor("#F7F9FB" if row % 2 == 0 else "white")
+            if col in (0, 1):
+                cell.set_text_props(ha="left")
+            if rows[row - 1][1] == "JEV":
+                cell.get_text().set_color("#6841A8")
+            elif rows[row - 1][1] == "LLM":
+                cell.get_text().set_color("#A85E00")
+    fig.tight_layout()
+    fig.savefig(CHARTS / "all-metrics-table.png", dpi=180, bbox_inches="tight")
+    plt.close(fig)
+
+
+def cost_chart() -> None:
+    by_id = {item["id"]: item for item in SUMMARY["models"]}
+    cost = COSTS["estimated_cost_usd_1000_transcripts"]
+    ordered_ids = sorted(cost, key=lambda key: (cost[key], by_id[key]["accuracy"]))
+    values = [cost[key] for key in ordered_ids]
+    labels = [by_id[key]["label"] for key in ordered_ids]
+    colors = [COLORS[by_id[key]["family"]] for key in ordered_ids]
+
+    fig, ax = plt.subplots(figsize=(15.5, 8.2))
+    bars = ax.bar(range(len(ordered_ids)), values, color=colors, width=0.72)
+    ax.set_title("Estimated marginal inference cost for 1,000 transcripts", loc="left", pad=20)
+    ax.text(
+        0,
+        1.015,
+        "USD API charges · logarithmic scale above $0.03 · validation/training and local hardware excluded",
+        transform=ax.transAxes,
+        color=MUTED,
+        fontsize=11,
+    )
+    ax.set_ylabel("Estimated USD per 1,000 transcripts")
+    ax.set_yscale("symlog", linthresh=0.03, linscale=0.8, base=10)
+    ticks = [0, 0.03, 0.1, 0.3, 1, 3, 10]
+    ax.yaxis.set_major_locator(FixedLocator(ticks))
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda value, _: "$0" if value == 0 else f"${value:g}"))
+    ax.set_ylim(0, 12)
+    ax.set_xticks(range(len(ordered_ids)), labels)
+    ax.tick_params(axis="x", pad=10)
+    ax.grid(axis="y", color=GRID, linewidth=0.8)
+    ax.set_axisbelow(True)
+    ax.spines[["top", "right"]].set_visible(False)
+    for bar, value, model_id in zip(bars, values, ordered_ids):
+        label = "$0 API*" if value == 0 else (f"${value:.3f}" if value < 1 else f"${value:.2f}")
+        y = 0.018 if value == 0 else value * 1.18
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            y,
+            label,
+            ha="center",
+            va="bottom",
+            fontsize=10,
+            fontweight="bold",
+        )
+    handles = [plt.Rectangle((0, 0), 1, 1, color=color) for color in COLORS.values()]
+    ax.legend(handles, COLORS.keys(), frameon=False, ncol=3, loc="upper left")
+    fig.text(
+        0.01,
+        0.01,
+        "* Local encoders have no API fee; electricity, hardware, hosting, and operations are not zero and are not estimated. "
+        "Sol/Luna use a standardized compact prompt estimate and exclude hidden reasoning tokens.",
+        color=MUTED,
+        fontsize=9,
+    )
+    fig.tight_layout(rect=(0, 0.06, 1, 0.96))
+    fig.savefig(CHARTS / "estimated-cost-1000-transcripts.png", dpi=180, bbox_inches="tight")
+    plt.close(fig)
+
+
+def main() -> None:
+    setup()
+    metric_chart("f1", "F1 comparison across transcript classifiers", "f1-comparison.png")
+    metric_chart("accuracy", "Accuracy comparison across transcript classifiers", "accuracy-comparison.png")
+    metrics_table()
+    cost_chart()
+    print(f"Wrote charts to {CHARTS}")
+
+
+if __name__ == "__main__":
+    main()

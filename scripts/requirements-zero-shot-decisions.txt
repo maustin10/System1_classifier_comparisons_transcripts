@@ -1,0 +1,4 @@
+# Installs the local, no-training inference backend for zero_shot_decision_poc.py.
+# Use current compatible releases for the local OS and accelerator.
+torch
+transformers

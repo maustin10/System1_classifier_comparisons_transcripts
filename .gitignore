@@ -1,0 +1,18 @@
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+.DS_Store
+tmp/
+
+# Download model weights locally; never commit them.
+models/
+*.safetensors
+*.bin
+*.onnx
+*.pt
+*.pth
+*.ckpt
+*.gguf
+.huggingface/
+hf-cache/

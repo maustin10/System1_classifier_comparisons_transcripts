@@ -1,0 +1,6 @@
+{
+  "elapsed_seconds": 171.92204149998724,
+  "decisions": 4050,
+  "timing_scope": "Local CPU inference after model and trained head load; 150 transcript batches producing 27 labels each.",
+  "produced": 4050
+}

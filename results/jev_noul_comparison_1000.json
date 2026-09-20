@@ -1,0 +1,97 @@
+{
+  "method": "JEV Noul with structured speaker state, strict criteria, and per-attribute F1 thresholds chosen on validation only",
+  "thresholds": {
+    "reset_equipment_mentioned": 0.5,
+    "unable_to_work_due_to_service_issues": 0.5,
+    "lagging_issues": 0.5,
+    "poor_performance_complaint": 0.5,
+    "glitching_issue": 0.5,
+    "technician_visits_mentioned": 0.7,
+    "poor_service_quality_complaint": 0.95,
+    "throughput_issues_mentioned": 0.5,
+    "receiving_error_messages": 0.5,
+    "remove_phone_lines_requested": 0.5,
+    "phone_purchase_upgrade_requested": 0.5,
+    "issue_inside_building_mentioned": 0.5,
+    "issue_outside_building_mentioned": 0.5,
+    "sim_memory_issues_mentioned": 0.5,
+    "app_issue_mentioned": 0.5,
+    "unknown_charges_on_bill": 0.5,
+    "credit_requested": 0.5,
+    "credit_applied_by_agent": 0.5,
+    "phone_service_issue": 0.5,
+    "smart_home_manager_issue": 0.5,
+    "sales_attempt_by_agent": 0.5,
+    "agent_attempted_resolution": 0.5,
+    "multiple_contacts_same_issue": 0.5,
+    "fiber_line_issue_mentioned": 0.5,
+    "unable_to_activate_internet": 0.5,
+    "unable_to_connect_multiple_devices": 0.5,
+    "resolution_time_concern": 0.5
+  },
+  "threshold_summary": {
+    "min": 0.5,
+    "median": 0.5,
+    "mean": 0.5240740740740741,
+    "max": 0.95
+  },
+  "jev_noul_default_0_5": {
+    "validation": {
+      "tp": 1103,
+      "fp": 39,
+      "fn": 0,
+      "tn": 2908,
+      "accuracy": 0.9903703703703703,
+      "precision": 0.9658493870402802,
+      "recall": 1.0,
+      "f1": 0.9826280623608018,
+      "exact_match_rate": 0.7666666666666667
+    },
+    "test": {
+      "tp": 1068,
+      "fp": 30,
+      "fn": 0,
+      "tn": 2952,
+      "accuracy": 0.9925925925925926,
+      "precision": 0.9726775956284153,
+      "recall": 1.0,
+      "f1": 0.9861495844875346,
+      "exact_match_rate": 0.8066666666666666
+    }
+  },
+  "jev_noul_validation_tuned": {
+    "validation": {
+      "tp": 1103,
+      "fp": 0,
+      "fn": 0,
+      "tn": 2947,
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "exact_match_rate": 1.0
+    },
+    "test": {
+      "tp": 1068,
+      "fp": 4,
+      "fn": 0,
+      "tn": 2978,
+      "accuracy": 0.9990123456790123,
+      "precision": 0.996268656716418,
+      "recall": 1.0,
+      "f1": 0.9981308411214954,
+      "exact_match_rate": 0.9733333333333334
+    }
+  },
+  "modernbert_trained_test": {
+    "tp": 1055,
+    "fp": 21,
+    "fn": 13,
+    "tn": 2961,
+    "accuracy": 0.9916049382716049,
+    "precision": 0.9804832713754646,
+    "recall": 0.9878277153558053,
+    "f1": 0.9841417910447762,
+    "exact_match_rate": 0.8333333333333334
+  }
+}

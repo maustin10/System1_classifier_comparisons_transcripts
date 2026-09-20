@@ -1,0 +1,137 @@
+{
+  "reset_equipment_mentioned": {
+    "train": 212,
+    "validation": 47,
+    "test": 50
+  },
+  "unable_to_work_due_to_service_issues": {
+    "train": 104,
+    "validation": 23,
+    "test": 18
+  },
+  "lagging_issues": {
+    "train": 116,
+    "validation": 21,
+    "test": 23
+  },
+  "poor_performance_complaint": {
+    "train": 263,
+    "validation": 56,
+    "test": 54
+  },
+  "glitching_issue": {
+    "train": 187,
+    "validation": 45,
+    "test": 31
+  },
+  "technician_visits_mentioned": {
+    "train": 134,
+    "validation": 30,
+    "test": 24
+  },
+  "poor_service_quality_complaint": {
+    "train": 296,
+    "validation": 63,
+    "test": 63
+  },
+  "throughput_issues_mentioned": {
+    "train": 134,
+    "validation": 21,
+    "test": 23
+  },
+  "receiving_error_messages": {
+    "train": 273,
+    "validation": 48,
+    "test": 57
+  },
+  "remove_phone_lines_requested": {
+    "train": 93,
+    "validation": 21,
+    "test": 13
+  },
+  "phone_purchase_upgrade_requested": {
+    "train": 94,
+    "validation": 16,
+    "test": 21
+  },
+  "issue_inside_building_mentioned": {
+    "train": 250,
+    "validation": 60,
+    "test": 64
+  },
+  "issue_outside_building_mentioned": {
+    "train": 170,
+    "validation": 36,
+    "test": 38
+  },
+  "sim_memory_issues_mentioned": {
+    "train": 67,
+    "validation": 16,
+    "test": 15
+  },
+  "app_issue_mentioned": {
+    "train": 280,
+    "validation": 60,
+    "test": 51
+  },
+  "unknown_charges_on_bill": {
+    "train": 163,
+    "validation": 35,
+    "test": 34
+  },
+  "credit_requested": {
+    "train": 241,
+    "validation": 54,
+    "test": 55
+  },
+  "credit_applied_by_agent": {
+    "train": 139,
+    "validation": 28,
+    "test": 16
+  },
+  "phone_service_issue": {
+    "train": 214,
+    "validation": 49,
+    "test": 45
+  },
+  "smart_home_manager_issue": {
+    "train": 137,
+    "validation": 28,
+    "test": 30
+  },
+  "sales_attempt_by_agent": {
+    "train": 172,
+    "validation": 40,
+    "test": 37
+  },
+  "agent_attempted_resolution": {
+    "train": 602,
+    "validation": 128,
+    "test": 129
+  },
+  "multiple_contacts_same_issue": {
+    "train": 217,
+    "validation": 41,
+    "test": 43
+  },
+  "fiber_line_issue_mentioned": {
+    "train": 90,
+    "validation": 19,
+    "test": 18
+  },
+  "unable_to_activate_internet": {
+    "train": 141,
+    "validation": 32,
+    "test": 31
+  },
+  "unable_to_connect_multiple_devices": {
+    "train": 144,
+    "validation": 29,
+    "test": 33
+  },
+  "resolution_time_concern": {
+    "train": 226,
+    "validation": 57,
+    "test": 52
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "encoding": "o200k_base",
+  "sample_rows": 150,
+  "input_tokens": {
+    "mean": 727.9933333333333,
+    "min": 688,
+    "max": 797
+  },
+  "output_tokens": {
+    "mean": 212.0,
+    "min": 212,
+    "max": 212
+  },
+  "projected_1000": {
+    "input_tokens": 727993,
+    "output_tokens": 212000
+  }
+}

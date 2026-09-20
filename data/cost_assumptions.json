@@ -1,0 +1,52 @@
+{
+  "as_of": "2026-09-19",
+  "scope": "Estimated recurring marginal inference cost for 1,000 transcripts; calibration, training, hardware acquisition, and engineering are excluded.",
+  "pricing_usd_per_million_tokens": {
+    "jev_input": 0.042,
+    "jev_output": 0.0,
+    "gpt_5_6_sol_input": 4.0,
+    "gpt_5_6_sol_output": 20.0,
+    "gpt_5_6_luna_input": 0.2,
+    "gpt_5_6_luna_output": 1.2
+  },
+  "token_measurements": {
+    "jev_choice": {
+      "method": "Actual API usage over all 150 locked test calls",
+      "mean_input_tokens_per_transcript": 3188.1266666666666,
+      "sample_size": 150
+    },
+    "jev_noul": {
+      "method": "Actual API usage from a 10-transcript length-spanning test sample",
+      "mean_input_tokens_per_transcript": 2784.2,
+      "sample_size": 10
+    },
+    "llm_standardized": {
+      "method": "o200k_base tokenization of one compact 27-label prompt and binary JSON response per transcript; hidden reasoning tokens excluded",
+      "mean_input_tokens_per_transcript": 727.9933333333333,
+      "mean_output_tokens_per_transcript": 212.0,
+      "sample_size": 150
+    }
+  },
+  "estimated_cost_usd_1000_transcripts": {
+    "deberta_zero_shot_c": 0.0,
+    "modernbert_zero_shot": 0.0,
+    "modernbert_zero_shot_opt_threshold": 0.0,
+    "modernbert_trained": 0.0,
+    "jev_choice": 0.13390132,
+    "jev_noul_default": 0.1169364,
+    "jev_noul_calibrated": 0.1169364,
+    "luna": 0.3999986,
+    "sol": 7.151972
+  },
+  "important_caveats": [
+    "Local encoder entries have zero API fees, not zero total cost. CPU/GPU electricity, hardware, hosting, and operations are excluded.",
+    "Sol and Luna are standardized API estimates, not invoices from the Codex evaluation run; hidden reasoning tokens were unavailable and are excluded.",
+    "JEV Noul calibration requires validation calls once, but recurring production inference uses the same per-transcript token cost as uncalibrated Noul.",
+    "Prices and promotional rates can change."
+  ],
+  "sources": {
+    "jev": "https://typesafe.ai/blog/introducing-system-one-models-and-jev",
+    "openai_sol": "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
+    "openai_pricing": "https://openai.com/index/advancing-the-price-performance-frontier-with-gpt-5-6/"
+  }
+}
