@@ -20,12 +20,19 @@ def _default_service() -> AskATTSystem1Service:
         )
     )
     labels_per_pass = int(os.environ.get("ASKATT_LABELS_PER_PASS", "64"))
+    choice_instruction_mode = os.environ.get(
+        "ASKATT_CHOICE_INSTRUCTION_MODE", "state"
+    )
     engine = GLiClassEngine(
         model_dir,
         device=os.environ.get("ASKATT_DEVICE", "auto"),
         max_labels=labels_per_pass,
     )
-    return AskATTSystem1Service(engine, labels_per_pass=labels_per_pass)
+    return AskATTSystem1Service(
+        engine,
+        labels_per_pass=labels_per_pass,
+        choice_instruction_mode=choice_instruction_mode,
+    )
 
 
 def create_app(service: AskATTSystem1Service | None = None) -> FastAPI:
@@ -60,6 +67,9 @@ def create_app(service: AskATTSystem1Service | None = None) -> FastAPI:
             "X-AskATT-Forward-Passes": str(metadata["forward_passes"]),
             "X-AskATT-Compiled-Labels": str(metadata["compiled_labels"]),
             "X-AskATT-Truncated": str(metadata["truncated"]).lower(),
+            "X-AskATT-Choice-Instruction-Mode": str(
+                metadata["choice_instruction_mode"]
+            ),
         }
         return JSONResponse(response, headers=headers)
 
@@ -67,4 +77,3 @@ def create_app(service: AskATTSystem1Service | None = None) -> FastAPI:
 
 
 app = create_app()
-

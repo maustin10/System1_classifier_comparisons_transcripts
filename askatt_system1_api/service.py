@@ -25,6 +25,7 @@ class CompiledLabel:
     question_type: str
     label: str
     option: str | None = None
+    question_context: str | None = None
 
 
 def _as_text(value: Any) -> str:
@@ -70,11 +71,20 @@ def _complementary_binary_options(criteria: dict[str, Any]) -> tuple[str, str] |
 class AskATTSystem1Service:
     """Compile Choice/Noul questions into one or more GLiClass shared passes."""
 
-    def __init__(self, engine: ScoringEngine, *, labels_per_pass: int = 64) -> None:
+    def __init__(
+        self,
+        engine: ScoringEngine,
+        *,
+        labels_per_pass: int = 64,
+        choice_instruction_mode: str = "state",
+    ) -> None:
         if labels_per_pass < 1:
             raise ValueError("labels_per_pass must be positive")
+        if choice_instruction_mode not in {"state", "discard"}:
+            raise ValueError("choice_instruction_mode must be 'state' or 'discard'")
         self.engine = engine
         self.labels_per_pass = labels_per_pass
+        self.choice_instruction_mode = choice_instruction_mode
 
     def _validate_and_compile(
         self, payload: dict[str, Any]
@@ -166,30 +176,58 @@ class AskATTSystem1Service:
                         if description is None
                         else _as_text(description)
                     )
-                    compiled.append(CompiledLabel(question_id, kind, label, option))
+                    question_context = (
+                        instructions
+                        if binary is None and self.choice_instruction_mode == "state"
+                        else None
+                    )
+                    compiled.append(
+                        CompiledLabel(
+                            question_id,
+                            kind,
+                            label,
+                            option,
+                            question_context,
+                        )
+                    )
             validated[question_id] = raw_question
         return state, compiled, validated
 
     def _score_labels(
         self, state: str, compiled: list[CompiledLabel]
     ) -> tuple[list[float], dict[str, Any]]:
-        scores: list[float] = []
+        scores = [0.0] * len(compiled)
         input_tokens = 0
         elapsed_seconds = 0.0
         truncation = False
         passes = 0
-        for offset in range(0, len(compiled), self.labels_per_pass):
-            batch = compiled[offset : offset + self.labels_per_pass]
-            result: EngineResult = self.engine.score(
-                state, [item.label for item in batch]
+        groups: dict[tuple[str, str] | None, list[tuple[int, CompiledLabel]]] = {}
+        for index, item in enumerate(compiled):
+            key = (
+                (item.question_id, item.question_context)
+                if item.question_context is not None
+                else None
             )
-            if len(result.scores) != len(batch):
-                raise RuntimeError("Scoring engine returned the wrong number of scores")
-            scores.extend(result.scores)
-            input_tokens += result.input_tokens
-            elapsed_seconds += result.elapsed_seconds
-            truncation = truncation or result.truncated
-            passes += 1
+            groups.setdefault(key, []).append((index, item))
+        for key, group in groups.items():
+            scoped_state = (
+                state
+                if key is None
+                else f"{state}\n\nClassification question: {key[1]}"
+            )
+            for offset in range(0, len(group), self.labels_per_pass):
+                batch = group[offset : offset + self.labels_per_pass]
+                result: EngineResult = self.engine.score(
+                    scoped_state, [item.label for _, item in batch]
+                )
+                if len(result.scores) != len(batch):
+                    raise RuntimeError("Scoring engine returned the wrong number of scores")
+                for (index, _), score in zip(batch, result.scores, strict=True):
+                    scores[index] = score
+                input_tokens += result.input_tokens
+                elapsed_seconds += result.elapsed_seconds
+                truncation = truncation or result.truncated
+                passes += 1
         return scores, {
             "input_tokens": input_tokens,
             "output_tokens": 0,
@@ -197,6 +235,7 @@ class AskATTSystem1Service:
             "inference_seconds": elapsed_seconds,
             "truncated": truncation,
             "compiled_labels": len(compiled),
+            "choice_instruction_mode": self.choice_instruction_mode,
         }
 
     def evaluate(self, payload: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:

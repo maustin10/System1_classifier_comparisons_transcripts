@@ -16,3 +16,6 @@ models/
 *.gguf
 .huggingface/
 hf-cache/
+
+# Resumable raw hosted-API responses; summarized results are kept separately.
+results/.jev_semantic_choice_api_cache.json

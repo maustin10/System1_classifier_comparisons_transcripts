@@ -1,0 +1,790 @@
+{
+  "metadata": {
+    "model": "askatt-gliclass-modern-large-v3.0",
+    "strategy": "Append each instruction to the state and score that question's option definitions in a separate pass.",
+    "states": 24,
+    "forward_passes_per_state": 4
+  },
+  "accuracy": 0.8854166666666666,
+  "correct": 85,
+  "decisions": 96,
+  "exact_state_match_rate": 0.5416666666666666,
+  "accuracy_by_question": {
+    "department": 0.8333333333333334,
+    "next_action": 0.875,
+    "sentiment": 0.9583333333333334,
+    "urgency": 0.875
+  },
+  "input_tokens_mean_per_state": 537.5,
+  "model_inference_seconds": 23.400874914601445,
+  "records": [
+    {
+      "case_id": "direct_01",
+      "question_id": "department",
+      "difficulty": "direct",
+      "expected": "billing",
+      "predicted": "billing",
+      "correct": true
+    },
+    {
+      "case_id": "direct_01",
+      "question_id": "urgency",
+      "difficulty": "direct",
+      "expected": "elevated",
+      "predicted": "elevated",
+      "correct": true
+    },
+    {
+      "case_id": "direct_01",
+      "question_id": "sentiment",
+      "difficulty": "direct",
+      "expected": "negative",
+      "predicted": "negative",
+      "correct": true
+    },
+    {
+      "case_id": "direct_01",
+      "question_id": "next_action",
+      "difficulty": "direct",
+      "expected": "billing_review",
+      "predicted": "billing_review",
+      "correct": true
+    },
+    {
+      "case_id": "direct_02",
+      "question_id": "department",
+      "difficulty": "direct",
+      "expected": "technical",
+      "predicted": "technical",
+      "correct": true
+    },
+    {
+      "case_id": "direct_02",
+      "question_id": "urgency",
+      "difficulty": "direct",
+      "expected": "urgent",
+      "predicted": "urgent",
+      "correct": true
+    },
+    {
+      "case_id": "direct_02",
+      "question_id": "sentiment",
+      "difficulty": "direct",
+      "expected": "negative",
+      "predicted": "negative",
+      "correct": true
+    },
+    {
+      "case_id": "direct_02",
+      "question_id": "next_action",
+      "difficulty": "direct",
+      "expected": "troubleshoot",
+      "predicted": "troubleshoot",
+      "correct": true
+    },
+    {
+      "case_id": "direct_03",
+      "question_id": "department",
+      "difficulty": "direct",
+      "expected": "sales",
+      "predicted": "sales",
+      "correct": true
+    },
+    {
+      "case_id": "direct_03",
+      "question_id": "urgency",
+      "difficulty": "direct",
+      "expected": "routine",
+      "predicted": "routine",
+      "correct": true
+    },
+    {
+      "case_id": "direct_03",
+      "question_id": "sentiment",
+      "difficulty": "direct",
+      "expected": "positive",
+      "predicted": "positive",
+      "correct": true
+    },
+    {
+      "case_id": "direct_03",
+      "question_id": "next_action",
+      "difficulty": "direct",
+      "expected": "sales_followup",
+      "predicted": "sales_followup",
+      "correct": true
+    },
+    {
+      "case_id": "direct_04",
+      "question_id": "department",
+      "difficulty": "direct",
+      "expected": "cancellation",
+      "predicted": "cancellation",
+      "correct": true
+    },
+    {
+      "case_id": "direct_04",
+      "question_id": "urgency",
+      "difficulty": "direct",
+      "expected": "routine",
+      "predicted": "routine",
+      "correct": true
+    },
+    {
+      "case_id": "direct_04",
+      "question_id": "sentiment",
+      "difficulty": "direct",
+      "expected": "neutral",
+      "predicted": "neutral",
+      "correct": true
+    },
+    {
+      "case_id": "direct_04",
+      "question_id": "next_action",
+      "difficulty": "direct",
+      "expected": "process_service_change",
+      "predicted": "process_service_change",
+      "correct": true
+    },
+    {
+      "case_id": "direct_05",
+      "question_id": "department",
+      "difficulty": "direct",
+      "expected": "smart_home",
+      "predicted": "smart_home",
+      "correct": true
+    },
+    {
+      "case_id": "direct_05",
+      "question_id": "urgency",
+      "difficulty": "direct",
+      "expected": "elevated",
+      "predicted": "elevated",
+      "correct": true
+    },
+    {
+      "case_id": "direct_05",
+      "question_id": "sentiment",
+      "difficulty": "direct",
+      "expected": "negative",
+      "predicted": "negative",
+      "correct": true
+    },
+    {
+      "case_id": "direct_05",
+      "question_id": "next_action",
+      "difficulty": "direct",
+      "expected": "troubleshoot",
+      "predicted": "troubleshoot",
+      "correct": true
+    },
+    {
+      "case_id": "direct_06",
+      "question_id": "department",
+      "difficulty": "direct",
+      "expected": "billing",
+      "predicted": "billing",
+      "correct": true
+    },
+    {
+      "case_id": "direct_06",
+      "question_id": "urgency",
+      "difficulty": "direct",
+      "expected": "elevated",
+      "predicted": "elevated",
+      "correct": true
+    },
+    {
+      "case_id": "direct_06",
+      "question_id": "sentiment",
+      "difficulty": "direct",
+      "expected": "negative",
+      "predicted": "negative",
+      "correct": true
+    },
+    {
+      "case_id": "direct_06",
+      "question_id": "next_action",
+      "difficulty": "direct",
+      "expected": "billing_review",
+      "predicted": "billing_review",
+      "correct": true
+    },
+    {
+      "case_id": "direct_07",
+      "question_id": "department",
+      "difficulty": "direct",
+      "expected": "technical",
+      "predicted": "technical",
+      "correct": true
+    },
+    {
+      "case_id": "direct_07",
+      "question_id": "urgency",
+      "difficulty": "direct",
+      "expected": "critical",
+      "predicted": "urgent",
+      "correct": false
+    },
+    {
+      "case_id": "direct_07",
+      "question_id": "sentiment",
+      "difficulty": "direct",
+      "expected": "negative",
+      "predicted": "negative",
+      "correct": true
+    },
+    {
+      "case_id": "direct_07",
+      "question_id": "next_action",
+      "difficulty": "direct",
+      "expected": "schedule_technician",
+      "predicted": "schedule_technician",
+      "correct": true
+    },
+    {
+      "case_id": "direct_08",
+      "question_id": "department",
+      "difficulty": "direct",
+      "expected": "sales",
+      "predicted": "sales",
+      "correct": true
+    },
+    {
+      "case_id": "direct_08",
+      "question_id": "urgency",
+      "difficulty": "direct",
+      "expected": "routine",
+      "predicted": "routine",
+      "correct": true
+    },
+    {
+      "case_id": "direct_08",
+      "question_id": "sentiment",
+      "difficulty": "direct",
+      "expected": "positive",
+      "predicted": "positive",
+      "correct": true
+    },
+    {
+      "case_id": "direct_08",
+      "question_id": "next_action",
+      "difficulty": "direct",
+      "expected": "sales_followup",
+      "predicted": "sales_followup",
+      "correct": true
+    },
+    {
+      "case_id": "direct_09",
+      "question_id": "department",
+      "difficulty": "direct",
+      "expected": "cancellation",
+      "predicted": "cancellation",
+      "correct": true
+    },
+    {
+      "case_id": "direct_09",
+      "question_id": "urgency",
+      "difficulty": "direct",
+      "expected": "elevated",
+      "predicted": "urgent",
+      "correct": false
+    },
+    {
+      "case_id": "direct_09",
+      "question_id": "sentiment",
+      "difficulty": "direct",
+      "expected": "negative",
+      "predicted": "negative",
+      "correct": true
+    },
+    {
+      "case_id": "direct_09",
+      "question_id": "next_action",
+      "difficulty": "direct",
+      "expected": "process_service_change",
+      "predicted": "process_service_change",
+      "correct": true
+    },
+    {
+      "case_id": "direct_10",
+      "question_id": "department",
+      "difficulty": "direct",
+      "expected": "smart_home",
+      "predicted": "smart_home",
+      "correct": true
+    },
+    {
+      "case_id": "direct_10",
+      "question_id": "urgency",
+      "difficulty": "direct",
+      "expected": "critical",
+      "predicted": "critical",
+      "correct": true
+    },
+    {
+      "case_id": "direct_10",
+      "question_id": "sentiment",
+      "difficulty": "direct",
+      "expected": "negative",
+      "predicted": "negative",
+      "correct": true
+    },
+    {
+      "case_id": "direct_10",
+      "question_id": "next_action",
+      "difficulty": "direct",
+      "expected": "schedule_technician",
+      "predicted": "schedule_technician",
+      "correct": true
+    },
+    {
+      "case_id": "direct_11",
+      "question_id": "department",
+      "difficulty": "direct",
+      "expected": "billing",
+      "predicted": "billing",
+      "correct": true
+    },
+    {
+      "case_id": "direct_11",
+      "question_id": "urgency",
+      "difficulty": "direct",
+      "expected": "routine",
+      "predicted": "routine",
+      "correct": true
+    },
+    {
+      "case_id": "direct_11",
+      "question_id": "sentiment",
+      "difficulty": "direct",
+      "expected": "neutral",
+      "predicted": "neutral",
+      "correct": true
+    },
+    {
+      "case_id": "direct_11",
+      "question_id": "next_action",
+      "difficulty": "direct",
+      "expected": "explain_information",
+      "predicted": "explain_information",
+      "correct": true
+    },
+    {
+      "case_id": "direct_12",
+      "question_id": "department",
+      "difficulty": "direct",
+      "expected": "technical",
+      "predicted": "technical",
+      "correct": true
+    },
+    {
+      "case_id": "direct_12",
+      "question_id": "urgency",
+      "difficulty": "direct",
+      "expected": "elevated",
+      "predicted": "elevated",
+      "correct": true
+    },
+    {
+      "case_id": "direct_12",
+      "question_id": "sentiment",
+      "difficulty": "direct",
+      "expected": "neutral",
+      "predicted": "neutral",
+      "correct": true
+    },
+    {
+      "case_id": "direct_12",
+      "question_id": "next_action",
+      "difficulty": "direct",
+      "expected": "troubleshoot",
+      "predicted": "troubleshoot",
+      "correct": true
+    },
+    {
+      "case_id": "paraphrase_01",
+      "question_id": "department",
+      "difficulty": "paraphrase",
+      "expected": "billing",
+      "predicted": "billing",
+      "correct": true
+    },
+    {
+      "case_id": "paraphrase_01",
+      "question_id": "urgency",
+      "difficulty": "paraphrase",
+      "expected": "elevated",
+      "predicted": "urgent",
+      "correct": false
+    },
+    {
+      "case_id": "paraphrase_01",
+      "question_id": "sentiment",
+      "difficulty": "paraphrase",
+      "expected": "negative",
+      "predicted": "negative",
+      "correct": true
+    },
+    {
+      "case_id": "paraphrase_01",
+      "question_id": "next_action",
+      "difficulty": "paraphrase",
+      "expected": "billing_review",
+      "predicted": "billing_review",
+      "correct": true
+    },
+    {
+      "case_id": "paraphrase_02",
+      "question_id": "department",
+      "difficulty": "paraphrase",
+      "expected": "technical",
+      "predicted": "technical",
+      "correct": true
+    },
+    {
+      "case_id": "paraphrase_02",
+      "question_id": "urgency",
+      "difficulty": "paraphrase",
+      "expected": "urgent",
+      "predicted": "urgent",
+      "correct": true
+    },
+    {
+      "case_id": "paraphrase_02",
+      "question_id": "sentiment",
+      "difficulty": "paraphrase",
+      "expected": "negative",
+      "predicted": "negative",
+      "correct": true
+    },
+    {
+      "case_id": "paraphrase_02",
+      "question_id": "next_action",
+      "difficulty": "paraphrase",
+      "expected": "troubleshoot",
+      "predicted": "schedule_technician",
+      "correct": false
+    },
+    {
+      "case_id": "paraphrase_03",
+      "question_id": "department",
+      "difficulty": "paraphrase",
+      "expected": "cancellation",
+      "predicted": "smart_home",
+      "correct": false
+    },
+    {
+      "case_id": "paraphrase_03",
+      "question_id": "urgency",
+      "difficulty": "paraphrase",
+      "expected": "routine",
+      "predicted": "routine",
+      "correct": true
+    },
+    {
+      "case_id": "paraphrase_03",
+      "question_id": "sentiment",
+      "difficulty": "paraphrase",
+      "expected": "neutral",
+      "predicted": "neutral",
+      "correct": true
+    },
+    {
+      "case_id": "paraphrase_03",
+      "question_id": "next_action",
+      "difficulty": "paraphrase",
+      "expected": "process_service_change",
+      "predicted": "process_service_change",
+      "correct": true
+    },
+    {
+      "case_id": "paraphrase_04",
+      "question_id": "department",
+      "difficulty": "paraphrase",
+      "expected": "sales",
+      "predicted": "sales",
+      "correct": true
+    },
+    {
+      "case_id": "paraphrase_04",
+      "question_id": "urgency",
+      "difficulty": "paraphrase",
+      "expected": "routine",
+      "predicted": "routine",
+      "correct": true
+    },
+    {
+      "case_id": "paraphrase_04",
+      "question_id": "sentiment",
+      "difficulty": "paraphrase",
+      "expected": "positive",
+      "predicted": "neutral",
+      "correct": false
+    },
+    {
+      "case_id": "paraphrase_04",
+      "question_id": "next_action",
+      "difficulty": "paraphrase",
+      "expected": "sales_followup",
+      "predicted": "sales_followup",
+      "correct": true
+    },
+    {
+      "case_id": "distractor_01",
+      "question_id": "department",
+      "difficulty": "distractor",
+      "expected": "smart_home",
+      "predicted": "smart_home",
+      "correct": true
+    },
+    {
+      "case_id": "distractor_01",
+      "question_id": "urgency",
+      "difficulty": "distractor",
+      "expected": "elevated",
+      "predicted": "elevated",
+      "correct": true
+    },
+    {
+      "case_id": "distractor_01",
+      "question_id": "sentiment",
+      "difficulty": "distractor",
+      "expected": "negative",
+      "predicted": "negative",
+      "correct": true
+    },
+    {
+      "case_id": "distractor_01",
+      "question_id": "next_action",
+      "difficulty": "distractor",
+      "expected": "troubleshoot",
+      "predicted": "schedule_technician",
+      "correct": false
+    },
+    {
+      "case_id": "distractor_02",
+      "question_id": "department",
+      "difficulty": "distractor",
+      "expected": "sales",
+      "predicted": "technical",
+      "correct": false
+    },
+    {
+      "case_id": "distractor_02",
+      "question_id": "urgency",
+      "difficulty": "distractor",
+      "expected": "routine",
+      "predicted": "routine",
+      "correct": true
+    },
+    {
+      "case_id": "distractor_02",
+      "question_id": "sentiment",
+      "difficulty": "distractor",
+      "expected": "positive",
+      "predicted": "positive",
+      "correct": true
+    },
+    {
+      "case_id": "distractor_02",
+      "question_id": "next_action",
+      "difficulty": "distractor",
+      "expected": "sales_followup",
+      "predicted": "sales_followup",
+      "correct": true
+    },
+    {
+      "case_id": "distractor_03",
+      "question_id": "department",
+      "difficulty": "distractor",
+      "expected": "cancellation",
+      "predicted": "cancellation",
+      "correct": true
+    },
+    {
+      "case_id": "distractor_03",
+      "question_id": "urgency",
+      "difficulty": "distractor",
+      "expected": "routine",
+      "predicted": "routine",
+      "correct": true
+    },
+    {
+      "case_id": "distractor_03",
+      "question_id": "sentiment",
+      "difficulty": "distractor",
+      "expected": "neutral",
+      "predicted": "neutral",
+      "correct": true
+    },
+    {
+      "case_id": "distractor_03",
+      "question_id": "next_action",
+      "difficulty": "distractor",
+      "expected": "process_service_change",
+      "predicted": "process_service_change",
+      "correct": true
+    },
+    {
+      "case_id": "distractor_04",
+      "question_id": "department",
+      "difficulty": "distractor",
+      "expected": "billing",
+      "predicted": "technical",
+      "correct": false
+    },
+    {
+      "case_id": "distractor_04",
+      "question_id": "urgency",
+      "difficulty": "distractor",
+      "expected": "routine",
+      "predicted": "routine",
+      "correct": true
+    },
+    {
+      "case_id": "distractor_04",
+      "question_id": "sentiment",
+      "difficulty": "distractor",
+      "expected": "neutral",
+      "predicted": "neutral",
+      "correct": true
+    },
+    {
+      "case_id": "distractor_04",
+      "question_id": "next_action",
+      "difficulty": "distractor",
+      "expected": "explain_information",
+      "predicted": "explain_information",
+      "correct": true
+    },
+    {
+      "case_id": "multi_01",
+      "question_id": "department",
+      "difficulty": "multiple_issues",
+      "expected": "technical",
+      "predicted": "technical",
+      "correct": true
+    },
+    {
+      "case_id": "multi_01",
+      "question_id": "urgency",
+      "difficulty": "multiple_issues",
+      "expected": "urgent",
+      "predicted": "urgent",
+      "correct": true
+    },
+    {
+      "case_id": "multi_01",
+      "question_id": "sentiment",
+      "difficulty": "multiple_issues",
+      "expected": "negative",
+      "predicted": "negative",
+      "correct": true
+    },
+    {
+      "case_id": "multi_01",
+      "question_id": "next_action",
+      "difficulty": "multiple_issues",
+      "expected": "troubleshoot",
+      "predicted": "schedule_technician",
+      "correct": false
+    },
+    {
+      "case_id": "multi_02",
+      "question_id": "department",
+      "difficulty": "multiple_issues",
+      "expected": "sales",
+      "predicted": "sales",
+      "correct": true
+    },
+    {
+      "case_id": "multi_02",
+      "question_id": "urgency",
+      "difficulty": "multiple_issues",
+      "expected": "routine",
+      "predicted": "routine",
+      "correct": true
+    },
+    {
+      "case_id": "multi_02",
+      "question_id": "sentiment",
+      "difficulty": "multiple_issues",
+      "expected": "positive",
+      "predicted": "positive",
+      "correct": true
+    },
+    {
+      "case_id": "multi_02",
+      "question_id": "next_action",
+      "difficulty": "multiple_issues",
+      "expected": "sales_followup",
+      "predicted": "sales_followup",
+      "correct": true
+    },
+    {
+      "case_id": "multi_03",
+      "question_id": "department",
+      "difficulty": "multiple_issues",
+      "expected": "smart_home",
+      "predicted": "billing",
+      "correct": false
+    },
+    {
+      "case_id": "multi_03",
+      "question_id": "urgency",
+      "difficulty": "multiple_issues",
+      "expected": "urgent",
+      "predicted": "urgent",
+      "correct": true
+    },
+    {
+      "case_id": "multi_03",
+      "question_id": "sentiment",
+      "difficulty": "multiple_issues",
+      "expected": "negative",
+      "predicted": "negative",
+      "correct": true
+    },
+    {
+      "case_id": "multi_03",
+      "question_id": "next_action",
+      "difficulty": "multiple_issues",
+      "expected": "schedule_technician",
+      "predicted": "schedule_technician",
+      "correct": true
+    },
+    {
+      "case_id": "multi_04",
+      "question_id": "department",
+      "difficulty": "multiple_issues",
+      "expected": "cancellation",
+      "predicted": "cancellation",
+      "correct": true
+    },
+    {
+      "case_id": "multi_04",
+      "question_id": "urgency",
+      "difficulty": "multiple_issues",
+      "expected": "elevated",
+      "predicted": "elevated",
+      "correct": true
+    },
+    {
+      "case_id": "multi_04",
+      "question_id": "sentiment",
+      "difficulty": "multiple_issues",
+      "expected": "negative",
+      "predicted": "negative",
+      "correct": true
+    },
+    {
+      "case_id": "multi_04",
+      "question_id": "next_action",
+      "difficulty": "multiple_issues",
+      "expected": "process_service_change",
+      "predicted": "process_service_change",
+      "correct": true
+    }
+  ]
+}

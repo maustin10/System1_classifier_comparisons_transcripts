@@ -48,5 +48,5 @@ def test_real_model_mixed_request() -> None:
     body = response.json()
     assert body["answers"]["unknown_charge"]["noul"] > 0.5
     assert body["answers"]["department"]["choice"] == "billing"
-    assert response.headers["x-askatt-forward-passes"] == "1"
+    assert response.headers["x-askatt-forward-passes"] == "2"
     assert response.headers["x-askatt-truncated"] == "false"

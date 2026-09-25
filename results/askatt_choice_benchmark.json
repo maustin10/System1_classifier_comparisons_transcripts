@@ -1,0 +1,4033 @@
+{
+  "metadata": {
+    "api": "Askatt_system1_api",
+    "benchmark": {
+      "name": "AskATT System1 multiclass Choice benchmark",
+      "version": "1.0.0",
+      "purpose": "Test semantic multiclass Choice, shared-state multi-question evaluation, distractor handling, and option-order stability.",
+      "questions_per_state": 4
+    },
+    "model": "askatt-gliclass-modern-large-v3.0",
+    "model_path": "/Users/markaustin/Documents/ChatGPT/zero-shot/System1_classifier_comparisons_transcripts/models/gliclass-modern-large-v3.0",
+    "device": "cpu",
+    "model_load_seconds": 5.0476623750291765,
+    "max_length": 8192,
+    "labels_per_pass": 64,
+    "choice_instruction_mode": "state",
+    "runtime": {
+      "python": "3.13.1",
+      "machine": "arm64"
+    }
+  },
+  "semantic_choice": {
+    "declared_order": {
+      "option_order": "declared",
+      "states": 24,
+      "questions_per_state": 4,
+      "quality": {
+        "decisions": 96,
+        "correct": 85,
+        "errors": 11,
+        "accuracy": 0.8854166666666666,
+        "mean_confidence": 0.8041171506250001,
+        "wrong_at_confidence_ge_0_5": 4,
+        "wrong_high_confidence_rate": 0.36363636363636365,
+        "accuracy_by_question": {
+          "department": 0.8333333333333334,
+          "next_action": 0.875,
+          "sentiment": 0.9583333333333334,
+          "urgency": 0.875
+        },
+        "accuracy_by_difficulty": {
+          "direct": 0.9583333333333334,
+          "distractor": 0.8125,
+          "multiple_issues": 0.875,
+          "paraphrase": 0.75
+        },
+        "confusion": {
+          "department::billing": {
+            "billing": 4,
+            "technical": 1
+          },
+          "department::cancellation": {
+            "cancellation": 4,
+            "smart_home": 1
+          },
+          "department::sales": {
+            "sales": 4,
+            "technical": 1
+          },
+          "department::smart_home": {
+            "smart_home": 3,
+            "billing": 1
+          },
+          "department::technical": {
+            "technical": 5
+          },
+          "next_action::billing_review": {
+            "billing_review": 3
+          },
+          "next_action::explain_information": {
+            "explain_information": 2
+          },
+          "next_action::process_service_change": {
+            "process_service_change": 5
+          },
+          "next_action::sales_followup": {
+            "sales_followup": 5
+          },
+          "next_action::schedule_technician": {
+            "schedule_technician": 3
+          },
+          "next_action::troubleshoot": {
+            "troubleshoot": 3,
+            "schedule_technician": 3
+          },
+          "sentiment::negative": {
+            "negative": 13
+          },
+          "sentiment::neutral": {
+            "neutral": 6
+          },
+          "sentiment::positive": {
+            "positive": 4,
+            "neutral": 1
+          },
+          "urgency::critical": {
+            "urgent": 1,
+            "critical": 1
+          },
+          "urgency::elevated": {
+            "elevated": 6,
+            "urgent": 2
+          },
+          "urgency::routine": {
+            "routine": 10
+          },
+          "urgency::urgent": {
+            "urgent": 4
+          }
+        }
+      },
+      "exact_state_match_rate": 0.5416666666666666,
+      "timing": {
+        "wall_seconds": 19.516168625093997,
+        "model_inference_seconds": 19.455268080579117,
+        "mean_wall_ms_per_state": 813.1736927122498,
+        "states_per_second_wall": 1.229749571293449,
+        "decisions_per_second_wall": 4.918998285173796,
+        "scope": "Local CPU sequential service calls after warm-up; HTTP/network time excluded."
+      },
+      "usage": {
+        "input_tokens_total": 12900,
+        "input_tokens_mean_per_state": 537.5,
+        "forward_passes_total": 96,
+        "forward_passes_mean_per_state": 4.0,
+        "compiled_labels_mean_per_state": 18.0,
+        "truncated_states": 0
+      },
+      "predictions": {
+        "direct_01": {
+          "department": "billing",
+          "urgency": "elevated",
+          "sentiment": "negative",
+          "next_action": "billing_review"
+        },
+        "direct_02": {
+          "department": "technical",
+          "urgency": "urgent",
+          "sentiment": "negative",
+          "next_action": "troubleshoot"
+        },
+        "direct_03": {
+          "department": "sales",
+          "urgency": "routine",
+          "sentiment": "positive",
+          "next_action": "sales_followup"
+        },
+        "direct_04": {
+          "department": "cancellation",
+          "urgency": "routine",
+          "sentiment": "neutral",
+          "next_action": "process_service_change"
+        },
+        "direct_05": {
+          "department": "smart_home",
+          "urgency": "elevated",
+          "sentiment": "negative",
+          "next_action": "troubleshoot"
+        },
+        "direct_06": {
+          "department": "billing",
+          "urgency": "elevated",
+          "sentiment": "negative",
+          "next_action": "billing_review"
+        },
+        "direct_07": {
+          "department": "technical",
+          "urgency": "urgent",
+          "sentiment": "negative",
+          "next_action": "schedule_technician"
+        },
+        "direct_08": {
+          "department": "sales",
+          "urgency": "routine",
+          "sentiment": "positive",
+          "next_action": "sales_followup"
+        },
+        "direct_09": {
+          "department": "cancellation",
+          "urgency": "urgent",
+          "sentiment": "negative",
+          "next_action": "process_service_change"
+        },
+        "direct_10": {
+          "department": "smart_home",
+          "urgency": "critical",
+          "sentiment": "negative",
+          "next_action": "schedule_technician"
+        },
+        "direct_11": {
+          "department": "billing",
+          "urgency": "routine",
+          "sentiment": "neutral",
+          "next_action": "explain_information"
+        },
+        "direct_12": {
+          "department": "technical",
+          "urgency": "elevated",
+          "sentiment": "neutral",
+          "next_action": "troubleshoot"
+        },
+        "paraphrase_01": {
+          "department": "billing",
+          "urgency": "urgent",
+          "sentiment": "negative",
+          "next_action": "billing_review"
+        },
+        "paraphrase_02": {
+          "department": "technical",
+          "urgency": "urgent",
+          "sentiment": "negative",
+          "next_action": "schedule_technician"
+        },
+        "paraphrase_03": {
+          "department": "smart_home",
+          "urgency": "routine",
+          "sentiment": "neutral",
+          "next_action": "process_service_change"
+        },
+        "paraphrase_04": {
+          "department": "sales",
+          "urgency": "routine",
+          "sentiment": "neutral",
+          "next_action": "sales_followup"
+        },
+        "distractor_01": {
+          "department": "smart_home",
+          "urgency": "elevated",
+          "sentiment": "negative",
+          "next_action": "schedule_technician"
+        },
+        "distractor_02": {
+          "department": "technical",
+          "urgency": "routine",
+          "sentiment": "positive",
+          "next_action": "sales_followup"
+        },
+        "distractor_03": {
+          "department": "cancellation",
+          "urgency": "routine",
+          "sentiment": "neutral",
+          "next_action": "process_service_change"
+        },
+        "distractor_04": {
+          "department": "technical",
+          "urgency": "routine",
+          "sentiment": "neutral",
+          "next_action": "explain_information"
+        },
+        "multi_01": {
+          "department": "technical",
+          "urgency": "urgent",
+          "sentiment": "negative",
+          "next_action": "schedule_technician"
+        },
+        "multi_02": {
+          "department": "sales",
+          "urgency": "routine",
+          "sentiment": "positive",
+          "next_action": "sales_followup"
+        },
+        "multi_03": {
+          "department": "billing",
+          "urgency": "urgent",
+          "sentiment": "negative",
+          "next_action": "schedule_technician"
+        },
+        "multi_04": {
+          "department": "cancellation",
+          "urgency": "elevated",
+          "sentiment": "negative",
+          "next_action": "process_service_change"
+        }
+      },
+      "records": [
+        {
+          "case_id": "direct_01",
+          "difficulty": "direct",
+          "question_id": "department",
+          "expected": "billing",
+          "predicted": "billing",
+          "correct": true,
+          "confidence": 0.67313929,
+          "probabilities": {
+            "billing": 0.84199077,
+            "technical": 0.00984205,
+            "sales": 0.00066828,
+            "cancellation": 0.01503892,
+            "smart_home": 0.13245998
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_01",
+          "difficulty": "direct",
+          "question_id": "urgency",
+          "expected": "elevated",
+          "predicted": "elevated",
+          "correct": true,
+          "confidence": 0.27070753,
+          "probabilities": {
+            "routine": 0.044982,
+            "elevated": 0.45560498,
+            "urgent": 0.44752564,
+            "critical": 0.05188738
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_01",
+          "difficulty": "direct",
+          "question_id": "sentiment",
+          "expected": "negative",
+          "predicted": "negative",
+          "correct": true,
+          "confidence": 0.99994139,
+          "probabilities": {
+            "positive": 2e-08,
+            "neutral": 4.83e-06,
+            "negative": 0.99999515
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_01",
+          "difficulty": "direct",
+          "question_id": "next_action",
+          "expected": "billing_review",
+          "predicted": "billing_review",
+          "correct": true,
+          "confidence": 0.52689487,
+          "probabilities": {
+            "explain_information": 0.07828209,
+            "billing_review": 0.75119664,
+            "troubleshoot": 0.01540728,
+            "schedule_technician": 0.02569324,
+            "process_service_change": 0.12740997,
+            "sales_followup": 0.00201078
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_02",
+          "difficulty": "direct",
+          "question_id": "department",
+          "expected": "technical",
+          "predicted": "technical",
+          "correct": true,
+          "confidence": 0.99584576,
+          "probabilities": {
+            "billing": 0.00016121,
+            "technical": 0.99924067,
+            "sales": 4.75e-06,
+            "cancellation": 1.04e-05,
+            "smart_home": 0.00058297
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_02",
+          "difficulty": "direct",
+          "question_id": "urgency",
+          "expected": "urgent",
+          "predicted": "urgent",
+          "correct": true,
+          "confidence": 0.98639214,
+          "probabilities": {
+            "routine": 3.8e-07,
+            "elevated": 3.79e-06,
+            "urgent": 0.9972718,
+            "critical": 0.00272403
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_02",
+          "difficulty": "direct",
+          "question_id": "sentiment",
+          "expected": "negative",
+          "predicted": "negative",
+          "correct": true,
+          "confidence": 0.99434572,
+          "probabilities": {
+            "positive": 2.75e-06,
+            "neutral": 0.00075384,
+            "negative": 0.99924341
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_02",
+          "difficulty": "direct",
+          "question_id": "next_action",
+          "expected": "troubleshoot",
+          "predicted": "troubleshoot",
+          "correct": true,
+          "confidence": 0.68019108,
+          "probabilities": {
+            "explain_information": 0.03200137,
+            "billing_review": 0.00075353,
+            "troubleshoot": 0.81460248,
+            "schedule_technician": 0.15217286,
+            "process_service_change": 0.00018362,
+            "sales_followup": 0.00028614
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_03",
+          "difficulty": "direct",
+          "question_id": "department",
+          "expected": "sales",
+          "predicted": "sales",
+          "correct": true,
+          "confidence": 0.97365934,
+          "probabilities": {
+            "billing": 0.00122899,
+            "technical": 0.00061216,
+            "sales": 0.99389469,
+            "cancellation": 4.957e-05,
+            "smart_home": 0.00421459
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_03",
+          "difficulty": "direct",
+          "question_id": "urgency",
+          "expected": "routine",
+          "predicted": "routine",
+          "correct": true,
+          "confidence": 0.99922146,
+          "probabilities": {
+            "routine": 0.99989918,
+            "elevated": 8.612e-05,
+            "urgent": 1.033e-05,
+            "critical": 4.37e-06
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_03",
+          "difficulty": "direct",
+          "question_id": "sentiment",
+          "expected": "positive",
+          "predicted": "positive",
+          "correct": true,
+          "confidence": 0.99943019,
+          "probabilities": {
+            "positive": 0.99994234,
+            "neutral": 5.654e-05,
+            "negative": 1.12e-06
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_03",
+          "difficulty": "direct",
+          "question_id": "next_action",
+          "expected": "sales_followup",
+          "predicted": "sales_followup",
+          "correct": true,
+          "confidence": 0.97693267,
+          "probabilities": {
+            "explain_information": 0.00505594,
+            "billing_review": 0.00026727,
+            "troubleshoot": 0.00050965,
+            "schedule_technician": 0.00022824,
+            "process_service_change": 5.355e-05,
+            "sales_followup": 0.99388535
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_04",
+          "difficulty": "direct",
+          "question_id": "department",
+          "expected": "cancellation",
+          "predicted": "cancellation",
+          "correct": true,
+          "confidence": 0.83709124,
+          "probabilities": {
+            "billing": 0.06712769,
+            "technical": 0.00029744,
+            "sales": 0.00011465,
+            "cancellation": 0.93079397,
+            "smart_home": 0.00166625
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_04",
+          "difficulty": "direct",
+          "question_id": "urgency",
+          "expected": "routine",
+          "predicted": "routine",
+          "correct": true,
+          "confidence": 0.6514856,
+          "probabilities": {
+            "routine": 0.81816773,
+            "elevated": 0.18045973,
+            "urgent": 0.00085613,
+            "critical": 0.00051641
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_04",
+          "difficulty": "direct",
+          "question_id": "sentiment",
+          "expected": "neutral",
+          "predicted": "neutral",
+          "correct": true,
+          "confidence": 0.89689604,
+          "probabilities": {
+            "positive": 0.01605124,
+            "neutral": 0.97901909,
+            "negative": 0.00492967
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_04",
+          "difficulty": "direct",
+          "question_id": "next_action",
+          "expected": "process_service_change",
+          "predicted": "process_service_change",
+          "correct": true,
+          "confidence": 0.78982587,
+          "probabilities": {
+            "explain_information": 0.06415578,
+            "billing_review": 0.01515328,
+            "troubleshoot": 0.00789385,
+            "schedule_technician": 0.0012735,
+            "process_service_change": 0.91081995,
+            "sales_followup": 0.00070364
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_05",
+          "difficulty": "direct",
+          "question_id": "department",
+          "expected": "smart_home",
+          "predicted": "smart_home",
+          "correct": true,
+          "confidence": 0.79365369,
+          "probabilities": {
+            "billing": 0.00449709,
+            "technical": 0.0878117,
+            "sales": 0.00011422,
+            "cancellation": 0.00062013,
+            "smart_home": 0.90695686
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_05",
+          "difficulty": "direct",
+          "question_id": "urgency",
+          "expected": "elevated",
+          "predicted": "elevated",
+          "correct": true,
+          "confidence": 0.99147585,
+          "probabilities": {
+            "routine": 7.323e-05,
+            "elevated": 0.9984893,
+            "urgent": 0.0013919,
+            "critical": 4.557e-05
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_05",
+          "difficulty": "direct",
+          "question_id": "sentiment",
+          "expected": "negative",
+          "predicted": "negative",
+          "correct": true,
+          "confidence": 0.95146413,
+          "probabilities": {
+            "positive": 4.1e-05,
+            "neutral": 0.00932308,
+            "negative": 0.99063592
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_05",
+          "difficulty": "direct",
+          "question_id": "next_action",
+          "expected": "troubleshoot",
+          "predicted": "troubleshoot",
+          "correct": true,
+          "confidence": 0.57353169,
+          "probabilities": {
+            "explain_information": 0.05421007,
+            "billing_review": 0.00353965,
+            "troubleshoot": 0.71905863,
+            "schedule_technician": 0.22089788,
+            "process_service_change": 0.00151051,
+            "sales_followup": 0.00078326
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_06",
+          "difficulty": "direct",
+          "question_id": "department",
+          "expected": "billing",
+          "predicted": "billing",
+          "correct": true,
+          "confidence": 0.55276392,
+          "probabilities": {
+            "billing": 0.70327602,
+            "technical": 0.02702374,
+            "sales": 0.00043597,
+            "cancellation": 0.00334271,
+            "smart_home": 0.26592156
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_06",
+          "difficulty": "direct",
+          "question_id": "urgency",
+          "expected": "elevated",
+          "predicted": "elevated",
+          "correct": true,
+          "confidence": 0.56190401,
+          "probabilities": {
+            "routine": 0.01119205,
+            "elevated": 0.79103032,
+            "urgent": 0.18357105,
+            "critical": 0.01420658
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_06",
+          "difficulty": "direct",
+          "question_id": "sentiment",
+          "expected": "negative",
+          "predicted": "negative",
+          "correct": true,
+          "confidence": 0.99879934,
+          "probabilities": {
+            "positive": 1.6e-07,
+            "neutral": 0.0001326,
+            "negative": 0.99986724
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_06",
+          "difficulty": "direct",
+          "question_id": "next_action",
+          "expected": "billing_review",
+          "predicted": "billing_review",
+          "correct": true,
+          "confidence": 0.78579145,
+          "probabilities": {
+            "explain_information": 0.09023418,
+            "billing_review": 0.89643964,
+            "troubleshoot": 0.00220354,
+            "schedule_technician": 0.00969707,
+            "process_service_change": 0.00066947,
+            "sales_followup": 0.0007561
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_07",
+          "difficulty": "direct",
+          "question_id": "department",
+          "expected": "technical",
+          "predicted": "technical",
+          "correct": true,
+          "confidence": 0.98962093,
+          "probabilities": {
+            "billing": 0.00049985,
+            "technical": 0.99792076,
+            "sales": 2.526e-05,
+            "cancellation": 0.00139639,
+            "smart_home": 0.00015774
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_07",
+          "difficulty": "direct",
+          "question_id": "urgency",
+          "expected": "critical",
+          "predicted": "urgent",
+          "correct": false,
+          "confidence": 0.50790929,
+          "probabilities": {
+            "routine": 7e-08,
+            "elevated": 5e-07,
+            "urgent": 0.57393542,
+            "critical": 0.42606401
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_07",
+          "difficulty": "direct",
+          "question_id": "sentiment",
+          "expected": "negative",
+          "predicted": "negative",
+          "correct": true,
+          "confidence": 0.89390252,
+          "probabilities": {
+            "positive": 6.23e-05,
+            "neutral": 0.02472449,
+            "negative": 0.97521321
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_07",
+          "difficulty": "direct",
+          "question_id": "next_action",
+          "expected": "schedule_technician",
+          "predicted": "schedule_technician",
+          "correct": true,
+          "confidence": 0.99864825,
+          "probabilities": {
+            "explain_information": 7.268e-05,
+            "billing_review": 9.92e-06,
+            "troubleshoot": 5.382e-05,
+            "schedule_technician": 0.99977306,
+            "process_service_change": 8.647e-05,
+            "sales_followup": 4.05e-06
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_08",
+          "difficulty": "direct",
+          "question_id": "department",
+          "expected": "sales",
+          "predicted": "sales",
+          "correct": true,
+          "confidence": 0.96264144,
+          "probabilities": {
+            "billing": 0.0012103,
+            "technical": 0.00051078,
+            "sales": 0.99034401,
+            "cancellation": 1.99e-05,
+            "smart_home": 0.00791501
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_08",
+          "difficulty": "direct",
+          "question_id": "urgency",
+          "expected": "routine",
+          "predicted": "routine",
+          "correct": true,
+          "confidence": 0.98846531,
+          "probabilities": {
+            "routine": 0.99795797,
+            "elevated": 0.00159761,
+            "urgent": 0.00034773,
+            "critical": 9.669e-05
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_08",
+          "difficulty": "direct",
+          "question_id": "sentiment",
+          "expected": "positive",
+          "predicted": "positive",
+          "correct": true,
+          "confidence": 0.974801,
+          "probabilities": {
+            "positive": 0.99573753,
+            "neutral": 0.00423492,
+            "negative": 2.755e-05
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_08",
+          "difficulty": "direct",
+          "question_id": "next_action",
+          "expected": "sales_followup",
+          "predicted": "sales_followup",
+          "correct": true,
+          "confidence": 0.91236201,
+          "probabilities": {
+            "explain_information": 0.00905966,
+            "billing_review": 0.00208147,
+            "troubleshoot": 0.00720308,
+            "schedule_technician": 0.00762146,
+            "process_service_change": 0.00036309,
+            "sales_followup": 0.97367124
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_09",
+          "difficulty": "direct",
+          "question_id": "department",
+          "expected": "cancellation",
+          "predicted": "cancellation",
+          "correct": true,
+          "confidence": 0.88893462,
+          "probabilities": {
+            "billing": 0.02046637,
+            "technical": 0.00040928,
+            "sales": 7.16e-05,
+            "cancellation": 0.96477039,
+            "smart_home": 0.01428236
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_09",
+          "difficulty": "direct",
+          "question_id": "urgency",
+          "expected": "elevated",
+          "predicted": "urgent",
+          "correct": false,
+          "confidence": 0.46491524,
+          "probabilities": {
+            "routine": 0.00136492,
+            "elevated": 0.31842926,
+            "urgent": 0.65546927,
+            "critical": 0.02473655
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_09",
+          "difficulty": "direct",
+          "question_id": "sentiment",
+          "expected": "negative",
+          "predicted": "negative",
+          "correct": true,
+          "confidence": 0.99993967,
+          "probabilities": {
+            "positive": 1e-08,
+            "neutral": 5e-06,
+            "negative": 0.99999499
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_09",
+          "difficulty": "direct",
+          "question_id": "next_action",
+          "expected": "process_service_change",
+          "predicted": "process_service_change",
+          "correct": true,
+          "confidence": 0.99894475,
+          "probabilities": {
+            "explain_information": 3.545e-05,
+            "billing_review": 7.998e-05,
+            "troubleshoot": 4.452e-05,
+            "schedule_technician": 1.142e-05,
+            "process_service_change": 0.99982683,
+            "sales_followup": 1.8e-06
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_10",
+          "difficulty": "direct",
+          "question_id": "department",
+          "expected": "smart_home",
+          "predicted": "smart_home",
+          "correct": true,
+          "confidence": 0.96766165,
+          "probabilities": {
+            "billing": 0.00299311,
+            "technical": 0.00341274,
+            "sales": 0.00017482,
+            "cancellation": 0.0008986,
+            "smart_home": 0.99252073
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_10",
+          "difficulty": "direct",
+          "question_id": "urgency",
+          "expected": "critical",
+          "predicted": "critical",
+          "correct": true,
+          "confidence": 0.84305031,
+          "probabilities": {
+            "routine": 4.818e-05,
+            "elevated": 0.00175835,
+            "urgent": 0.05195686,
+            "critical": 0.94623661
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_10",
+          "difficulty": "direct",
+          "question_id": "sentiment",
+          "expected": "negative",
+          "predicted": "negative",
+          "correct": true,
+          "confidence": 0.80724589,
+          "probabilities": {
+            "positive": 0.00013524,
+            "neutral": 0.05410513,
+            "negative": 0.94575963
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_10",
+          "difficulty": "direct",
+          "question_id": "next_action",
+          "expected": "schedule_technician",
+          "predicted": "schedule_technician",
+          "correct": true,
+          "confidence": 0.99992727,
+          "probabilities": {
+            "explain_information": 1.42e-06,
+            "billing_review": 6.7e-07,
+            "troubleshoot": 5.94e-06,
+            "schedule_technician": 0.99999049,
+            "process_service_change": 4.8e-07,
+            "sales_followup": 1e-06
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_11",
+          "difficulty": "direct",
+          "question_id": "department",
+          "expected": "billing",
+          "predicted": "billing",
+          "correct": true,
+          "confidence": 0.77263044,
+          "probabilities": {
+            "billing": 0.88497109,
+            "technical": 0.00055118,
+            "sales": 0.00040646,
+            "cancellation": 0.00043255,
+            "smart_home": 0.11363872
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_11",
+          "difficulty": "direct",
+          "question_id": "urgency",
+          "expected": "routine",
+          "predicted": "routine",
+          "correct": true,
+          "confidence": 0.85956409,
+          "probabilities": {
+            "routine": 0.96071571,
+            "elevated": 0.02798316,
+            "urgent": 0.00918479,
+            "critical": 0.00211634
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_11",
+          "difficulty": "direct",
+          "question_id": "sentiment",
+          "expected": "neutral",
+          "predicted": "neutral",
+          "correct": true,
+          "confidence": 0.99738309,
+          "probabilities": {
+            "positive": 0.00015559,
+            "neutral": 0.99970747,
+            "negative": 0.00013694
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_11",
+          "difficulty": "direct",
+          "question_id": "next_action",
+          "expected": "explain_information",
+          "predicted": "explain_information",
+          "correct": true,
+          "confidence": 0.97768854,
+          "probabilities": {
+            "explain_information": 0.99371819,
+            "billing_review": 0.00591353,
+            "troubleshoot": 3.581e-05,
+            "schedule_technician": 0.00016231,
+            "process_service_change": 7.09e-05,
+            "sales_followup": 9.926e-05
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_12",
+          "difficulty": "direct",
+          "question_id": "department",
+          "expected": "technical",
+          "predicted": "technical",
+          "correct": true,
+          "confidence": 0.98609612,
+          "probabilities": {
+            "billing": 0.00044756,
+            "technical": 0.99706662,
+            "sales": 2.713e-05,
+            "cancellation": 0.00031413,
+            "smart_home": 0.00214456
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_12",
+          "difficulty": "direct",
+          "question_id": "urgency",
+          "expected": "elevated",
+          "predicted": "elevated",
+          "correct": true,
+          "confidence": 0.99907929,
+          "probabilities": {
+            "routine": 0.00012453,
+            "elevated": 0.99987324,
+            "urgent": 1.93e-06,
+            "critical": 3e-07
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_12",
+          "difficulty": "direct",
+          "question_id": "sentiment",
+          "expected": "neutral",
+          "predicted": "neutral",
+          "correct": true,
+          "confidence": 0.4612736,
+          "probabilities": {
+            "positive": 0.01107512,
+            "neutral": 0.76339812,
+            "negative": 0.22552676
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_12",
+          "difficulty": "direct",
+          "question_id": "next_action",
+          "expected": "troubleshoot",
+          "predicted": "troubleshoot",
+          "correct": true,
+          "confidence": 0.75746148,
+          "probabilities": {
+            "explain_information": 0.05115844,
+            "billing_review": 0.00645993,
+            "troubleshoot": 0.90172348,
+            "schedule_technician": 0.03140975,
+            "process_service_change": 0.0074031,
+            "sales_followup": 0.0018453
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_01",
+          "difficulty": "paraphrase",
+          "question_id": "department",
+          "expected": "billing",
+          "predicted": "billing",
+          "correct": true,
+          "confidence": 0.39711355,
+          "probabilities": {
+            "billing": 0.64343227,
+            "technical": 0.16594458,
+            "sales": 0.00257908,
+            "cancellation": 0.01781754,
+            "smart_home": 0.17022653
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_01",
+          "difficulty": "paraphrase",
+          "question_id": "urgency",
+          "expected": "elevated",
+          "predicted": "urgent",
+          "correct": false,
+          "confidence": 0.25857558,
+          "probabilities": {
+            "routine": 0.04590989,
+            "elevated": 0.40415829,
+            "urgent": 0.48903853,
+            "critical": 0.06089329
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_01",
+          "difficulty": "paraphrase",
+          "question_id": "sentiment",
+          "expected": "negative",
+          "predicted": "negative",
+          "correct": true,
+          "confidence": 0.99925813,
+          "probabilities": {
+            "positive": 1.4e-07,
+            "neutral": 7.768e-05,
+            "negative": 0.99992218
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_01",
+          "difficulty": "paraphrase",
+          "question_id": "next_action",
+          "expected": "billing_review",
+          "predicted": "billing_review",
+          "correct": true,
+          "confidence": 0.40665529,
+          "probabilities": {
+            "explain_information": 0.44635747,
+            "billing_review": 0.44783856,
+            "troubleshoot": 0.05250354,
+            "schedule_technician": 0.0416453,
+            "process_service_change": 0.01022336,
+            "sales_followup": 0.00143177
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_02",
+          "difficulty": "paraphrase",
+          "question_id": "department",
+          "expected": "technical",
+          "predicted": "technical",
+          "correct": true,
+          "confidence": 0.58996917,
+          "probabilities": {
+            "billing": 0.02796411,
+            "technical": 0.79254995,
+            "sales": 0.00188957,
+            "cancellation": 0.01735926,
+            "smart_home": 0.16023711
+          },
+          "probability_sum": 0.9999999999999999
+        },
+        {
+          "case_id": "paraphrase_02",
+          "difficulty": "paraphrase",
+          "question_id": "urgency",
+          "expected": "urgent",
+          "predicted": "urgent",
+          "correct": true,
+          "confidence": 0.98415952,
+          "probabilities": {
+            "routine": 1.45e-06,
+            "elevated": 3.914e-05,
+            "urgent": 0.99677251,
+            "critical": 0.0031869
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_02",
+          "difficulty": "paraphrase",
+          "question_id": "sentiment",
+          "expected": "negative",
+          "predicted": "negative",
+          "correct": true,
+          "confidence": 0.99982977,
+          "probabilities": {
+            "positive": 2.2e-07,
+            "neutral": 1.516e-05,
+            "negative": 0.99998462
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_02",
+          "difficulty": "paraphrase",
+          "question_id": "next_action",
+          "expected": "troubleshoot",
+          "predicted": "schedule_technician",
+          "correct": false,
+          "confidence": 0.59388947,
+          "probabilities": {
+            "explain_information": 0.03998176,
+            "billing_review": 0.00768435,
+            "troubleshoot": 0.16106137,
+            "schedule_technician": 0.77676056,
+            "process_service_change": 0.00867596,
+            "sales_followup": 0.005836
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_03",
+          "difficulty": "paraphrase",
+          "question_id": "department",
+          "expected": "cancellation",
+          "predicted": "smart_home",
+          "correct": false,
+          "confidence": 0.28901443,
+          "probabilities": {
+            "billing": 0.23534883,
+            "technical": 0.02074068,
+            "sales": 0.00437987,
+            "cancellation": 0.25516754,
+            "smart_home": 0.48436308
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_03",
+          "difficulty": "paraphrase",
+          "question_id": "urgency",
+          "expected": "routine",
+          "predicted": "routine",
+          "correct": true,
+          "confidence": 0.9953693,
+          "probabilities": {
+            "routine": 0.99921481,
+            "elevated": 0.00078228,
+            "urgent": 2.06e-06,
+            "critical": 8.5e-07
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_03",
+          "difficulty": "paraphrase",
+          "question_id": "sentiment",
+          "expected": "neutral",
+          "predicted": "neutral",
+          "correct": true,
+          "confidence": 0.98356307,
+          "probabilities": {
+            "positive": 0.00198109,
+            "neutral": 0.99759073,
+            "negative": 0.00042818
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_03",
+          "difficulty": "paraphrase",
+          "question_id": "next_action",
+          "expected": "process_service_change",
+          "predicted": "process_service_change",
+          "correct": true,
+          "confidence": 0.72911439,
+          "probabilities": {
+            "explain_information": 0.09787313,
+            "billing_review": 0.01030405,
+            "troubleshoot": 0.00879085,
+            "schedule_technician": 0.00648368,
+            "process_service_change": 0.8733809,
+            "sales_followup": 0.00316739
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_04",
+          "difficulty": "paraphrase",
+          "question_id": "department",
+          "expected": "sales",
+          "predicted": "sales",
+          "correct": true,
+          "confidence": 0.79030623,
+          "probabilities": {
+            "billing": 0.01366891,
+            "technical": 0.0040823,
+            "sales": 0.91829394,
+            "cancellation": 0.00036204,
+            "smart_home": 0.06359281
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_04",
+          "difficulty": "paraphrase",
+          "question_id": "urgency",
+          "expected": "routine",
+          "predicted": "routine",
+          "correct": true,
+          "confidence": 0.76384955,
+          "probabilities": {
+            "routine": 0.91964101,
+            "elevated": 0.06565025,
+            "urgent": 0.00962862,
+            "critical": 0.00508012
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_04",
+          "difficulty": "paraphrase",
+          "question_id": "sentiment",
+          "expected": "positive",
+          "predicted": "neutral",
+          "correct": false,
+          "confidence": 0.35560015,
+          "probabilities": {
+            "positive": 0.39166556,
+            "neutral": 0.60127937,
+            "negative": 0.00705507
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_04",
+          "difficulty": "paraphrase",
+          "question_id": "next_action",
+          "expected": "sales_followup",
+          "predicted": "sales_followup",
+          "correct": true,
+          "confidence": 0.92098928,
+          "probabilities": {
+            "explain_information": 0.00304169,
+            "billing_review": 0.00273519,
+            "troubleshoot": 0.00862539,
+            "schedule_technician": 0.00805028,
+            "process_service_change": 0.00070214,
+            "sales_followup": 0.97684531
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_01",
+          "difficulty": "distractor",
+          "question_id": "department",
+          "expected": "smart_home",
+          "predicted": "smart_home",
+          "correct": true,
+          "confidence": 0.49745979,
+          "probabilities": {
+            "billing": 0.24625306,
+            "technical": 0.07186982,
+            "sales": 0.00044258,
+            "cancellation": 0.00134141,
+            "smart_home": 0.68009313
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_01",
+          "difficulty": "distractor",
+          "question_id": "urgency",
+          "expected": "elevated",
+          "predicted": "elevated",
+          "correct": true,
+          "confidence": 0.74357137,
+          "probabilities": {
+            "routine": 0.0211006,
+            "elevated": 0.91051193,
+            "urgent": 0.06737814,
+            "critical": 0.00100933
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_01",
+          "difficulty": "distractor",
+          "question_id": "sentiment",
+          "expected": "negative",
+          "predicted": "negative",
+          "correct": true,
+          "confidence": 0.99851685,
+          "probabilities": {
+            "positive": 9.8e-07,
+            "neutral": 0.00016646,
+            "negative": 0.99983256
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_01",
+          "difficulty": "distractor",
+          "question_id": "next_action",
+          "expected": "troubleshoot",
+          "predicted": "schedule_technician",
+          "correct": false,
+          "confidence": 0.34413611,
+          "probabilities": {
+            "explain_information": 0.11624804,
+            "billing_review": 0.07874469,
+            "troubleshoot": 0.3108061,
+            "schedule_technician": 0.49237337,
+            "process_service_change": 0.00095159,
+            "sales_followup": 0.00087621
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_02",
+          "difficulty": "distractor",
+          "question_id": "department",
+          "expected": "sales",
+          "predicted": "technical",
+          "correct": false,
+          "confidence": 0.43752066,
+          "probabilities": {
+            "billing": 0.03848999,
+            "technical": 0.60386157,
+            "sales": 0.33276066,
+            "cancellation": 0.01283172,
+            "smart_home": 0.01205606
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_02",
+          "difficulty": "distractor",
+          "question_id": "urgency",
+          "expected": "routine",
+          "predicted": "routine",
+          "correct": true,
+          "confidence": 0.98687934,
+          "probabilities": {
+            "routine": 0.9974819,
+            "elevated": 0.00237914,
+            "urgent": 0.00011253,
+            "critical": 2.643e-05
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_02",
+          "difficulty": "distractor",
+          "question_id": "sentiment",
+          "expected": "positive",
+          "predicted": "positive",
+          "correct": true,
+          "confidence": 0.99856397,
+          "probabilities": {
+            "positive": 0.99983896,
+            "neutral": 0.00015917,
+            "negative": 1.87e-06
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_02",
+          "difficulty": "distractor",
+          "question_id": "next_action",
+          "expected": "sales_followup",
+          "predicted": "sales_followup",
+          "correct": true,
+          "confidence": 0.61891006,
+          "probabilities": {
+            "explain_information": 0.19330148,
+            "billing_review": 0.00748199,
+            "troubleshoot": 0.01121545,
+            "schedule_technician": 0.01363915,
+            "process_service_change": 0.0033444,
+            "sales_followup": 0.77101753
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_03",
+          "difficulty": "distractor",
+          "question_id": "department",
+          "expected": "cancellation",
+          "predicted": "cancellation",
+          "correct": true,
+          "confidence": 0.96553376,
+          "probabilities": {
+            "billing": 0.00743981,
+            "technical": 0.00011942,
+            "sales": 8.19e-06,
+            "cancellation": 0.99107699,
+            "smart_home": 0.00135559
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_03",
+          "difficulty": "distractor",
+          "question_id": "urgency",
+          "expected": "routine",
+          "predicted": "routine",
+          "correct": true,
+          "confidence": 0.93813987,
+          "probabilities": {
+            "routine": 0.98388176,
+            "elevated": 0.01534519,
+            "urgent": 0.00074098,
+            "critical": 3.207e-05
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_03",
+          "difficulty": "distractor",
+          "question_id": "sentiment",
+          "expected": "neutral",
+          "predicted": "neutral",
+          "correct": true,
+          "confidence": 0.70276187,
+          "probabilities": {
+            "positive": 0.00300564,
+            "neutral": 0.90532499,
+            "negative": 0.09166937
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_03",
+          "difficulty": "distractor",
+          "question_id": "next_action",
+          "expected": "process_service_change",
+          "predicted": "process_service_change",
+          "correct": true,
+          "confidence": 0.53477008,
+          "probabilities": {
+            "explain_information": 0.32075111,
+            "billing_review": 0.0448242,
+            "troubleshoot": 0.0048265,
+            "schedule_technician": 0.00133263,
+            "process_service_change": 0.62789858,
+            "sales_followup": 0.00036698
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_04",
+          "difficulty": "distractor",
+          "question_id": "department",
+          "expected": "billing",
+          "predicted": "technical",
+          "correct": false,
+          "confidence": 0.50994152,
+          "probabilities": {
+            "billing": 0.33043626,
+            "technical": 0.63263518,
+            "sales": 0.00094245,
+            "cancellation": 0.00173306,
+            "smart_home": 0.03425305
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_04",
+          "difficulty": "distractor",
+          "question_id": "urgency",
+          "expected": "routine",
+          "predicted": "routine",
+          "correct": true,
+          "confidence": 0.67952907,
+          "probabilities": {
+            "routine": 0.85031727,
+            "elevated": 0.14546199,
+            "urgent": 0.00239811,
+            "critical": 0.00182263
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_04",
+          "difficulty": "distractor",
+          "question_id": "sentiment",
+          "expected": "neutral",
+          "predicted": "neutral",
+          "correct": true,
+          "confidence": 0.9819161,
+          "probabilities": {
+            "positive": 0.00162771,
+            "neutral": 0.99738902,
+            "negative": 0.00098327
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_04",
+          "difficulty": "distractor",
+          "question_id": "next_action",
+          "expected": "explain_information",
+          "predicted": "explain_information",
+          "correct": true,
+          "confidence": 0.55001248,
+          "probabilities": {
+            "explain_information": 0.60165122,
+            "billing_review": 0.37027985,
+            "troubleshoot": 0.01211293,
+            "schedule_technician": 0.01094899,
+            "process_service_change": 0.001856,
+            "sales_followup": 0.00315101
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_01",
+          "difficulty": "multiple_issues",
+          "question_id": "department",
+          "expected": "technical",
+          "predicted": "technical",
+          "correct": true,
+          "confidence": 0.86859466,
+          "probabilities": {
+            "billing": 0.02974187,
+            "technical": 0.95570747,
+            "sales": 0.00012238,
+            "cancellation": 0.00028115,
+            "smart_home": 0.01414713
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_01",
+          "difficulty": "multiple_issues",
+          "question_id": "urgency",
+          "expected": "urgent",
+          "predicted": "urgent",
+          "correct": true,
+          "confidence": 0.99968206,
+          "probabilities": {
+            "routine": 2.21e-06,
+            "elevated": 2.993e-05,
+            "urgent": 0.99996269,
+            "critical": 5.17e-06
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_01",
+          "difficulty": "multiple_issues",
+          "question_id": "sentiment",
+          "expected": "negative",
+          "predicted": "negative",
+          "correct": true,
+          "confidence": 0.99999763,
+          "probabilities": {
+            "positive": 0.0,
+            "neutral": 1.5e-07,
+            "negative": 0.99999985
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_01",
+          "difficulty": "multiple_issues",
+          "question_id": "next_action",
+          "expected": "troubleshoot",
+          "predicted": "schedule_technician",
+          "correct": false,
+          "confidence": 0.35855396,
+          "probabilities": {
+            "explain_information": 0.05962522,
+            "billing_review": 0.23960426,
+            "troubleshoot": 0.09320077,
+            "schedule_technician": 0.5828385,
+            "process_service_change": 0.02035128,
+            "sales_followup": 0.00437997
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_02",
+          "difficulty": "multiple_issues",
+          "question_id": "department",
+          "expected": "sales",
+          "predicted": "sales",
+          "correct": true,
+          "confidence": 0.98998618,
+          "probabilities": {
+            "billing": 0.00061208,
+            "technical": 0.00022759,
+            "sales": 0.99807484,
+            "cancellation": 0.00010569,
+            "smart_home": 0.0009798
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_02",
+          "difficulty": "multiple_issues",
+          "question_id": "urgency",
+          "expected": "routine",
+          "predicted": "routine",
+          "correct": true,
+          "confidence": 0.9990449,
+          "probabilities": {
+            "routine": 0.99986804,
+            "elevated": 0.00012961,
+            "urgent": 1.6e-06,
+            "critical": 7.5e-07
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_02",
+          "difficulty": "multiple_issues",
+          "question_id": "sentiment",
+          "expected": "positive",
+          "predicted": "positive",
+          "correct": true,
+          "confidence": 0.99822906,
+          "probabilities": {
+            "positive": 0.99979556,
+            "neutral": 0.0002038,
+            "negative": 6.4e-07
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_02",
+          "difficulty": "multiple_issues",
+          "question_id": "next_action",
+          "expected": "sales_followup",
+          "predicted": "sales_followup",
+          "correct": true,
+          "confidence": 0.99900194,
+          "probabilities": {
+            "explain_information": 7.157e-05,
+            "billing_review": 1.75e-05,
+            "troubleshoot": 2.911e-05,
+            "schedule_technician": 1.486e-05,
+            "process_service_change": 2.702e-05,
+            "sales_followup": 0.99983994
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_03",
+          "difficulty": "multiple_issues",
+          "question_id": "department",
+          "expected": "smart_home",
+          "predicted": "billing",
+          "correct": false,
+          "confidence": 0.53050438,
+          "probabilities": {
+            "billing": 0.59096188,
+            "technical": 0.00838682,
+            "sales": 0.00059137,
+            "cancellation": 0.00663316,
+            "smart_home": 0.39342677
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_03",
+          "difficulty": "multiple_issues",
+          "question_id": "urgency",
+          "expected": "urgent",
+          "predicted": "urgent",
+          "correct": true,
+          "confidence": 0.64555324,
+          "probabilities": {
+            "routine": 0.00093324,
+            "elevated": 0.01531977,
+            "urgent": 0.8425016,
+            "critical": 0.14124539
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_03",
+          "difficulty": "multiple_issues",
+          "question_id": "sentiment",
+          "expected": "negative",
+          "predicted": "negative",
+          "correct": true,
+          "confidence": 0.96322779,
+          "probabilities": {
+            "positive": 0.00013164,
+            "neutral": 0.00647592,
+            "negative": 0.99339244
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_03",
+          "difficulty": "multiple_issues",
+          "question_id": "next_action",
+          "expected": "schedule_technician",
+          "predicted": "schedule_technician",
+          "correct": true,
+          "confidence": 0.99645687,
+          "probabilities": {
+            "explain_information": 0.00010293,
+            "billing_review": 0.00033136,
+            "troubleshoot": 0.00014096,
+            "schedule_technician": 0.99933981,
+            "process_service_change": 6.802e-05,
+            "sales_followup": 1.692e-05
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_04",
+          "difficulty": "multiple_issues",
+          "question_id": "department",
+          "expected": "cancellation",
+          "predicted": "cancellation",
+          "correct": true,
+          "confidence": 0.93869436,
+          "probabilities": {
+            "billing": 0.01428918,
+            "technical": 0.00053177,
+            "sales": 1.823e-05,
+            "cancellation": 0.98239253,
+            "smart_home": 0.00276829
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_04",
+          "difficulty": "multiple_issues",
+          "question_id": "urgency",
+          "expected": "elevated",
+          "predicted": "elevated",
+          "correct": true,
+          "confidence": 0.91672285,
+          "probabilities": {
+            "routine": 0.0019403,
+            "elevated": 0.97838236,
+            "urgent": 0.01842946,
+            "critical": 0.00124788
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_04",
+          "difficulty": "multiple_issues",
+          "question_id": "sentiment",
+          "expected": "negative",
+          "predicted": "negative",
+          "correct": true,
+          "confidence": 0.97427942,
+          "probabilities": {
+            "positive": 2.418e-05,
+            "neutral": 0.00434665,
+            "negative": 0.99562917
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_04",
+          "difficulty": "multiple_issues",
+          "question_id": "next_action",
+          "expected": "process_service_change",
+          "predicted": "process_service_change",
+          "correct": true,
+          "confidence": 0.99976631,
+          "probabilities": {
+            "explain_information": 2.077e-05,
+            "billing_review": 9.35e-06,
+            "troubleshoot": 2.33e-06,
+            "schedule_technician": 1.45e-06,
+            "process_service_change": 0.99996593,
+            "sales_followup": 1.7e-07
+          },
+          "probability_sum": 1.0
+        }
+      ]
+    },
+    "reversed_order": {
+      "option_order": "reversed",
+      "states": 24,
+      "questions_per_state": 4,
+      "quality": {
+        "decisions": 96,
+        "correct": 88,
+        "errors": 8,
+        "accuracy": 0.9166666666666666,
+        "mean_confidence": 0.8207935309375,
+        "wrong_at_confidence_ge_0_5": 6,
+        "wrong_high_confidence_rate": 0.75,
+        "accuracy_by_question": {
+          "department": 0.875,
+          "next_action": 0.8333333333333334,
+          "sentiment": 0.9583333333333334,
+          "urgency": 1.0
+        },
+        "accuracy_by_difficulty": {
+          "direct": 0.9583333333333334,
+          "distractor": 0.8125,
+          "multiple_issues": 0.875,
+          "paraphrase": 0.9375
+        },
+        "confusion": {
+          "department::billing": {
+            "billing": 5
+          },
+          "department::cancellation": {
+            "cancellation": 5
+          },
+          "department::sales": {
+            "sales": 4,
+            "technical": 1
+          },
+          "department::smart_home": {
+            "technical": 1,
+            "smart_home": 2,
+            "billing": 1
+          },
+          "department::technical": {
+            "technical": 5
+          },
+          "next_action::billing_review": {
+            "billing_review": 3
+          },
+          "next_action::explain_information": {
+            "explain_information": 2
+          },
+          "next_action::process_service_change": {
+            "process_service_change": 4,
+            "explain_information": 1
+          },
+          "next_action::sales_followup": {
+            "sales_followup": 5
+          },
+          "next_action::schedule_technician": {
+            "schedule_technician": 3
+          },
+          "next_action::troubleshoot": {
+            "troubleshoot": 3,
+            "schedule_technician": 3
+          },
+          "sentiment::negative": {
+            "negative": 13
+          },
+          "sentiment::neutral": {
+            "neutral": 5,
+            "negative": 1
+          },
+          "sentiment::positive": {
+            "positive": 5
+          },
+          "urgency::critical": {
+            "critical": 2
+          },
+          "urgency::elevated": {
+            "elevated": 8
+          },
+          "urgency::routine": {
+            "routine": 10
+          },
+          "urgency::urgent": {
+            "urgent": 4
+          }
+        }
+      },
+      "exact_state_match_rate": 0.6666666666666666,
+      "timing": {
+        "wall_seconds": 19.16934083402157,
+        "model_inference_seconds": 19.112365502864122,
+        "mean_wall_ms_per_state": 798.7225347508987,
+        "states_per_second_wall": 1.2519992318882986,
+        "decisions_per_second_wall": 5.007996927553195,
+        "scope": "Local CPU sequential service calls after warm-up; HTTP/network time excluded."
+      },
+      "usage": {
+        "input_tokens_total": 12900,
+        "input_tokens_mean_per_state": 537.5,
+        "forward_passes_total": 96,
+        "forward_passes_mean_per_state": 4.0,
+        "compiled_labels_mean_per_state": 18.0,
+        "truncated_states": 0
+      },
+      "predictions": {
+        "direct_01": {
+          "department": "billing",
+          "urgency": "elevated",
+          "sentiment": "negative",
+          "next_action": "billing_review"
+        },
+        "direct_02": {
+          "department": "technical",
+          "urgency": "urgent",
+          "sentiment": "negative",
+          "next_action": "troubleshoot"
+        },
+        "direct_03": {
+          "department": "sales",
+          "urgency": "routine",
+          "sentiment": "positive",
+          "next_action": "sales_followup"
+        },
+        "direct_04": {
+          "department": "cancellation",
+          "urgency": "routine",
+          "sentiment": "neutral",
+          "next_action": "process_service_change"
+        },
+        "direct_05": {
+          "department": "technical",
+          "urgency": "elevated",
+          "sentiment": "negative",
+          "next_action": "troubleshoot"
+        },
+        "direct_06": {
+          "department": "billing",
+          "urgency": "elevated",
+          "sentiment": "negative",
+          "next_action": "billing_review"
+        },
+        "direct_07": {
+          "department": "technical",
+          "urgency": "critical",
+          "sentiment": "negative",
+          "next_action": "schedule_technician"
+        },
+        "direct_08": {
+          "department": "sales",
+          "urgency": "routine",
+          "sentiment": "positive",
+          "next_action": "sales_followup"
+        },
+        "direct_09": {
+          "department": "cancellation",
+          "urgency": "elevated",
+          "sentiment": "negative",
+          "next_action": "process_service_change"
+        },
+        "direct_10": {
+          "department": "smart_home",
+          "urgency": "critical",
+          "sentiment": "negative",
+          "next_action": "schedule_technician"
+        },
+        "direct_11": {
+          "department": "billing",
+          "urgency": "routine",
+          "sentiment": "neutral",
+          "next_action": "explain_information"
+        },
+        "direct_12": {
+          "department": "technical",
+          "urgency": "elevated",
+          "sentiment": "negative",
+          "next_action": "troubleshoot"
+        },
+        "paraphrase_01": {
+          "department": "billing",
+          "urgency": "elevated",
+          "sentiment": "negative",
+          "next_action": "billing_review"
+        },
+        "paraphrase_02": {
+          "department": "technical",
+          "urgency": "urgent",
+          "sentiment": "negative",
+          "next_action": "schedule_technician"
+        },
+        "paraphrase_03": {
+          "department": "cancellation",
+          "urgency": "routine",
+          "sentiment": "neutral",
+          "next_action": "process_service_change"
+        },
+        "paraphrase_04": {
+          "department": "sales",
+          "urgency": "routine",
+          "sentiment": "positive",
+          "next_action": "sales_followup"
+        },
+        "distractor_01": {
+          "department": "smart_home",
+          "urgency": "elevated",
+          "sentiment": "negative",
+          "next_action": "schedule_technician"
+        },
+        "distractor_02": {
+          "department": "technical",
+          "urgency": "routine",
+          "sentiment": "positive",
+          "next_action": "sales_followup"
+        },
+        "distractor_03": {
+          "department": "cancellation",
+          "urgency": "routine",
+          "sentiment": "neutral",
+          "next_action": "explain_information"
+        },
+        "distractor_04": {
+          "department": "billing",
+          "urgency": "routine",
+          "sentiment": "neutral",
+          "next_action": "explain_information"
+        },
+        "multi_01": {
+          "department": "technical",
+          "urgency": "urgent",
+          "sentiment": "negative",
+          "next_action": "schedule_technician"
+        },
+        "multi_02": {
+          "department": "sales",
+          "urgency": "routine",
+          "sentiment": "positive",
+          "next_action": "sales_followup"
+        },
+        "multi_03": {
+          "department": "billing",
+          "urgency": "urgent",
+          "sentiment": "negative",
+          "next_action": "schedule_technician"
+        },
+        "multi_04": {
+          "department": "cancellation",
+          "urgency": "elevated",
+          "sentiment": "negative",
+          "next_action": "process_service_change"
+        }
+      },
+      "records": [
+        {
+          "case_id": "direct_01",
+          "difficulty": "direct",
+          "question_id": "department",
+          "expected": "billing",
+          "predicted": "billing",
+          "correct": true,
+          "confidence": 0.88328806,
+          "probabilities": {
+            "smart_home": 0.00920399,
+            "cancellation": 0.02039811,
+            "sales": 0.00064088,
+            "technical": 0.00490082,
+            "billing": 0.9648562
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_01",
+          "difficulty": "direct",
+          "question_id": "urgency",
+          "expected": "elevated",
+          "predicted": "elevated",
+          "correct": true,
+          "confidence": 0.31311431,
+          "probabilities": {
+            "critical": 0.09683609,
+            "urgent": 0.1913001,
+            "elevated": 0.66686249,
+            "routine": 0.04500132
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_01",
+          "difficulty": "direct",
+          "question_id": "sentiment",
+          "expected": "negative",
+          "predicted": "negative",
+          "correct": true,
+          "confidence": 0.99996477,
+          "probabilities": {
+            "negative": 0.9999972,
+            "neutral": 2.78e-06,
+            "positive": 2e-08
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_01",
+          "difficulty": "direct",
+          "question_id": "next_action",
+          "expected": "billing_review",
+          "predicted": "billing_review",
+          "correct": true,
+          "confidence": 0.74460279,
+          "probabilities": {
+            "sales_followup": 0.00087575,
+            "process_service_change": 0.01941102,
+            "schedule_technician": 0.00953651,
+            "troubleshoot": 0.01137518,
+            "billing_review": 0.89318152,
+            "explain_information": 0.06562002
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_02",
+          "difficulty": "direct",
+          "question_id": "department",
+          "expected": "technical",
+          "predicted": "technical",
+          "correct": true,
+          "confidence": 0.9975491,
+          "probabilities": {
+            "smart_home": 0.00013672,
+            "cancellation": 9.302e-05,
+            "sales": 3.031e-05,
+            "technical": 0.99961039,
+            "billing": 0.00012956
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_02",
+          "difficulty": "direct",
+          "question_id": "urgency",
+          "expected": "urgent",
+          "predicted": "urgent",
+          "correct": true,
+          "confidence": 0.98349661,
+          "probabilities": {
+            "critical": 0.00335679,
+            "urgent": 0.99660889,
+            "elevated": 2.711e-05,
+            "routine": 7.21e-06
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_02",
+          "difficulty": "direct",
+          "question_id": "sentiment",
+          "expected": "negative",
+          "predicted": "negative",
+          "correct": true,
+          "confidence": 0.99181695,
+          "probabilities": {
+            "negative": 0.99884353,
+            "neutral": 0.00115464,
+            "positive": 1.83e-06
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_02",
+          "difficulty": "direct",
+          "question_id": "next_action",
+          "expected": "troubleshoot",
+          "predicted": "troubleshoot",
+          "correct": true,
+          "confidence": 0.80962289,
+          "probabilities": {
+            "sales_followup": 7.438e-05,
+            "process_service_change": 8.379e-05,
+            "schedule_technician": 0.06718959,
+            "troubleshoot": 0.91405072,
+            "billing_review": 0.00039844,
+            "explain_information": 0.01820308
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_03",
+          "difficulty": "direct",
+          "question_id": "department",
+          "expected": "sales",
+          "predicted": "sales",
+          "correct": true,
+          "confidence": 0.98969204,
+          "probabilities": {
+            "smart_home": 0.00044022,
+            "cancellation": 9.494e-05,
+            "sales": 0.9980203,
+            "technical": 0.00043472,
+            "billing": 0.00100982
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_03",
+          "difficulty": "direct",
+          "question_id": "urgency",
+          "expected": "routine",
+          "predicted": "routine",
+          "correct": true,
+          "confidence": 0.99894719,
+          "probabilities": {
+            "critical": 2.238e-05,
+            "urgent": 1.192e-05,
+            "elevated": 0.00010319,
+            "routine": 0.99986251
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_03",
+          "difficulty": "direct",
+          "question_id": "sentiment",
+          "expected": "positive",
+          "predicted": "positive",
+          "correct": true,
+          "confidence": 0.9986001,
+          "probabilities": {
+            "negative": 5.99e-06,
+            "neutral": 0.00014877,
+            "positive": 0.99984524
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_03",
+          "difficulty": "direct",
+          "question_id": "next_action",
+          "expected": "sales_followup",
+          "predicted": "sales_followup",
+          "correct": true,
+          "confidence": 0.91090755,
+          "probabilities": {
+            "sales_followup": 0.96626176,
+            "process_service_change": 0.00022314,
+            "schedule_technician": 0.00028457,
+            "troubleshoot": 0.00174373,
+            "billing_review": 0.00043794,
+            "explain_information": 0.03104886
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_04",
+          "difficulty": "direct",
+          "question_id": "department",
+          "expected": "cancellation",
+          "predicted": "cancellation",
+          "correct": true,
+          "confidence": 0.69173987,
+          "probabilities": {
+            "smart_home": 0.00037096,
+            "cancellation": 0.80748673,
+            "sales": 0.00010661,
+            "technical": 0.00037005,
+            "billing": 0.19166565
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_04",
+          "difficulty": "direct",
+          "question_id": "urgency",
+          "expected": "routine",
+          "predicted": "routine",
+          "correct": true,
+          "confidence": 0.96909972,
+          "probabilities": {
+            "critical": 0.00011786,
+            "urgent": 0.00017107,
+            "elevated": 0.00665695,
+            "routine": 0.99305412
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_04",
+          "difficulty": "direct",
+          "question_id": "sentiment",
+          "expected": "neutral",
+          "predicted": "neutral",
+          "correct": true,
+          "confidence": 0.63564279,
+          "probabilities": {
+            "negative": 0.01232783,
+            "neutral": 0.8830062,
+            "positive": 0.10466597
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_04",
+          "difficulty": "direct",
+          "question_id": "next_action",
+          "expected": "process_service_change",
+          "predicted": "process_service_change",
+          "correct": true,
+          "confidence": 0.49400162,
+          "probabilities": {
+            "sales_followup": 0.00171673,
+            "process_service_change": 0.47984432,
+            "schedule_technician": 0.00442583,
+            "troubleshoot": 0.0164489,
+            "billing_review": 0.02684372,
+            "explain_information": 0.4707205
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_05",
+          "difficulty": "direct",
+          "question_id": "department",
+          "expected": "smart_home",
+          "predicted": "technical",
+          "correct": false,
+          "confidence": 0.58968749,
+          "probabilities": {
+            "smart_home": 0.27181318,
+            "cancellation": 0.00219072,
+            "sales": 0.00091203,
+            "technical": 0.71493394,
+            "billing": 0.01015013
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_05",
+          "difficulty": "direct",
+          "question_id": "urgency",
+          "expected": "elevated",
+          "predicted": "elevated",
+          "correct": true,
+          "confidence": 0.99315973,
+          "probabilities": {
+            "critical": 7.371e-05,
+            "urgent": 0.00093882,
+            "elevated": 0.99886507,
+            "routine": 0.0001224
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_05",
+          "difficulty": "direct",
+          "question_id": "sentiment",
+          "expected": "negative",
+          "predicted": "negative",
+          "correct": true,
+          "confidence": 0.97787886,
+          "probabilities": {
+            "negative": 0.99633225,
+            "neutral": 0.00365722,
+            "positive": 1.053e-05
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_05",
+          "difficulty": "direct",
+          "question_id": "next_action",
+          "expected": "troubleshoot",
+          "predicted": "troubleshoot",
+          "correct": true,
+          "confidence": 0.54847522,
+          "probabilities": {
+            "sales_followup": 0.00030607,
+            "process_service_change": 0.00070025,
+            "schedule_technician": 0.31252989,
+            "troubleshoot": 0.63958836,
+            "billing_review": 0.00213096,
+            "explain_information": 0.04474447
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_06",
+          "difficulty": "direct",
+          "question_id": "department",
+          "expected": "billing",
+          "predicted": "billing",
+          "correct": true,
+          "confidence": 0.86879527,
+          "probabilities": {
+            "smart_home": 0.02926941,
+            "cancellation": 0.00494524,
+            "sales": 0.00052513,
+            "technical": 0.00740867,
+            "billing": 0.95785155
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_06",
+          "difficulty": "direct",
+          "question_id": "urgency",
+          "expected": "elevated",
+          "predicted": "elevated",
+          "correct": true,
+          "confidence": 0.38476235,
+          "probabilities": {
+            "critical": 0.04920066,
+            "urgent": 0.30507969,
+            "elevated": 0.63362228,
+            "routine": 0.01209737
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_06",
+          "difficulty": "direct",
+          "question_id": "sentiment",
+          "expected": "negative",
+          "predicted": "negative",
+          "correct": true,
+          "confidence": 0.99883858,
+          "probabilities": {
+            "negative": 0.99987201,
+            "neutral": 0.00012789,
+            "positive": 1e-07
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_06",
+          "difficulty": "direct",
+          "question_id": "next_action",
+          "expected": "billing_review",
+          "predicted": "billing_review",
+          "correct": true,
+          "confidence": 0.90111832,
+          "probabilities": {
+            "sales_followup": 0.00027203,
+            "process_service_change": 0.0003427,
+            "schedule_technician": 0.00360211,
+            "troubleshoot": 0.00257262,
+            "billing_review": 0.96455705,
+            "explain_information": 0.02865349
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_07",
+          "difficulty": "direct",
+          "question_id": "department",
+          "expected": "technical",
+          "predicted": "technical",
+          "correct": true,
+          "confidence": 0.98016003,
+          "probabilities": {
+            "smart_home": 0.00010806,
+            "cancellation": 0.00404456,
+            "sales": 7.627e-05,
+            "technical": 0.9953472,
+            "billing": 0.00042391
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_07",
+          "difficulty": "direct",
+          "question_id": "urgency",
+          "expected": "critical",
+          "predicted": "critical",
+          "correct": true,
+          "confidence": 0.83016828,
+          "probabilities": {
+            "critical": 0.93691645,
+            "urgent": 0.06307713,
+            "elevated": 5.7e-06,
+            "routine": 7.2e-07
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_07",
+          "difficulty": "direct",
+          "question_id": "sentiment",
+          "expected": "negative",
+          "predicted": "negative",
+          "correct": true,
+          "confidence": 0.69463756,
+          "probabilities": {
+            "negative": 0.89541813,
+            "neutral": 0.1045309,
+            "positive": 5.097e-05
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_07",
+          "difficulty": "direct",
+          "question_id": "next_action",
+          "expected": "schedule_technician",
+          "predicted": "schedule_technician",
+          "correct": true,
+          "confidence": 0.99082114,
+          "probabilities": {
+            "sales_followup": 1.173e-05,
+            "process_service_change": 8.096e-05,
+            "schedule_technician": 0.99786346,
+            "troubleshoot": 0.00017927,
+            "billing_review": 2.942e-05,
+            "explain_information": 0.00183516
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_08",
+          "difficulty": "direct",
+          "question_id": "department",
+          "expected": "sales",
+          "predicted": "sales",
+          "correct": true,
+          "confidence": 0.9701722,
+          "probabilities": {
+            "smart_home": 0.00182629,
+            "cancellation": 0.00011757,
+            "sales": 0.99300053,
+            "technical": 0.00054161,
+            "billing": 0.004514
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_08",
+          "difficulty": "direct",
+          "question_id": "urgency",
+          "expected": "routine",
+          "predicted": "routine",
+          "correct": true,
+          "confidence": 0.99775702,
+          "probabilities": {
+            "critical": 2.708e-05,
+            "urgent": 6.096e-05,
+            "elevated": 0.0002286,
+            "routine": 0.99968336
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_08",
+          "difficulty": "direct",
+          "question_id": "sentiment",
+          "expected": "positive",
+          "predicted": "positive",
+          "correct": true,
+          "confidence": 0.99622791,
+          "probabilities": {
+            "negative": 6.38e-06,
+            "neutral": 0.0004687,
+            "positive": 0.99952492
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_08",
+          "difficulty": "direct",
+          "question_id": "next_action",
+          "expected": "sales_followup",
+          "predicted": "sales_followup",
+          "correct": true,
+          "confidence": 0.82979274,
+          "probabilities": {
+            "sales_followup": 0.93882085,
+            "process_service_change": 0.00047241,
+            "schedule_technician": 0.02321716,
+            "troubleshoot": 0.02191602,
+            "billing_review": 0.00210615,
+            "explain_information": 0.01346741
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_09",
+          "difficulty": "direct",
+          "question_id": "department",
+          "expected": "cancellation",
+          "predicted": "cancellation",
+          "correct": true,
+          "confidence": 0.85934423,
+          "probabilities": {
+            "smart_home": 0.00171178,
+            "cancellation": 0.94389962,
+            "sales": 5.49e-05,
+            "technical": 0.0003639,
+            "billing": 0.0539698
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_09",
+          "difficulty": "direct",
+          "question_id": "urgency",
+          "expected": "elevated",
+          "predicted": "elevated",
+          "correct": true,
+          "confidence": 0.39556336,
+          "probabilities": {
+            "critical": 0.03990055,
+            "urgent": 0.47706687,
+            "elevated": 0.48240057,
+            "routine": 0.00063201
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_09",
+          "difficulty": "direct",
+          "question_id": "sentiment",
+          "expected": "negative",
+          "predicted": "negative",
+          "correct": true,
+          "confidence": 0.99997371,
+          "probabilities": {
+            "negative": 0.99999796,
+            "neutral": 2.03e-06,
+            "positive": 1e-08
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_09",
+          "difficulty": "direct",
+          "question_id": "next_action",
+          "expected": "process_service_change",
+          "predicted": "process_service_change",
+          "correct": true,
+          "confidence": 0.9956277,
+          "probabilities": {
+            "sales_followup": 1.647e-05,
+            "process_service_change": 0.99913785,
+            "schedule_technician": 1.693e-05,
+            "troubleshoot": 8.923e-05,
+            "billing_review": 0.00021007,
+            "explain_information": 0.00052945
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_10",
+          "difficulty": "direct",
+          "question_id": "department",
+          "expected": "smart_home",
+          "predicted": "smart_home",
+          "correct": true,
+          "confidence": 0.73921369,
+          "probabilities": {
+            "smart_home": 0.89320473,
+            "cancellation": 0.00632808,
+            "sales": 0.00441064,
+            "technical": 0.08318501,
+            "billing": 0.01287154
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_10",
+          "difficulty": "direct",
+          "question_id": "urgency",
+          "expected": "critical",
+          "predicted": "critical",
+          "correct": true,
+          "confidence": 0.77873227,
+          "probabilities": {
+            "critical": 0.92646946,
+            "urgent": 0.05350561,
+            "elevated": 0.01984901,
+            "routine": 0.00017592
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_10",
+          "difficulty": "direct",
+          "question_id": "sentiment",
+          "expected": "negative",
+          "predicted": "negative",
+          "correct": true,
+          "confidence": 0.97104547,
+          "probabilities": {
+            "negative": 0.99494266,
+            "neutral": 0.00505404,
+            "positive": 3.3e-06
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_10",
+          "difficulty": "direct",
+          "question_id": "next_action",
+          "expected": "schedule_technician",
+          "predicted": "schedule_technician",
+          "correct": true,
+          "confidence": 0.99793191,
+          "probabilities": {
+            "sales_followup": 7.81e-06,
+            "process_service_change": 3.59e-06,
+            "schedule_technician": 0.99961647,
+            "troubleshoot": 0.00026823,
+            "billing_review": 7.26e-06,
+            "explain_information": 9.664e-05
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_11",
+          "difficulty": "direct",
+          "question_id": "department",
+          "expected": "billing",
+          "predicted": "billing",
+          "correct": true,
+          "confidence": 0.93409285,
+          "probabilities": {
+            "smart_home": 0.01579977,
+            "cancellation": 0.00076514,
+            "sales": 0.00092903,
+            "technical": 0.00149966,
+            "billing": 0.9810064
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_11",
+          "difficulty": "direct",
+          "question_id": "urgency",
+          "expected": "routine",
+          "predicted": "routine",
+          "correct": true,
+          "confidence": 0.99297872,
+          "probabilities": {
+            "critical": 0.00016739,
+            "urgent": 0.00014423,
+            "elevated": 0.00082625,
+            "routine": 0.99886213
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_11",
+          "difficulty": "direct",
+          "question_id": "sentiment",
+          "expected": "neutral",
+          "predicted": "neutral",
+          "correct": true,
+          "confidence": 0.98229437,
+          "probabilities": {
+            "negative": 0.00059883,
+            "neutral": 0.99740386,
+            "positive": 0.00199731
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_11",
+          "difficulty": "direct",
+          "question_id": "next_action",
+          "expected": "explain_information",
+          "predicted": "explain_information",
+          "correct": true,
+          "confidence": 0.99183946,
+          "probabilities": {
+            "sales_followup": 1.813e-05,
+            "process_service_change": 4.991e-05,
+            "schedule_technician": 5.578e-05,
+            "troubleshoot": 5.58e-05,
+            "billing_review": 0.00171847,
+            "explain_information": 0.99810191
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_12",
+          "difficulty": "direct",
+          "question_id": "department",
+          "expected": "technical",
+          "predicted": "technical",
+          "correct": true,
+          "confidence": 0.98396871,
+          "probabilities": {
+            "smart_home": 0.00127292,
+            "cancellation": 0.0011862,
+            "sales": 9.466e-05,
+            "technical": 0.99673058,
+            "billing": 0.00071564
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_12",
+          "difficulty": "direct",
+          "question_id": "urgency",
+          "expected": "elevated",
+          "predicted": "elevated",
+          "correct": true,
+          "confidence": 0.95496276,
+          "probabilities": {
+            "critical": 1.71e-06,
+            "urgent": 1.172e-05,
+            "elevated": 0.98860319,
+            "routine": 0.01138338
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_12",
+          "difficulty": "direct",
+          "question_id": "sentiment",
+          "expected": "neutral",
+          "predicted": "negative",
+          "correct": false,
+          "confidence": 0.63759868,
+          "probabilities": {
+            "negative": 0.867469,
+            "neutral": 0.13130352,
+            "positive": 0.00122748
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "direct_12",
+          "difficulty": "direct",
+          "question_id": "next_action",
+          "expected": "troubleshoot",
+          "predicted": "troubleshoot",
+          "correct": true,
+          "confidence": 0.78968745,
+          "probabilities": {
+            "sales_followup": 0.00064433,
+            "process_service_change": 0.00172643,
+            "schedule_technician": 0.02856011,
+            "troubleshoot": 0.91287747,
+            "billing_review": 0.00405808,
+            "explain_information": 0.05213358
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_01",
+          "difficulty": "paraphrase",
+          "question_id": "department",
+          "expected": "billing",
+          "predicted": "billing",
+          "correct": true,
+          "confidence": 0.84035676,
+          "probabilities": {
+            "smart_home": 0.02245473,
+            "cancellation": 0.00863467,
+            "sales": 0.00186663,
+            "technical": 0.01724328,
+            "billing": 0.94980069
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_01",
+          "difficulty": "paraphrase",
+          "question_id": "urgency",
+          "expected": "elevated",
+          "predicted": "elevated",
+          "correct": true,
+          "confidence": 0.18596063,
+          "probabilities": {
+            "critical": 0.17760938,
+            "urgent": 0.25302612,
+            "elevated": 0.52607157,
+            "routine": 0.04329293
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_01",
+          "difficulty": "paraphrase",
+          "question_id": "sentiment",
+          "expected": "negative",
+          "predicted": "negative",
+          "correct": true,
+          "confidence": 0.9996746,
+          "probabilities": {
+            "negative": 0.99996861,
+            "neutral": 3.13e-05,
+            "positive": 9e-08
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_01",
+          "difficulty": "paraphrase",
+          "question_id": "next_action",
+          "expected": "billing_review",
+          "predicted": "billing_review",
+          "correct": true,
+          "confidence": 0.56001009,
+          "probabilities": {
+            "sales_followup": 0.00078216,
+            "process_service_change": 0.00375715,
+            "schedule_technician": 0.03232226,
+            "troubleshoot": 0.04699253,
+            "billing_review": 0.75447345,
+            "explain_information": 0.16167245
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_02",
+          "difficulty": "paraphrase",
+          "question_id": "department",
+          "expected": "technical",
+          "predicted": "technical",
+          "correct": true,
+          "confidence": 0.83521603,
+          "probabilities": {
+            "smart_home": 0.01754842,
+            "cancellation": 0.01152244,
+            "sales": 0.0021912,
+            "technical": 0.94841282,
+            "billing": 0.02032512
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_02",
+          "difficulty": "paraphrase",
+          "question_id": "urgency",
+          "expected": "urgent",
+          "predicted": "urgent",
+          "correct": true,
+          "confidence": 0.9843432,
+          "probabilities": {
+            "critical": 0.0027197,
+            "urgent": 0.9969604,
+            "elevated": 0.00031395,
+            "routine": 5.95e-06
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_02",
+          "difficulty": "paraphrase",
+          "question_id": "sentiment",
+          "expected": "negative",
+          "predicted": "negative",
+          "correct": true,
+          "confidence": 0.9997192,
+          "probabilities": {
+            "negative": 0.99997338,
+            "neutral": 2.636e-05,
+            "positive": 2.6e-07
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_02",
+          "difficulty": "paraphrase",
+          "question_id": "next_action",
+          "expected": "troubleshoot",
+          "predicted": "schedule_technician",
+          "correct": false,
+          "confidence": 0.65100899,
+          "probabilities": {
+            "sales_followup": 0.001485,
+            "process_service_change": 0.00146759,
+            "schedule_technician": 0.79481051,
+            "troubleshoot": 0.17018625,
+            "billing_review": 0.00391068,
+            "explain_information": 0.02813997
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_03",
+          "difficulty": "paraphrase",
+          "question_id": "department",
+          "expected": "cancellation",
+          "predicted": "cancellation",
+          "correct": true,
+          "confidence": 0.54620561,
+          "probabilities": {
+            "smart_home": 0.04207524,
+            "cancellation": 0.75211744,
+            "sales": 0.00220243,
+            "technical": 0.0118758,
+            "billing": 0.19172909
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_03",
+          "difficulty": "paraphrase",
+          "question_id": "urgency",
+          "expected": "routine",
+          "predicted": "routine",
+          "correct": true,
+          "confidence": 0.9997239,
+          "probabilities": {
+            "critical": 5.1e-07,
+            "urgent": 9.7e-07,
+            "elevated": 3.175e-05,
+            "routine": 0.99996677
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_03",
+          "difficulty": "paraphrase",
+          "question_id": "sentiment",
+          "expected": "neutral",
+          "predicted": "neutral",
+          "correct": true,
+          "confidence": 0.95420084,
+          "probabilities": {
+            "negative": 0.00133391,
+            "neutral": 0.99197687,
+            "positive": 0.00668922
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_03",
+          "difficulty": "paraphrase",
+          "question_id": "next_action",
+          "expected": "process_service_change",
+          "predicted": "process_service_change",
+          "correct": true,
+          "confidence": 0.93915424,
+          "probabilities": {
+            "sales_followup": 0.00163382,
+            "process_service_change": 0.98252068,
+            "schedule_technician": 0.00144416,
+            "troubleshoot": 0.00243787,
+            "billing_review": 0.00131781,
+            "explain_information": 0.01064566
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_04",
+          "difficulty": "paraphrase",
+          "question_id": "department",
+          "expected": "sales",
+          "predicted": "sales",
+          "correct": true,
+          "confidence": 0.60281197,
+          "probabilities": {
+            "smart_home": 0.0198858,
+            "cancellation": 0.00456703,
+            "sales": 0.79620063,
+            "technical": 0.01317468,
+            "billing": 0.16617186
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_04",
+          "difficulty": "paraphrase",
+          "question_id": "urgency",
+          "expected": "routine",
+          "predicted": "routine",
+          "correct": true,
+          "confidence": 0.99594314,
+          "probabilities": {
+            "critical": 0.00011942,
+            "urgent": 4.701e-05,
+            "elevated": 0.00044907,
+            "routine": 0.9993845
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_04",
+          "difficulty": "paraphrase",
+          "question_id": "sentiment",
+          "expected": "positive",
+          "predicted": "positive",
+          "correct": true,
+          "confidence": 0.60542412,
+          "probabilities": {
+            "negative": 0.0091199,
+            "neutral": 0.12813476,
+            "positive": 0.86274534
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "paraphrase_04",
+          "difficulty": "paraphrase",
+          "question_id": "next_action",
+          "expected": "sales_followup",
+          "predicted": "sales_followup",
+          "correct": true,
+          "confidence": 0.86096664,
+          "probabilities": {
+            "sales_followup": 0.95454259,
+            "process_service_change": 0.00111881,
+            "schedule_technician": 0.01591165,
+            "troubleshoot": 0.01350534,
+            "billing_review": 0.00725704,
+            "explain_information": 0.00766457
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_01",
+          "difficulty": "distractor",
+          "question_id": "department",
+          "expected": "smart_home",
+          "predicted": "smart_home",
+          "correct": true,
+          "confidence": 0.32090087,
+          "probabilities": {
+            "smart_home": 0.43587705,
+            "cancellation": 0.00683934,
+            "sales": 0.00221349,
+            "technical": 0.18997564,
+            "billing": 0.36509448
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_01",
+          "difficulty": "distractor",
+          "question_id": "urgency",
+          "expected": "elevated",
+          "predicted": "elevated",
+          "correct": true,
+          "confidence": 0.91310294,
+          "probabilities": {
+            "critical": 0.00123783,
+            "urgent": 0.01601016,
+            "elevated": 0.97822272,
+            "routine": 0.00452929
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_01",
+          "difficulty": "distractor",
+          "question_id": "sentiment",
+          "expected": "negative",
+          "predicted": "negative",
+          "correct": true,
+          "confidence": 0.99898514,
+          "probabilities": {
+            "negative": 0.99988989,
+            "neutral": 0.00010994,
+            "positive": 1.7e-07
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_01",
+          "difficulty": "distractor",
+          "question_id": "next_action",
+          "expected": "troubleshoot",
+          "predicted": "schedule_technician",
+          "correct": false,
+          "confidence": 0.48010639,
+          "probabilities": {
+            "sales_followup": 0.00035896,
+            "process_service_change": 0.00037896,
+            "schedule_technician": 0.50246094,
+            "troubleshoot": 0.43091908,
+            "billing_review": 0.04858899,
+            "explain_information": 0.01729307
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_02",
+          "difficulty": "distractor",
+          "question_id": "department",
+          "expected": "sales",
+          "predicted": "technical",
+          "correct": false,
+          "confidence": 0.52184845,
+          "probabilities": {
+            "smart_home": 0.00501114,
+            "cancellation": 0.03334342,
+            "sales": 0.13281394,
+            "technical": 0.77247905,
+            "billing": 0.05635245
+          },
+          "probability_sum": 0.9999999999999999
+        },
+        {
+          "case_id": "distractor_02",
+          "difficulty": "distractor",
+          "question_id": "urgency",
+          "expected": "routine",
+          "predicted": "routine",
+          "correct": true,
+          "confidence": 0.99726298,
+          "probabilities": {
+            "critical": 5.25e-06,
+            "urgent": 1.509e-05,
+            "elevated": 0.00040167,
+            "routine": 0.99957799
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_02",
+          "difficulty": "distractor",
+          "question_id": "sentiment",
+          "expected": "positive",
+          "predicted": "positive",
+          "correct": true,
+          "confidence": 0.99963466,
+          "probabilities": {
+            "negative": 4.9e-07,
+            "neutral": 3.496e-05,
+            "positive": 0.99996455
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_02",
+          "difficulty": "distractor",
+          "question_id": "next_action",
+          "expected": "sales_followup",
+          "predicted": "sales_followup",
+          "correct": true,
+          "confidence": 0.41165086,
+          "probabilities": {
+            "sales_followup": 0.50005441,
+            "process_service_change": 0.01403173,
+            "schedule_technician": 0.02030632,
+            "troubleshoot": 0.05122601,
+            "billing_review": 0.01116184,
+            "explain_information": 0.40321969
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_03",
+          "difficulty": "distractor",
+          "question_id": "department",
+          "expected": "cancellation",
+          "predicted": "cancellation",
+          "correct": true,
+          "confidence": 0.90643906,
+          "probabilities": {
+            "smart_home": 0.00024932,
+            "cancellation": 0.96632857,
+            "sales": 1.113e-05,
+            "technical": 0.00030317,
+            "billing": 0.03310781
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_03",
+          "difficulty": "distractor",
+          "question_id": "urgency",
+          "expected": "routine",
+          "predicted": "routine",
+          "correct": true,
+          "confidence": 0.98990739,
+          "probabilities": {
+            "critical": 6.7e-06,
+            "urgent": 5.313e-05,
+            "elevated": 0.00182448,
+            "routine": 0.99811569
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_03",
+          "difficulty": "distractor",
+          "question_id": "sentiment",
+          "expected": "neutral",
+          "predicted": "neutral",
+          "correct": true,
+          "confidence": 0.69196761,
+          "probabilities": {
+            "negative": 0.0978518,
+            "neutral": 0.89950251,
+            "positive": 0.00264569
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_03",
+          "difficulty": "distractor",
+          "question_id": "next_action",
+          "expected": "process_service_change",
+          "predicted": "explain_information",
+          "correct": false,
+          "confidence": 0.54839299,
+          "probabilities": {
+            "sales_followup": 0.00068566,
+            "process_service_change": 0.30610894,
+            "schedule_technician": 0.00135644,
+            "troubleshoot": 0.00260143,
+            "billing_review": 0.04297219,
+            "explain_information": 0.64627534
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_04",
+          "difficulty": "distractor",
+          "question_id": "department",
+          "expected": "billing",
+          "predicted": "billing",
+          "correct": true,
+          "confidence": 0.56124549,
+          "probabilities": {
+            "smart_home": 0.00651868,
+            "cancellation": 0.00357215,
+            "sales": 0.00068538,
+            "technical": 0.34151143,
+            "billing": 0.64771236
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_04",
+          "difficulty": "distractor",
+          "question_id": "urgency",
+          "expected": "routine",
+          "predicted": "routine",
+          "correct": true,
+          "confidence": 0.98866498,
+          "probabilities": {
+            "critical": 8.793e-05,
+            "urgent": 5.419e-05,
+            "elevated": 0.00196643,
+            "routine": 0.99789145
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_04",
+          "difficulty": "distractor",
+          "question_id": "sentiment",
+          "expected": "neutral",
+          "predicted": "neutral",
+          "correct": true,
+          "confidence": 0.82698309,
+          "probabilities": {
+            "negative": 0.00761146,
+            "neutral": 0.95920961,
+            "positive": 0.03317893
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "distractor_04",
+          "difficulty": "distractor",
+          "question_id": "next_action",
+          "expected": "explain_information",
+          "predicted": "explain_information",
+          "correct": true,
+          "confidence": 0.50643845,
+          "probabilities": {
+            "sales_followup": 0.00173931,
+            "process_service_change": 0.00169969,
+            "schedule_technician": 0.01479533,
+            "troubleshoot": 0.04900331,
+            "billing_review": 0.30208209,
+            "explain_information": 0.63068027
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_01",
+          "difficulty": "multiple_issues",
+          "question_id": "department",
+          "expected": "technical",
+          "predicted": "technical",
+          "correct": true,
+          "confidence": 0.67931031,
+          "probabilities": {
+            "smart_home": 0.01065851,
+            "cancellation": 0.00370282,
+            "sales": 0.00065856,
+            "technical": 0.83085467,
+            "billing": 0.15412544
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_01",
+          "difficulty": "multiple_issues",
+          "question_id": "urgency",
+          "expected": "urgent",
+          "predicted": "urgent",
+          "correct": true,
+          "confidence": 0.98900828,
+          "probabilities": {
+            "critical": 0.00019216,
+            "urgent": 0.99798974,
+            "elevated": 0.00179744,
+            "routine": 2.066e-05
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_01",
+          "difficulty": "multiple_issues",
+          "question_id": "sentiment",
+          "expected": "negative",
+          "predicted": "negative",
+          "correct": true,
+          "confidence": 0.99999955,
+          "probabilities": {
+            "negative": 0.99999997,
+            "neutral": 3e-08,
+            "positive": 0.0
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_01",
+          "difficulty": "multiple_issues",
+          "question_id": "next_action",
+          "expected": "troubleshoot",
+          "predicted": "schedule_technician",
+          "correct": false,
+          "confidence": 0.26381268,
+          "probabilities": {
+            "sales_followup": 0.00313412,
+            "process_service_change": 0.00474801,
+            "schedule_technician": 0.45528083,
+            "troubleshoot": 0.17861142,
+            "billing_review": 0.21275068,
+            "explain_information": 0.14547494
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_02",
+          "difficulty": "multiple_issues",
+          "question_id": "department",
+          "expected": "sales",
+          "predicted": "sales",
+          "correct": true,
+          "confidence": 0.98809547,
+          "probabilities": {
+            "smart_home": 0.00017717,
+            "cancellation": 0.00023049,
+            "sales": 0.9975591,
+            "technical": 0.00020218,
+            "billing": 0.00183106
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_02",
+          "difficulty": "multiple_issues",
+          "question_id": "urgency",
+          "expected": "routine",
+          "predicted": "routine",
+          "correct": true,
+          "confidence": 0.99953017,
+          "probabilities": {
+            "critical": 5.9e-07,
+            "urgent": 1.07e-06,
+            "elevated": 5.827e-05,
+            "routine": 0.99994007
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_02",
+          "difficulty": "multiple_issues",
+          "question_id": "sentiment",
+          "expected": "positive",
+          "predicted": "positive",
+          "correct": true,
+          "confidence": 0.99956434,
+          "probabilities": {
+            "negative": 7.3e-07,
+            "neutral": 4.224e-05,
+            "positive": 0.99995703
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_02",
+          "difficulty": "multiple_issues",
+          "question_id": "next_action",
+          "expected": "sales_followup",
+          "predicted": "sales_followup",
+          "correct": true,
+          "confidence": 0.9532933,
+          "probabilities": {
+            "sales_followup": 0.98770417,
+            "process_service_change": 0.00173794,
+            "schedule_technician": 0.00145362,
+            "troubleshoot": 0.0034144,
+            "billing_review": 0.00069947,
+            "explain_information": 0.0049904
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_03",
+          "difficulty": "multiple_issues",
+          "question_id": "department",
+          "expected": "smart_home",
+          "predicted": "billing",
+          "correct": false,
+          "confidence": 0.74194116,
+          "probabilities": {
+            "smart_home": 0.06500194,
+            "cancellation": 0.0136711,
+            "sales": 0.00188894,
+            "technical": 0.01832731,
+            "billing": 0.90111071
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_03",
+          "difficulty": "multiple_issues",
+          "question_id": "urgency",
+          "expected": "urgent",
+          "predicted": "urgent",
+          "correct": true,
+          "confidence": 0.34080268,
+          "probabilities": {
+            "critical": 0.36003857,
+            "urgent": 0.55831546,
+            "elevated": 0.07760373,
+            "routine": 0.00404224
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_03",
+          "difficulty": "multiple_issues",
+          "question_id": "sentiment",
+          "expected": "negative",
+          "predicted": "negative",
+          "correct": true,
+          "confidence": 0.9900531,
+          "probabilities": {
+            "negative": 0.998562,
+            "neutral": 0.00142377,
+            "positive": 1.423e-05
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_03",
+          "difficulty": "multiple_issues",
+          "question_id": "next_action",
+          "expected": "schedule_technician",
+          "predicted": "schedule_technician",
+          "correct": true,
+          "confidence": 0.98728467,
+          "probabilities": {
+            "sales_followup": 4.175e-05,
+            "process_service_change": 0.00014013,
+            "schedule_technician": 0.99721311,
+            "troubleshoot": 0.00087253,
+            "billing_review": 0.00071349,
+            "explain_information": 0.00101899
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_04",
+          "difficulty": "multiple_issues",
+          "question_id": "department",
+          "expected": "cancellation",
+          "predicted": "cancellation",
+          "correct": true,
+          "confidence": 0.81815197,
+          "probabilities": {
+            "smart_home": 0.00067223,
+            "cancellation": 0.9192905,
+            "sales": 2.823e-05,
+            "technical": 0.0016491,
+            "billing": 0.07835994
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_04",
+          "difficulty": "multiple_issues",
+          "question_id": "urgency",
+          "expected": "elevated",
+          "predicted": "elevated",
+          "correct": true,
+          "confidence": 0.87524124,
+          "probabilities": {
+            "critical": 0.00746904,
+            "urgent": 0.02637012,
+            "elevated": 0.96525124,
+            "routine": 0.0009096
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_04",
+          "difficulty": "multiple_issues",
+          "question_id": "sentiment",
+          "expected": "negative",
+          "predicted": "negative",
+          "correct": true,
+          "confidence": 0.99764488,
+          "probabilities": {
+            "negative": 0.99971842,
+            "neutral": 0.00028106,
+            "positive": 5.2e-07
+          },
+          "probability_sum": 1.0
+        },
+        {
+          "case_id": "multi_04",
+          "difficulty": "multiple_issues",
+          "question_id": "next_action",
+          "expected": "process_service_change",
+          "predicted": "process_service_change",
+          "correct": true,
+          "confidence": 0.97879946,
+          "probabilities": {
+            "sales_followup": 9.99e-06,
+            "process_service_change": 0.99455726,
+            "schedule_technician": 1.96e-05,
+            "troubleshoot": 8.984e-05,
+            "billing_review": 0.00199837,
+            "explain_information": 0.00332494
+          },
+          "probability_sum": 1.0
+        }
+      ]
+    },
+    "option_order_stability": {
+      "decisions": 96,
+      "flips": 9,
+      "flip_rate": 0.09375,
+      "details": [
+        {
+          "case_id": "direct_05",
+          "question_id": "department",
+          "declared": "smart_home",
+          "reversed": "technical"
+        },
+        {
+          "case_id": "direct_07",
+          "question_id": "urgency",
+          "declared": "urgent",
+          "reversed": "critical"
+        },
+        {
+          "case_id": "direct_09",
+          "question_id": "urgency",
+          "declared": "urgent",
+          "reversed": "elevated"
+        },
+        {
+          "case_id": "direct_12",
+          "question_id": "sentiment",
+          "declared": "neutral",
+          "reversed": "negative"
+        },
+        {
+          "case_id": "paraphrase_01",
+          "question_id": "urgency",
+          "declared": "urgent",
+          "reversed": "elevated"
+        },
+        {
+          "case_id": "paraphrase_03",
+          "question_id": "department",
+          "declared": "smart_home",
+          "reversed": "cancellation"
+        },
+        {
+          "case_id": "paraphrase_04",
+          "question_id": "sentiment",
+          "declared": "neutral",
+          "reversed": "positive"
+        },
+        {
+          "case_id": "distractor_03",
+          "question_id": "next_action",
+          "declared": "process_service_change",
+          "reversed": "explain_information"
+        },
+        {
+          "case_id": "distractor_04",
+          "question_id": "department",
+          "declared": "technical",
+          "reversed": "billing"
+        }
+      ]
+    }
+  },
+  "cardinality_stress": {
+    "cases": 17,
+    "accuracy": 1.0,
+    "by_option_count": {
+      "2": {
+        "cases": 2,
+        "accuracy": 1.0,
+        "mean_inference_ms": 156.17802052292973,
+        "mean_forward_passes": 1.0,
+        "mean_input_tokens": 70.0
+      },
+      "4": {
+        "cases": 3,
+        "accuracy": 1.0,
+        "mean_inference_ms": 184.788569342345,
+        "mean_forward_passes": 1.0,
+        "mean_input_tokens": 94.0
+      },
+      "8": {
+        "cases": 3,
+        "accuracy": 1.0,
+        "mean_inference_ms": 243.22618070679405,
+        "mean_forward_passes": 1.0,
+        "mean_input_tokens": 142.0
+      },
+      "16": {
+        "cases": 3,
+        "accuracy": 1.0,
+        "mean_inference_ms": 267.28068067071337,
+        "mean_forward_passes": 1.0,
+        "mean_input_tokens": 238.0
+      },
+      "32": {
+        "cases": 3,
+        "accuracy": 1.0,
+        "mean_inference_ms": 455.7094029927005,
+        "mean_forward_passes": 1.0,
+        "mean_input_tokens": 430.0
+      },
+      "65": {
+        "cases": 3,
+        "accuracy": 1.0,
+        "mean_inference_ms": 884.711500412474,
+        "mean_forward_passes": 2.0,
+        "mean_input_tokens": 872.0
+      }
+    },
+    "records": [
+      {
+        "option_count": 2,
+        "target_position": 0,
+        "expected": "route_001",
+        "predicted": "route_001",
+        "correct": true,
+        "confidence": 0.99999994,
+        "forward_passes": 1,
+        "compiled_labels": 2,
+        "input_tokens": 70,
+        "inference_seconds": 0.15787174995057285,
+        "truncated": false
+      },
+      {
+        "option_count": 2,
+        "target_position": 1,
+        "expected": "route_002",
+        "predicted": "route_002",
+        "correct": true,
+        "confidence": 0.99999996,
+        "forward_passes": 1,
+        "compiled_labels": 2,
+        "input_tokens": 70,
+        "inference_seconds": 0.1544842910952866,
+        "truncated": false
+      },
+      {
+        "option_count": 4,
+        "target_position": 0,
+        "expected": "route_001",
+        "predicted": "route_001",
+        "correct": true,
+        "confidence": 0.99999991,
+        "forward_passes": 1,
+        "compiled_labels": 4,
+        "input_tokens": 94,
+        "inference_seconds": 0.21733083412982523,
+        "truncated": false
+      },
+      {
+        "option_count": 4,
+        "target_position": 2,
+        "expected": "route_003",
+        "predicted": "route_003",
+        "correct": true,
+        "confidence": 0.99999997,
+        "forward_passes": 1,
+        "compiled_labels": 4,
+        "input_tokens": 94,
+        "inference_seconds": 0.17274079099297523,
+        "truncated": false
+      },
+      {
+        "option_count": 4,
+        "target_position": 3,
+        "expected": "route_004",
+        "predicted": "route_004",
+        "correct": true,
+        "confidence": 0.99999999,
+        "forward_passes": 1,
+        "compiled_labels": 4,
+        "input_tokens": 94,
+        "inference_seconds": 0.16429408290423453,
+        "truncated": false
+      },
+      {
+        "option_count": 8,
+        "target_position": 0,
+        "expected": "route_001",
+        "predicted": "route_001",
+        "correct": true,
+        "confidence": 0.9999944,
+        "forward_passes": 1,
+        "compiled_labels": 8,
+        "input_tokens": 142,
+        "inference_seconds": 0.19756808411329985,
+        "truncated": false
+      },
+      {
+        "option_count": 8,
+        "target_position": 4,
+        "expected": "route_005",
+        "predicted": "route_005",
+        "correct": true,
+        "confidence": 0.99999646,
+        "forward_passes": 1,
+        "compiled_labels": 8,
+        "input_tokens": 142,
+        "inference_seconds": 0.33159720804542303,
+        "truncated": false
+      },
+      {
+        "option_count": 8,
+        "target_position": 7,
+        "expected": "route_008",
+        "predicted": "route_008",
+        "correct": true,
+        "confidence": 0.99999925,
+        "forward_passes": 1,
+        "compiled_labels": 8,
+        "input_tokens": 142,
+        "inference_seconds": 0.2005132499616593,
+        "truncated": false
+      },
+      {
+        "option_count": 16,
+        "target_position": 0,
+        "expected": "route_001",
+        "predicted": "route_001",
+        "correct": true,
+        "confidence": 0.99556516,
+        "forward_passes": 1,
+        "compiled_labels": 16,
+        "input_tokens": 238,
+        "inference_seconds": 0.26667012507095933,
+        "truncated": false
+      },
+      {
+        "option_count": 16,
+        "target_position": 8,
+        "expected": "route_009",
+        "predicted": "route_009",
+        "correct": true,
+        "confidence": 0.99916407,
+        "forward_passes": 1,
+        "compiled_labels": 16,
+        "input_tokens": 238,
+        "inference_seconds": 0.2603927080053836,
+        "truncated": false
+      },
+      {
+        "option_count": 16,
+        "target_position": 15,
+        "expected": "route_016",
+        "predicted": "route_016",
+        "correct": true,
+        "confidence": 0.99995793,
+        "forward_passes": 1,
+        "compiled_labels": 16,
+        "input_tokens": 238,
+        "inference_seconds": 0.2747792089357972,
+        "truncated": false
+      },
+      {
+        "option_count": 32,
+        "target_position": 0,
+        "expected": "route_001",
+        "predicted": "route_001",
+        "correct": true,
+        "confidence": 0.90896789,
+        "forward_passes": 1,
+        "compiled_labels": 32,
+        "input_tokens": 430,
+        "inference_seconds": 0.4390471251681447,
+        "truncated": false
+      },
+      {
+        "option_count": 32,
+        "target_position": 16,
+        "expected": "route_017",
+        "predicted": "route_017",
+        "correct": true,
+        "confidence": 0.78872314,
+        "forward_passes": 1,
+        "compiled_labels": 32,
+        "input_tokens": 430,
+        "inference_seconds": 0.45689337491057813,
+        "truncated": false
+      },
+      {
+        "option_count": 32,
+        "target_position": 31,
+        "expected": "route_032",
+        "predicted": "route_032",
+        "correct": true,
+        "confidence": 0.99646245,
+        "forward_passes": 1,
+        "compiled_labels": 32,
+        "input_tokens": 430,
+        "inference_seconds": 0.4711877088993788,
+        "truncated": false
+      },
+      {
+        "option_count": 65,
+        "target_position": 0,
+        "expected": "route_001",
+        "predicted": "route_001",
+        "correct": true,
+        "confidence": 0.23490286,
+        "forward_passes": 2,
+        "compiled_labels": 65,
+        "input_tokens": 872,
+        "inference_seconds": 0.9325466670561582,
+        "truncated": false
+      },
+      {
+        "option_count": 65,
+        "target_position": 32,
+        "expected": "route_033",
+        "predicted": "route_033",
+        "correct": true,
+        "confidence": 0.27485996,
+        "forward_passes": 2,
+        "compiled_labels": 65,
+        "input_tokens": 872,
+        "inference_seconds": 0.8492550002411008,
+        "truncated": false
+      },
+      {
+        "option_count": 65,
+        "target_position": 64,
+        "expected": "route_065",
+        "predicted": "route_065",
+        "correct": true,
+        "confidence": 0.84417212,
+        "forward_passes": 2,
+        "compiled_labels": 65,
+        "input_tokens": 872,
+        "inference_seconds": 0.8723328339401633,
+        "truncated": false
+      }
+    ],
+    "note": "Synthetic exact-match stress test for option cardinality and the 64-label pass boundary; not a semantic benchmark."
+  }
+}

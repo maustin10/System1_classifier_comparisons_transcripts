@@ -1,0 +1,198 @@
+{
+  "metadata": {
+    "name": "AskATT System1 multiclass Choice benchmark",
+    "version": "1.0.0",
+    "purpose": "Test semantic multiclass Choice, shared-state multi-question evaluation, distractor handling, and option-order stability.",
+    "questions_per_state": 4
+  },
+  "questions": {
+    "department": {
+      "type": "choice",
+      "instructions": "Which department should own the caller's primary request?",
+      "criteria": {
+        "billing": "Billing, charges, payments, refunds, credits, fees, or invoices",
+        "technical": "Internet, mobile service, connectivity, device, activation, error, or performance troubleshooting",
+        "sales": "New purchase, upgrade, plan recommendation, price quote, or adding service",
+        "cancellation": "Cancel, disconnect, remove, retire, or terminate service or a line",
+        "smart_home": "Home security, cameras, sensors, locks, alarms, or smart-home equipment"
+      }
+    },
+    "urgency": {
+      "type": "choice",
+      "instructions": "What is the operational urgency of the primary request?",
+      "criteria": {
+        "routine": "Informational or planned request with no outage, material impact, or time pressure",
+        "elevated": "Service degradation, repeated inconvenience, or account impact while basic activity can continue",
+        "urgent": "Service is blocked, work is materially affected, or same-day action is explicitly needed",
+        "critical": "Safety risk, emergency condition, widespread outage, or severe business impact requiring immediate action"
+      }
+    },
+    "sentiment": {
+      "type": "choice",
+      "instructions": "What is the caller's expressed sentiment?",
+      "criteria": {
+        "positive": "Satisfied, appreciative, excited, pleased, or optimistic",
+        "neutral": "Matter-of-fact, informational, or neither clearly pleased nor upset",
+        "negative": "Frustrated, angry, disappointed, worried, or dissatisfied"
+      }
+    },
+    "next_action": {
+      "type": "choice",
+      "instructions": "What is the best immediate next action for the primary request?",
+      "criteria": {
+        "explain_information": "Answer a question or explain policy, timing, status, or account information without changing service",
+        "billing_review": "Investigate or correct a charge, payment, refund, invoice, fee, or credit",
+        "troubleshoot": "Perform remote troubleshooting, reset, diagnostics, configuration, or activation steps",
+        "schedule_technician": "Arrange an onsite technician, field repair, or equipment replacement visit",
+        "process_service_change": "Cancel, remove, disconnect, or otherwise change an existing service or line",
+        "sales_followup": "Provide a quote, recommend a product, complete an upgrade, or add a new service"
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "direct_01",
+      "difficulty": "direct",
+      "state": "[Agent]: How can I help?\n[Caller]: I am angry because an unfamiliar $49 charge appeared on my bill. Please investigate it and remove it.",
+      "expected": {"department": "billing", "urgency": "elevated", "sentiment": "negative", "next_action": "billing_review"}
+    },
+    {
+      "id": "direct_02",
+      "difficulty": "direct",
+      "state": "[Agent]: What is happening with your service?\n[Caller]: My internet is completely down and I cannot work. I need it restored today. Please walk me through troubleshooting now.",
+      "expected": {"department": "technical", "urgency": "urgent", "sentiment": "negative", "next_action": "troubleshoot"}
+    },
+    {
+      "id": "direct_03",
+      "difficulty": "direct",
+      "state": "[Agent]: What can I do for you?\n[Caller]: I am excited about the newest phone and would like an upgrade quote. There is no rush.",
+      "expected": {"department": "sales", "urgency": "routine", "sentiment": "positive", "next_action": "sales_followup"}
+    },
+    {
+      "id": "direct_04",
+      "difficulty": "direct",
+      "state": "[Agent]: How may I assist?\n[Caller]: Please remove one unused phone line at the end of this billing cycle. Everything else is fine.",
+      "expected": {"department": "cancellation", "urgency": "routine", "sentiment": "neutral", "next_action": "process_service_change"}
+    },
+    {
+      "id": "direct_05",
+      "difficulty": "direct",
+      "state": "[Agent]: Tell me about the problem.\n[Caller]: My security camera is offline again. I am frustrated, but the alarm still works. Please help me reconnect it.",
+      "expected": {"department": "smart_home", "urgency": "elevated", "sentiment": "negative", "next_action": "troubleshoot"}
+    },
+    {
+      "id": "direct_06",
+      "difficulty": "direct",
+      "state": "[Agent]: How can I help today?\n[Caller]: I was promised a refund and it never arrived. This is disappointing and I need the credit reviewed.",
+      "expected": {"department": "billing", "urgency": "elevated", "sentiment": "negative", "next_action": "billing_review"}
+    },
+    {
+      "id": "direct_07",
+      "difficulty": "direct",
+      "state": "[Agent]: Is anyone in danger?\n[Caller]: A fallen tree tore down the fiber line outside our medical office. Phones and internet are out for the whole site. Send a field technician immediately.",
+      "expected": {"department": "technical", "urgency": "critical", "sentiment": "negative", "next_action": "schedule_technician"}
+    },
+    {
+      "id": "direct_08",
+      "difficulty": "direct",
+      "state": "[Agent]: What would you like to do?\n[Caller]: I am happy with the service and want to add a new line for my daughter. Please show me the available plans.",
+      "expected": {"department": "sales", "urgency": "routine", "sentiment": "positive", "next_action": "sales_followup"}
+    },
+    {
+      "id": "direct_09",
+      "difficulty": "direct",
+      "state": "[Agent]: How may I help?\n[Caller]: I am unhappy with the repeated price increases. Disconnect all services before the next bill.",
+      "expected": {"department": "cancellation", "urgency": "elevated", "sentiment": "negative", "next_action": "process_service_change"}
+    },
+    {
+      "id": "direct_10",
+      "difficulty": "direct",
+      "state": "[Agent]: What is the smart-home issue?\n[Caller]: The alarm keeps triggering falsely in the middle of the night and waking everyone. I am worried it may fail in a real emergency. Please send a technician today.",
+      "expected": {"department": "smart_home", "urgency": "critical", "sentiment": "negative", "next_action": "schedule_technician"}
+    },
+    {
+      "id": "direct_11",
+      "difficulty": "direct",
+      "state": "[Agent]: What billing information do you need?\n[Caller]: Could you explain when my payment is due? I am not disputing anything and there is no hurry.",
+      "expected": {"department": "billing", "urgency": "routine", "sentiment": "neutral", "next_action": "explain_information"}
+    },
+    {
+      "id": "direct_12",
+      "difficulty": "direct",
+      "state": "[Agent]: What error are you seeing?\n[Caller]: The router shows error 204 and devices disconnect every hour. It is annoying, but I can still work. Please run diagnostics with me.",
+      "expected": {"department": "technical", "urgency": "elevated", "sentiment": "neutral", "next_action": "troubleshoot"}
+    },
+    {
+      "id": "paraphrase_01",
+      "difficulty": "paraphrase",
+      "state": "[Agent]: What brings you in today?\n[Caller]: A debit landed on my account that I do not recognize. I am pretty upset and want someone to trace it.",
+      "expected": {"department": "billing", "urgency": "elevated", "sentiment": "negative", "next_action": "billing_review"}
+    },
+    {
+      "id": "paraphrase_02",
+      "difficulty": "paraphrase",
+      "state": "[Agent]: Describe the issue.\n[Caller]: Every page is a spinning wheel and throughput has collapsed. My video meetings are impossible, so I need a same-day fix.",
+      "expected": {"department": "technical", "urgency": "urgent", "sentiment": "negative", "next_action": "troubleshoot"}
+    },
+    {
+      "id": "paraphrase_03",
+      "difficulty": "paraphrase",
+      "state": "[Agent]: What account change do you need?\n[Caller]: I would like to retire the number ending in 4421 next month. This is a planned cleanup and I am not upset.",
+      "expected": {"department": "cancellation", "urgency": "routine", "sentiment": "neutral", "next_action": "process_service_change"}
+    },
+    {
+      "id": "paraphrase_04",
+      "difficulty": "paraphrase",
+      "state": "[Agent]: How can I help?\n[Caller]: I am looking forward to trading in my old handset for the latest model. Please tell me the offers whenever convenient.",
+      "expected": {"department": "sales", "urgency": "routine", "sentiment": "positive", "next_action": "sales_followup"}
+    },
+    {
+      "id": "distractor_01",
+      "difficulty": "distractor",
+      "state": "[Agent]: Is this about the bill?\n[Caller]: The bill is correct and I do not need billing help. My problem is that the front-door camera will not connect, and I am frustrated. Please troubleshoot the camera.",
+      "expected": {"department": "smart_home", "urgency": "elevated", "sentiment": "negative", "next_action": "troubleshoot"}
+    },
+    {
+      "id": "distractor_02",
+      "difficulty": "distractor",
+      "state": "[Agent]: Are you still calling about the outage?\n[Caller]: No, the internet problem is resolved. I am pleased now and my only request is a quote to upgrade our phones.",
+      "expected": {"department": "sales", "urgency": "routine", "sentiment": "positive", "next_action": "sales_followup"}
+    },
+    {
+      "id": "distractor_03",
+      "difficulty": "distractor",
+      "state": "[Agent]: Do you want a bill credit?\n[Caller]: No credit and no billing review. I simply need one unused mobile line removed. It can happen at the normal cycle date.",
+      "expected": {"department": "cancellation", "urgency": "routine", "sentiment": "neutral", "next_action": "process_service_change"}
+    },
+    {
+      "id": "distractor_04",
+      "difficulty": "distractor",
+      "state": "[Agent]: Is your internet failing?\n[Caller]: No, the internet works perfectly. I only want a neutral explanation of the activation fee on this invoice; I am not disputing it.",
+      "expected": {"department": "billing", "urgency": "routine", "sentiment": "neutral", "next_action": "explain_information"}
+    },
+    {
+      "id": "multi_01",
+      "difficulty": "multiple_issues",
+      "state": "[Agent]: I see both a charge question and slow internet. Which matters most?\n[Caller]: The charge can wait. I am angry because the connection is unusable and blocking work. Restore the service today; that is my primary request.",
+      "expected": {"department": "technical", "urgency": "urgent", "sentiment": "negative", "next_action": "troubleshoot"}
+    },
+    {
+      "id": "multi_02",
+      "difficulty": "multiple_issues",
+      "state": "[Agent]: You mentioned an old line and a new phone. What should we do first?\n[Caller]: First, I am excited to add a new upgraded phone and get a quote. We can remove the old line later. There is no rush.",
+      "expected": {"department": "sales", "urgency": "routine", "sentiment": "positive", "next_action": "sales_followup"}
+    },
+    {
+      "id": "multi_03",
+      "difficulty": "multiple_issues",
+      "state": "[Agent]: Is the bill or alarm your priority?\n[Caller]: The small fee is fine. The alarm sensor is offline and leaves the house unprotected. I am worried and need a technician today.",
+      "expected": {"department": "smart_home", "urgency": "urgent", "sentiment": "negative", "next_action": "schedule_technician"}
+    },
+    {
+      "id": "multi_04",
+      "difficulty": "multiple_issues",
+      "state": "[Agent]: We applied the outage credit. What remains?\n[Caller]: Thank you for the credit, but repeated outages have been disappointing. My primary request now is to cancel the service before another bill.",
+      "expected": {"department": "cancellation", "urgency": "elevated", "sentiment": "negative", "next_action": "process_service_change"}
+    }
+  ]
+}

@@ -5,7 +5,7 @@ import math
 from fastapi.testclient import TestClient
 
 from askatt_system1_api.app import create_app
-from askatt_system1_api.engine import DeterministicTestEngine
+from askatt_system1_api.engine import DeterministicTestEngine, EngineResult
 from askatt_system1_api.service import AskATTSystem1Service
 
 
@@ -47,8 +47,9 @@ def test_mixed_choice_and_noul_contract() -> None:
     assert choice["choice"] == "billing"
     assert math.isclose(sum(choice["probabilities"].values()), 1.0, abs_tol=1e-8)
     assert 0 <= choice["confidence"] <= 1
-    assert response.headers["x-askatt-forward-passes"] == "1"
+    assert response.headers["x-askatt-forward-passes"] == "2"
     assert response.headers["x-askatt-compiled-labels"] == "4"
+    assert response.headers["x-askatt-choice-instruction-mode"] == "state"
     assert body["usage"]["output_tokens"] == 0
 
 
@@ -106,6 +107,62 @@ def test_label_batching_is_visible() -> None:
     assert len(response["answers"]) == 3
     assert metadata["forward_passes"] == 2
     assert metadata["compiled_labels"] == 3
+
+
+def test_general_choice_instruction_is_scored_with_the_state() -> None:
+    class RecordingEngine:
+        model_name = "recording-engine"
+
+        def __init__(self) -> None:
+            self.states: list[str] = []
+
+        def score(self, state: str, labels: list[str]) -> EngineResult:
+            self.states.append(state)
+            return EngineResult([0.9] + [0.1] * (len(labels) - 1), 20, 0.001, False)
+
+    engine = RecordingEngine()
+    service = AskATTSystem1Service(engine)
+    service.evaluate(
+        {
+            "model": "jev-latest",
+            "state": "The caller has a billing problem.",
+            "questions": {
+                "department": {
+                    "type": "choice",
+                    "instructions": "Which department should own the request?",
+                    "criteria": {
+                        "billing": "Billing and payments",
+                        "technical": "Technical failures",
+                    },
+                }
+            },
+        }
+    )
+    assert engine.states == [
+        "The caller has a billing problem.\n\n"
+        "Classification question: Which department should own the request?"
+    ]
+
+
+def test_legacy_discard_mode_is_explicit() -> None:
+    service = AskATTSystem1Service(
+        DeterministicTestEngine(), choice_instruction_mode="discard"
+    )
+    _, metadata = service.evaluate(
+        {
+            "model": "jev-latest",
+            "state": "hello",
+            "questions": {
+                "route": {
+                    "type": "choice",
+                    "instructions": "Which route?",
+                    "criteria": {"a": "Route A", "b": "Route B"},
+                }
+            },
+        }
+    )
+    assert metadata["choice_instruction_mode"] == "discard"
+    assert metadata["forward_passes"] == 1
 
 
 def test_binary_choice_is_the_same_probability_as_noul() -> None:

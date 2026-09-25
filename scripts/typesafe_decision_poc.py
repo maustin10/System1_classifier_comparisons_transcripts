@@ -52,8 +52,6 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from obvious_answers_benchmark import CASES  # noqa: E402  (shared question set)
-
 DEFAULT_ENDPOINT = "https://api.typesafe.ai/v1/systemone"
 DEFAULT_MODEL = "jev-latest"
 
@@ -74,6 +72,22 @@ MIN_MARGIN = 0.15
 
 class TypeSafeError(RuntimeError):
     """Raised for configuration, transport, and API-reported failures."""
+
+
+def _load_default_cases() -> list[dict[str, Any]]:
+    """Load the original POC cases only when the standalone CLI needs them.
+
+    Transport helpers in this module are reused by other benchmarks, which
+    should not fail merely because the original twelve-case fixture is absent.
+    """
+    try:
+        from obvious_answers_benchmark import CASES
+    except ModuleNotFoundError as error:
+        raise TypeSafeError(
+            "The original obvious_answers_benchmark fixture is not installed. "
+            "Use a benchmark-specific runner or restore that module next to this script."
+        ) from error
+    return list(CASES)
 
 
 def _resolve_api_key(explicit: str | None = None) -> str:
@@ -341,7 +355,7 @@ def main() -> int:
 
     _load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
-    cases = [c for c in CASES if arguments.only in (None, c["id"])]
+    cases = [c for c in _load_default_cases() if arguments.only in (None, c["id"])]
     if not cases:
         raise TypeSafeError(f"no case matches --only {arguments.only!r}")
     if len(cases) > MAX_QUESTIONS:
