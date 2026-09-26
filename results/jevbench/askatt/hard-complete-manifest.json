@@ -1,0 +1,21 @@
+{
+  "adapter": "typesafe",
+  "charged_usd": 0.0,
+  "cost_basis": "local_m2_pro_16gb_cpu",
+  "dataset_hash": "e816e106f562dec75a8da12e69b75e957a4bbd9f6300f1145fc71837327a3c61",
+  "delay_s": 0.0,
+  "endpoint": "http://127.0.0.1:8000",
+  "finished_utc": "2026-09-26T22:57:37.561889+00:00",
+  "key_env_used": false,
+  "n_attempted": 111,
+  "n_planned": 111,
+  "price_input_per_m": null,
+  "price_output_per_m": null,
+  "request_options": {},
+  "requested_model": "askatt-gliclass-modern-large-v3.0",
+  "resolved_models": [
+    "askatt-hybrid[askatt-gliclass-modern-large-v3.0|askatt-gliclass-modern-large-v3.0-lora]"
+  ],
+  "run_label": "askatt-hard-complete",
+  "started_utc": "2026-09-26T22:54:11.451480+00:00"
+}

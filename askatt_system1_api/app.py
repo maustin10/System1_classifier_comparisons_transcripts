@@ -23,15 +23,38 @@ def _default_service() -> AskATTSystem1Service:
     choice_instruction_mode = os.environ.get(
         "ASKATT_CHOICE_INSTRUCTION_MODE", "state"
     )
+    noul_boundary_mode = os.environ.get("ASKATT_NOUL_BOUNDARY_MODE", "positive")
     engine = GLiClassEngine(
         model_dir,
         device=os.environ.get("ASKATT_DEVICE", "auto"),
         max_labels=labels_per_pass,
     )
+    default_lora = (
+        Path(__file__).resolve().parents[2]
+        / "Training_System1"
+        / "checkpoints"
+        / "pilot_2000_lora_r8_last8.pt"
+    )
+    checkpoint_value = os.environ.get(
+        "ASKATT_TOOL_LORA_CHECKPOINT",
+        str(default_lora) if default_lora.is_file() else "",
+    ).strip()
+    tool_engine = (
+        GLiClassEngine(
+            model_dir,
+            device=os.environ.get("ASKATT_DEVICE", "auto"),
+            max_labels=labels_per_pass,
+            checkpoint=checkpoint_value,
+        )
+        if checkpoint_value
+        else None
+    )
     return AskATTSystem1Service(
         engine,
+        tool_engine=tool_engine,
         labels_per_pass=labels_per_pass,
         choice_instruction_mode=choice_instruction_mode,
+        noul_boundary_mode=noul_boundary_mode,
     )
 
 
@@ -39,7 +62,7 @@ def create_app(service: AskATTSystem1Service | None = None) -> FastAPI:
     app = FastAPI(
         title="AskATT System1 API",
         version="0.1.0",
-        description="JEV-shaped Choice and Noul evaluation backed by GLiClass.",
+        description="JEV-shaped Choice, Noul, and Score evaluation backed by GLiClass.",
     )
     active_service = service or _default_service()
 
@@ -52,7 +75,15 @@ def create_app(service: AskATTSystem1Service | None = None) -> FastAPI:
 
     @app.get("/healthz")
     def health() -> dict[str, str]:
-        return {"status": "ok", "model": active_service.engine.model_name}
+        return {
+            "status": "ok",
+            "model": active_service.engine.model_name,
+            "tool_model": (
+                active_service.tool_engine.model_name
+                if active_service.tool_engine is not None
+                else active_service.engine.model_name
+            ),
+        }
 
     @app.post("/v1/systemone", dependencies=[Depends(authorize)])
     def systemone(payload: dict[str, Any]) -> JSONResponse:
@@ -70,6 +101,11 @@ def create_app(service: AskATTSystem1Service | None = None) -> FastAPI:
             "X-AskATT-Choice-Instruction-Mode": str(
                 metadata["choice_instruction_mode"]
             ),
+            "X-AskATT-Routing-Profiles": ",".join(
+                f"{key}:{value}"
+                for key, value in sorted(metadata["passes_by_profile"].items())
+            ),
+            "X-AskATT-Noul-Boundary-Mode": str(metadata["noul_boundary_mode"]),
         }
         return JSONResponse(response, headers=headers)
 

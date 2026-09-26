@@ -1,10 +1,26 @@
 # AskATT System1 API
 
-`Askatt_system1_api` exposes a local GLiClass checkpoint behind the same endpoint and JSON shapes used by the TypeSafe System One API for **Noul** and **Choice** questions.
+`Askatt_system1_api` exposes a local GLiClass checkpoint behind the same endpoint and JSON shapes used by the TypeSafe System One API for **Noul**, **Choice**, and ordered **Score** questions.
 
 It is a compatibility layer, not a reimplementation of JEV. Probability calibration, confidence semantics, context limits, and model quality are GLiClass/AskATT behavior.
 
+The default local deployment can operate as a hybrid: general semantic and
+transcript questions use the untouched base encoder, while tool-selection and
+no-tool questions use a rank-8 LoRA specialist. See the
+[matched JEV comparison](../report/askatt-hybrid-vs-jev.md).
+On its BFCL-derived routing suite, the untouched base scored 56.67%, the hybrid
+scored 83.33%, and JEV scored 96.67%.
+
 See the [standalone appendix](../report/appendix-askatt-system1-api.md) for the architecture, compatibility boundary, persona-specific deployment guidance, cost formulas, and test evidence.
+
+## JevBench integration
+
+AskATT has been run through all 231 public JevBench decisions using the
+unmodified TypeSafe endpoint adapter. The local result is 125/231 (54.11%):
+44/48 easy, 41/72 original, and 40/111 hard, with 100% strict schema validity.
+This is a public-cohort diagnostic, not an official result on JevBench's sealed
+set. See the [execution report](../report/jevbench-open-model-comparison.md) and
+[reproduction guide](../benchmarks/jevbench/README.md).
 
 ## Install
 
@@ -71,6 +87,8 @@ export ASKATT_GLICLASS_MODEL=/opt/askatt/models/gliclass-modern-large-v3.0
 export ASKATT_DEVICE=cuda
 export ASKATT_LABELS_PER_PASS=64
 export ASKATT_CHOICE_INSTRUCTION_MODE=state
+export ASKATT_TOOL_LORA_CHECKPOINT=/opt/askatt/models/pilot_2000_lora_r8_last8.pt
+export ASKATT_NOUL_BOUNDARY_MODE=positive
 export ASKATT_SYSTEM1_API_KEY='read-this-from-a-secret-manager'
 export ASKATT_HOST=0.0.0.0
 export ASKATT_PORT=8000
@@ -109,6 +127,8 @@ Check that the response is HTTP 200, `answers.unknown_charge.noul` is between ze
 export ASKATT_GLICLASS_MODEL=models/gliclass-modern-large-v3.0
 export ASKATT_DEVICE=cpu          # use cuda on an NVIDIA deployment
 export ASKATT_CHOICE_INSTRUCTION_MODE=state
+export ASKATT_TOOL_LORA_CHECKPOINT=../Training_System1/checkpoints/pilot_2000_lora_r8_last8.pt
+export ASKATT_NOUL_BOUNDARY_MODE=positive
 # Optional: export ASKATT_SYSTEM1_API_KEY=local-secret
 .venv/bin/python -m askatt_system1_api
 ```
@@ -120,6 +140,30 @@ POST http://127.0.0.1:8000/v1/systemone
 ```
 
 Interactive OpenAPI documentation is available at `http://127.0.0.1:8000/docs`.
+
+## Hybrid question routing
+
+With `ASKATT_TOOL_LORA_CHECKPOINT` configured, the service automatically sends
+strongly identified tool/function questions to the LoRA engine and keeps all
+other questions on the base engine. For deterministic production behavior, add
+one of these optional per-question extensions:
+
+```json
+"routing_profile": "base"
+```
+
+```json
+"routing_profile": "tool_routing"
+```
+
+The response includes `askatt_routing.question_profiles` and
+`askatt_routing.engines`. The HTTP header `X-AskATT-Routing-Profiles` reports
+forward-pass counts by profile. Auto-routing is conservative, but explicit
+profiles are recommended for centrally governed tool schemas.
+
+`ASKATT_NOUL_BOUNDARY_MODE=positive` is the validated production default. The
+experimental `paired` mode scores both JEV true/false criteria; it performed
+poorly with the current checkpoint and should not be enabled without retraining.
 
 ## Deployment strategies
 
@@ -181,6 +225,8 @@ ASKATT_GLICLASS_MODEL=/opt/askatt/models/gliclass-modern-large-v3.0
 ASKATT_DEVICE=cuda
 ASKATT_LABELS_PER_PASS=64
 ASKATT_CHOICE_INSTRUCTION_MODE=state
+ASKATT_TOOL_LORA_CHECKPOINT=/opt/askatt/models/pilot_2000_lora_r8_last8.pt
+ASKATT_NOUL_BOUNDARY_MODE=positive
 ASKATT_SYSTEM1_API_KEY=replace-with-secret-manager-material
 ASKATT_HOST=0.0.0.0
 ASKATT_PORT=8000
@@ -211,6 +257,7 @@ The current `/healthz` endpoint is a process liveness check; it reports the conf
 ### Capacity, latency, and scaling cautions
 
 - The engine uses a process-local lock around inference. Requests in one process are serialized; dynamic batching is not implemented.
+- Hybrid mode currently loads two full model instances—base and LoRA-specialized—and therefore approximately doubles model memory. Size GPU replicas accordingly.
 - Use one process per GPU and add replicas for concurrency. Do not increase Uvicorn worker count blindly.
 - Interactive services should retain GPU headroom and scale against queue depth plus p95/p99 latency, rather than targeting continuous 100% utilization.
 - Offline batch jobs can run closer to saturation.
@@ -267,13 +314,13 @@ The response preserves the JEV field names:
 }
 ```
 
-For conventional binary Choice options (`present/absent`, `yes/no`, or `true/false`), one positive GLiClass score is returned with its complement. Other Choice questions append their instructions to the state, score all of that question's option definitions together, and apply a within-question softmax to the log-odds. Noul uses the positive criterion when supplied; the negative criterion remains part of request validation but is not a separate label. `confidence` is normalized distribution concentration, not TypeSafe's proprietary confidence calculation.
+For conventional binary Choice options (`present/absent`, `yes/no`, or `true/false`), one positive GLiClass score is returned with its complement. Other Choice questions append their instructions to the state, score all of that question's option definitions together, and apply a within-question softmax to the log-odds. Score does the same for 2–10 ordered levels and returns their expected zero-based ordinal value. Noul uses the positive criterion when supplied; the negative criterion remains part of request validation but is not a separate label. `confidence` is normalized distribution concentration, not TypeSafe's proprietary confidence calculation.
 
 ## Compatibility and cost behavior
 
 - Accepts string, object, or array state.
 - Supports up to 64 questions per request.
-- Supports Noul and Choice; Score is intentionally rejected.
+- Supports Noul, Choice, and ordered Score questions.
 - Runs compiled labels in groups of `ASKATT_LABELS_PER_PASS` (default 64).
 - For general Choice, the default `ASKATT_CHOICE_INSTRUCTION_MODE=state` appends the question instructions to the state and scores that question's options together. This preserves question meaning, but repeats the state once per Choice question.
 - Noul and conventional binary Choice labels still share a pass. More than `ASKATT_LABELS_PER_PASS` labels within any group adds passes.

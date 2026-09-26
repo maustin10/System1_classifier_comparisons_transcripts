@@ -19,3 +19,8 @@ hf-cache/
 
 # Resumable raw hosted-API responses; summarized results are kept separately.
 results/.jev_semantic_choice_api_cache.json
+
+# JevBench keeps compact scored JSONL and summaries, not request bodies or ledgers.
+results/jevbench/**/raw-*/
+results/jevbench/**/*-ledger.jsonl
+results/jevbench/.local-partial/

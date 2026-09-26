@@ -72,7 +72,7 @@ def test_choice_requires_two_options() -> None:
     assert "at least two options" in response.json()["detail"]
 
 
-def test_score_is_explicitly_unsupported() -> None:
+def test_score_returns_ordered_distribution_and_expected_value() -> None:
     response = client().post(
         "/v1/systemone",
         json={
@@ -87,8 +87,14 @@ def test_score_is_explicitly_unsupported() -> None:
             },
         },
     )
-    assert response.status_code == 422
-    assert "'noul' and 'choice'" in response.json()["detail"]
+    assert response.status_code == 200
+    score = response.json()["answers"]["rating"]
+    assert score["type"] == "score"
+    assert score["legend"] == ["low", "high"]
+    assert set(score["probabilities"]) == {"0", "1"}
+    assert math.isclose(sum(score["probabilities"].values()), 1.0, abs_tol=1e-8)
+    assert math.isclose(score["score"], score["probabilities"]["1"], abs_tol=1e-8)
+    assert 0 <= score["confidence"] <= 1
 
 
 def test_label_batching_is_visible() -> None:
@@ -193,6 +199,44 @@ def test_binary_choice_is_the_same_probability_as_noul() -> None:
     assert answers["noul"]["noul"] == answers["choice"]["probabilities"]["present"]
 
 
+def test_noul_uses_both_true_and_false_boundaries_when_supplied() -> None:
+    class BoundaryEngine:
+        model_name = "boundary-engine"
+
+        def __init__(self) -> None:
+            self.labels: list[str] = []
+
+        def score(self, state: str, labels: list[str]) -> EngineResult:
+            del state
+            self.labels = list(labels)
+            return EngineResult([0.8, 0.2], 20, 0.001, False)
+
+    engine = BoundaryEngine()
+    service = AskATTSystem1Service(engine, noul_boundary_mode="paired")
+    response, metadata = service.evaluate(
+        {
+            "model": "jev-latest",
+            "state": "The caller cannot work.",
+            "questions": {
+                "blocked": {
+                    "type": "noul",
+                    "instructions": "Is work blocked?",
+                    "criteria": {
+                        "true": "The caller explicitly cannot work",
+                        "false": "The caller can continue working",
+                    },
+                }
+            },
+        }
+    )
+    assert engine.labels == [
+        "The caller explicitly cannot work",
+        "The caller can continue working",
+    ]
+    assert metadata["compiled_labels"] == 2
+    assert response["answers"]["blocked"]["noul"] > 0.9
+
+
 def test_model_and_state_are_required_and_typed() -> None:
     bad_model = client().post(
         "/v1/systemone",
@@ -211,3 +255,96 @@ def test_model_and_state_are_required_and_typed() -> None:
     )
     assert bad_state.status_code == 422
     assert "state" in bad_state.json()["detail"]
+
+
+def test_hybrid_routes_only_tool_questions_to_specialist() -> None:
+    class RecordingEngine:
+        def __init__(self, name: str, first_score: float) -> None:
+            self.model_name = name
+            self.first_score = first_score
+            self.calls: list[tuple[str, list[str]]] = []
+
+        def score(self, state: str, labels: list[str]) -> EngineResult:
+            self.calls.append((state, list(labels)))
+            scores = [self.first_score] + [1.0 - self.first_score] * (len(labels) - 1)
+            return EngineResult(scores, 10, 0.001, False)
+
+    base = RecordingEngine("base", 0.9)
+    tool = RecordingEngine("tool-lora", 0.1)
+    service = AskATTSystem1Service(base, tool_engine=tool)
+    response, metadata = service.evaluate(
+        {
+            "model": "jev-latest",
+            "state": "Please route this request.",
+            "questions": {
+                "department": {
+                    "type": "choice",
+                    "instructions": "Which department should own this?",
+                    "criteria": {"billing": "Billing", "technical": "Technical"},
+                },
+                "selected_tool": {
+                    "type": "choice",
+                    "instructions": "Which available tool best handles this request?",
+                    "criteria": {"tool_a": "Tool A", "tool_b": "Tool B"},
+                },
+            },
+        }
+    )
+    assert len(base.calls) == 1
+    assert len(tool.calls) == 1
+    assert metadata["question_routing_profiles"] == {
+        "department": "base",
+        "selected_tool": "tool_routing",
+    }
+    assert metadata["passes_by_profile"] == {"base": 1, "tool_routing": 1}
+    assert response["askatt_routing"]["engines"] == {
+        "base": "base",
+        "tool_routing": "tool-lora",
+    }
+
+
+def test_explicit_routing_profile_overrides_auto_detection() -> None:
+    service = AskATTSystem1Service(DeterministicTestEngine())
+    _, metadata = service.evaluate(
+        {
+            "model": "jev-latest",
+            "state": "hello",
+            "questions": {
+                "selected_tool": {
+                    "type": "choice",
+                    "instructions": "Which tool?",
+                    "routing_profile": "base",
+                    "criteria": {"a": "A", "b": "B"},
+                }
+            },
+        }
+    )
+    assert metadata["question_routing_profiles"] == {"selected_tool": "base"}
+
+
+def test_no_tool_question_auto_routes_to_tool_specialist() -> None:
+    service = AskATTSystem1Service(
+        DeterministicTestEngine(), tool_engine=DeterministicTestEngine()
+    )
+    _, metadata = service.evaluate(
+        {
+            "model": "jev-latest",
+            "state": "Explain photosynthesis.",
+            "questions": {
+                "routing_irrelevance": {
+                    "type": "choice",
+                    "instructions": (
+                        "Should the available tool be called now, or is no supplied "
+                        "tool callable for this request?"
+                    ),
+                    "criteria": {
+                        "tool_1": "Use tool weather.get for forecasts",
+                        "no_tool": "No supplied tool should be called",
+                    },
+                }
+            },
+        }
+    )
+    assert metadata["question_routing_profiles"] == {
+        "routing_irrelevance": "tool_routing"
+    }

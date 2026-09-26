@@ -38,12 +38,15 @@ class GLiClassEngine:
         device: str = "auto",
         max_labels: int = 64,
         max_length: int | None = None,
+        checkpoint: str | Path | None = None,
     ) -> None:
         self.model_dir = Path(model_dir)
         self.device_request = device
         self.max_labels = max_labels
         self.max_length_request = max_length
-        self.model_name = f"askatt-{self.model_dir.name}"
+        self.checkpoint = Path(checkpoint) if checkpoint else None
+        suffix = "-lora" if self.checkpoint else ""
+        self.model_name = f"askatt-{self.model_dir.name}{suffix}"
         self._pipeline = None
         self._tokenizer = None
         self._max_length = None
@@ -88,6 +91,31 @@ class GLiClassEngine:
                 self.model_dir,
                 local_files_only=True,
             )
+            if self.checkpoint is not None:
+                if not self.checkpoint.is_file():
+                    raise FileNotFoundError(
+                        f"GLiClass adapter checkpoint does not exist: {self.checkpoint}"
+                    )
+                checkpoint = torch.load(
+                    self.checkpoint, map_location="cpu", weights_only=True
+                )
+                metadata = checkpoint.get("metadata", {})
+                if metadata.get("training_method") != "lora":
+                    raise ValueError("AskATT tool checkpoint must be a LoRA checkpoint")
+                _inject_lora(
+                    model,
+                    last_layers=int(metadata["lora_last_layers"]),
+                    rank=int(metadata["lora_rank"]),
+                    alpha=float(metadata["lora_alpha"]),
+                    dropout=float(metadata["lora_dropout"]),
+                )
+                incompatible = model.load_state_dict(
+                    checkpoint["trainable_state"], strict=False
+                )
+                if incompatible.unexpected_keys:
+                    raise RuntimeError(
+                        f"Unexpected LoRA checkpoint keys: {incompatible.unexpected_keys}"
+                    )
             model.to(device)
             model.eval()
             encoder_limit = int(
@@ -149,6 +177,58 @@ class GLiClassEngine:
         )
 
 
+def _inject_lora(
+    model,
+    *,
+    last_layers: int,
+    rank: int,
+    alpha: float,
+    dropout: float,
+) -> list[str]:
+    """Install the native LoRA layout used by Training_System1."""
+    import torch.nn as nn
+
+    class LoRALinear(nn.Module):
+        def __init__(self, base: nn.Linear) -> None:
+            super().__init__()
+            self.base = base
+            self.base.requires_grad_(False)
+            self.lora_a = nn.Linear(base.in_features, rank, bias=False)
+            self.lora_b = nn.Linear(rank, base.out_features, bias=False)
+            self.dropout = nn.Dropout(dropout)
+            self.scaling = float(alpha) / rank
+            nn.init.kaiming_uniform_(self.lora_a.weight, a=5**0.5)
+            nn.init.zeros_(self.lora_b.weight)
+
+        def forward(self, inputs):
+            return self.base(inputs) + self.lora_b(
+                self.lora_a(self.dropout(inputs))
+            ) * self.scaling
+
+    layer_count = int(model.config.encoder_config.num_hidden_layers)
+    first_layer = layer_count - last_layers
+    targets: list[str] = []
+    for name, module in list(model.named_modules()):
+        parts = name.split(".")
+        if len(parts) < 2 or parts[-2:] not in (["attn", "Wqkv"], ["attn", "Wo"]):
+            continue
+        try:
+            layer_index = int(parts[parts.index("layers") + 1])
+        except (ValueError, IndexError):
+            continue
+        if layer_index < first_layer:
+            continue
+        parent_name, attribute = name.rsplit(".", 1)
+        parent = model.get_submodule(parent_name)
+        setattr(parent, attribute, LoRALinear(module))
+        targets.append(name)
+    if len(targets) != last_layers * 2:
+        raise RuntimeError(
+            f"Installed {len(targets)} LoRA modules; expected {last_layers * 2}"
+        )
+    return targets
+
+
 class DeterministicTestEngine:
     """Small deterministic engine for HTTP and schema tests."""
 
@@ -169,4 +249,3 @@ class DeterministicTestEngine:
             elapsed_seconds=0.001,
             truncated=False,
         )
-

@@ -1,0 +1,97 @@
+{
+  "protocol": "JevBench public cohorts",
+  "jevbench_revision": "1bcc55eb6c8cffde2306b3db03ede39b61c6152a",
+  "scope": "231 public decisions only; not an official sealed JevBench submission",
+  "systems": {
+    "askatt_hybrid": {
+      "cohorts": {
+        "original": {
+          "status": "complete",
+          "correct": 41,
+          "decisions": 72,
+          "accuracy": 0.5694444444444444,
+          "brier_mean": 0.6416495769322015,
+          "ece": 0.32221608958333314,
+          "p50_latency_s": 0.10521337499994843,
+          "p95_latency_s": 0.14953330625012312,
+          "schema_validity": 1.0,
+          "operational_success": 1.0
+        },
+        "easy": {
+          "status": "complete",
+          "correct": 44,
+          "decisions": 48,
+          "accuracy": 0.9166666666666666,
+          "brier_mean": 0.1438972129922667,
+          "ece": 0.08699556625000021,
+          "p50_latency_s": 0.11847081250016345,
+          "p95_latency_s": 0.18339488520177838,
+          "schema_validity": 1.0,
+          "operational_success": 1.0
+        },
+        "hard": {
+          "status": "complete",
+          "correct": 40,
+          "decisions": 111,
+          "accuracy": 0.36036036036036034,
+          "brier_mean": 0.9574209715770392,
+          "ece": 0.4080927344144145,
+          "p50_latency_s": 0.862505458000669,
+          "p95_latency_s": 5.69764718749866,
+          "schema_validity": 1.0,
+          "operational_success": 1.0
+        }
+      },
+      "public_total": {
+        "correct": 125,
+        "decisions": 231,
+        "accuracy": 0.5411255411255411
+      }
+    },
+    "askatt_base": {
+      "cohorts": {
+        "original": {
+          "status": "complete",
+          "correct": 41,
+          "decisions": 72,
+          "accuracy": 0.5694444444444444,
+          "brier_mean": 0.6416495769322015,
+          "ece": 0.32221608958333314,
+          "p50_latency_s": 0.10697149949919549,
+          "p95_latency_s": 0.14607751280054798,
+          "schema_validity": 1.0,
+          "operational_success": 1.0
+        },
+        "easy": {
+          "status": "complete",
+          "correct": 44,
+          "decisions": 48,
+          "accuracy": 0.9166666666666666,
+          "brier_mean": 0.14390608472514602,
+          "ece": 0.08729164041666668,
+          "p50_latency_s": 0.10586254149893648,
+          "p95_latency_s": 0.12740875450090242,
+          "schema_validity": 1.0,
+          "operational_success": 1.0
+        },
+        "hard": {
+          "status": "complete",
+          "correct": 40,
+          "decisions": 111,
+          "accuracy": 0.36036036036036034,
+          "brier_mean": 0.9574209715770392,
+          "ece": 0.4080927344144145,
+          "p50_latency_s": 0.5081070419983007,
+          "p95_latency_s": 3.5988803539985383,
+          "schema_validity": 1.0,
+          "operational_success": 1.0
+        }
+      },
+      "public_total": {
+        "correct": 125,
+        "decisions": 231,
+        "accuracy": 0.5411255411255411
+      }
+    }
+  }
+}

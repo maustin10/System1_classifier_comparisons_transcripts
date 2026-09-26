@@ -2,9 +2,17 @@
 
 This repository represents an independent comparison of open encoder classifiers, TypeSafe.ai JEV, and frontier LLMs on the same synthetic customer-care transcript classification task.
 
+The AskATT API now supports a hybrid deployment policy: general questions stay
+on the untouched shared-state encoder, while tool-routing questions use the
+specialized LoRA checkpoint. On the BFCL-derived suite, the untouched base
+reached 56.67% and the hybrid reached 83.33%—a 26.67-point lift driven by
+no-tool recall improving from 0% to 80%. JEV reached 96.67%. On transcript Noul,
+AskATT reached 92.76% calibrated F1 versus JEV at 99.81%. See the
+[hybrid-versus-JEV report](report/askatt-hybrid-vs-jev.md).
+
 **Author: Mark Austin**
 
-Publication drafts: [LinkedIn post](articles/linkedin-post.md) · [Long-form blog](articles/blog-post.md) · [Classifier-tokenomics outline](articles/blog-outline-classifier-tokenomics.md) ([PDF](articles/blog-outline-classifier-tokenomics.pdf))
+Publication drafts: [LinkedIn post](articles/linkedin-post.md) · [Long-form blog](articles/blog-post.md) · [Classifier-tokenomics outline](articles/blog-outline-classifier-tokenomics.md) ([PDF](articles/blog-outline-classifier-tokenomics.pdf)) · [Conversational edition](articles/blog-classifier-tokenomics-conversational.md) ([PDF](articles/blog-classifier-tokenomics-conversational.pdf))
 
 The benchmark contains 1,000 synthetic conversations, each labeled for 27 binary customer-care attributes. The fixed split is 700 training, 150 validation, and 150 locked test conversations. All quality numbers below are calculated only on the locked test set: 4,050 binary decisions.
 
@@ -12,11 +20,17 @@ The benchmark contains 1,000 synthetic conversations, each labeled for 27 binary
 
 ## AskATT System1-compatible API
 
-The repository now includes `Askatt_system1_api`, a local GLiClass Modern Large service with the TypeSafe System One `POST /v1/systemone` envelope for **Noul** and **Choice**. It is intended as a portable comparison seam: an application can submit the same shared `state` and named questions to JEV or to the local service while keeping model-specific calibration and policy outside the application.
+The repository now includes `Askatt_system1_api`, a local GLiClass Modern Large service with the TypeSafe System One `POST /v1/systemone` envelope for **Noul**, **Choice**, and ordered **Score**. It is intended as a portable comparison seam: an application can submit the same shared `state` and named questions to JEV or to the local service while keeping model-specific calibration and policy outside the application.
 
-This is API compatibility, not a reproduction of JEV. GLiClass supplies the probabilities; general Choice distributions and confidence are adapter-defined; Score is not implemented.
+This is API compatibility, not a reproduction of JEV. GLiClass supplies the probabilities; general Choice and Score distributions and confidence are adapter-defined.
 
 On the locked 150-transcript / 4,050-decision test, both the Noul and conventional binary Choice adapters produced **94.10% accuracy, 83.89% precision, 96.07% recall, and 89.57% F1**, with all 27 labels in one shared GLiClass pass per transcript. See the [API guide](askatt_system1_api/README.md) and the [separate implementation appendix](report/appendix-askatt-system1-api.md).
+
+On the broader 231-decision public JevBench diagnostic, AskATT scored 54.11%
+overall: 91.67% easy, 56.94% original, and 36.04% hard, with 100% strict
+schema validity. This is a public-only diagnostic rather than an official
+sealed leaderboard result. See the [open-model execution report](report/jevbench-open-model-comparison.md)
+and [reproduction guide](benchmarks/jevbench/README.md).
 
 ## Executive decision pack
 
@@ -284,7 +298,7 @@ JEV Choice versus Noul is not a primitive-only A/B test. The Noul experiment als
 
 ```text
 articles/                       LinkedIn and long-form publication drafts
-askatt_system1_api/             JEV-shaped Noul/Choice service over GLiClass
+askatt_system1_api/             JEV-shaped Noul/Choice/Score service over GLiClass
 charts/                         Generated comparison charts
 data/
   synth_transcript.xlsx        1,000 synthetic labeled conversations
